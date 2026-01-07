@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <thirdparty>$(SolutionDir)..\3rdparty\</thirdparty>
+    <glfw_dir>$(thirdparty)glfw-3.3.8.bin.WIN64\</glfw_dir>
+    <stb_dir>$(thirdparty)stb\</stb_dir>
+    <glm_dir>$(thirdparty)glm-0.9.9.7\</glm_dir>
+    <sfml_dir>$(thirdparty)\SFML-2.5.1\</sfml_dir>
+    <glad_dir>$(thirdparty)glad</glad_dir>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalLibraryDirectories>$(sfml_dir)\lib;$(glfw_dir)lib-vc2022;$(glew_dir)lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glfw3dll.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(glad_dir)\src;$(glad_dir)\include;$(sfml_dir)\include;$(stb_dir);$(glm_dir)glm;$(glfw_dir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="thirdparty">
+      <Value>$(thirdparty)</Value>
+    </BuildMacro>
+    <BuildMacro Include="glfw_dir">
+      <Value>$(glfw_dir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="stb_dir">
+      <Value>$(stb_dir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="glm_dir">
+      <Value>$(glm_dir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="sfml_dir">
+      <Value>$(sfml_dir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="glad_dir">
+      <Value>$(glad_dir)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
