@@ -1,0 +1,134 @@
+<html lang="en">
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>webgl test</title>
+   <link rel="stylesheet" href="./lib/css/default.css">
+   <script src="./lib/js/math/3dmath.js"></script>
+   <script src="./lib/js/gl2js/glcanvas.js"></script>
+   <script src="./lib/js/gl2js/gldynamic.js"></script>
+   <script src="./lib/js/gl2js/gl3dcalc.js"></script>
+</head>
+<body>
+   DynamiTD<br/>
+   Automatic Dynamic GLSL 300 Shader Handling. Migrated from  <a href="./draw.simple.1.glsl300.vao.html">WebGL2 GLSL 300</a><br/>
+   Older version available here <a href="./draw.simple.1.glsl300.html">WebGL</a><br/>
+   A WebGPU variant <a href="./webgpu1.html">available</a><br/>
+   <div class="sample">
+      Simple draw<br/>Translate<br/>
+      <canvas id = "draw0"  width = "120" height = "120" class="blue">
+         <script src="./draw.simple.1.glsl300.vao.auto/draw0.js"></script>
+      </canvas>
+   </div>
+   <div class="sample">
+      Animate 1/2 combined<br/>
+      2 progs<br/>
+      P1 Verts dynamic<br/> P2 2 VAOs static<br/>
+      <canvas id = "animate"  width = "120" height = "120" class="cyan">
+         <script src="./draw.simple.1.glsl300.vao.auto/animate.js"></script>
+      </canvas>
+   </div>
+   <div class="sample">
+      Normals + Colors,<br/> 2 progs<br/>
+      <canvas id = "normals" width = "120" height = "120"  class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/normalsAndColors_2progs.js"></script>
+      </canvas>
+   </div><br/>
+   <div class="sample">
+      <b>Indexed Draw Test</b><br/>
+      Quad (4 verts, 6 indices)<br/>
+      2 chained triangles<br/>
+      <canvas id = "drawIndexed" width = "200" height = "200" class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/drawIndexed.js"></script>
+      </canvas>
+   </div>
+   <div class="sample">
+      <b>Strided Draw Test</b><br/>
+      Interleaved vertex data<br/>
+      vertex+color, vertex+normal<br/>
+      <canvas id = "drawStrided" width = "200" height = "200" class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/drawStrided.js"></script>
+      </canvas>
+   </div>
+   <div class="sample">
+      <br/>
+      Cone TRIANGLE_FAN<br/>
+      (wrong but correct)</br>
+      <canvas id = "cone" width = "200" height = "200"  class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/triangleFan.js"></script>
+      </canvas>
+   </div>
+   <div class="sample">
+      <b>Cone TRIANGLES (correct), <br/>
+      Normals simple, smooth gradient<br/>
+      Light change direction<br/>
+      to merge</b><br/>
+      <canvas id = "cone1_animate" width = "200" height = "200"  class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/cone1Animate1.js"></script>
+      </canvas>
+   </div>
+   <div class="sample">
+      <b>Cone TRIANGLES (correct), <br/>
+      Normals simple, no gradient, <br/>
+      Tip normal to whole side.<br/>
+      Light change direction<br/>
+      to be merged</b><br/>
+      <canvas id = "cone1_animate" width = "200" height = "200"  class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/cone1Animate2.js"></script>
+      </canvas>
+   </div>
+   <div class="sample">
+      Cone TRIANGLES (correct), </br>
+      Normals simple <br/>
+      <canvas id = "cone1" width = "200" height = "200"  class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/cone1Geometry1.js"></script>
+      </canvas>
+   </div>
+   <div class="sample">
+      <b>Cone TRIANGLES (correct), </br>
+      Geometry <br/>
+      Very good investigation<br/>
+      to be merged</b><br/>
+      <canvas id = "cone1_geometry" width = "200" height = "200"  class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/cone1Geometry2.js"></script>
+      </canvas>
+   </div><br/>
+   <div class="sample">
+      </br>
+      Cone TRIANGLES (cross), </br>
+      Geometry <br/>
+      <canvas id = "cone1 heart geometry" width = "200" height = "200"  class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/cone1HeartGeometry1.js"></script>
+      </canvas>
+   </div>
+   <div class="sample">
+      <b>Cone TRIANGLES (grad), </br>
+      Geometry <br/>
+      <canvas id = "cone1 heart geometry" width = "400" height = "400"  class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/cone1HeartGeometry2.js"></script>
+      </canvas>
+   </div>
+   <div class="sample">
+      <b>3DCalculator Test</b><br/>
+      Parametric polar geometry<br/>
+      circle, heart, star<br/>
+      <canvas id = "cone3DCalc" width = "400" height = "400" class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/cone3DCalc.js"></script>
+      </canvas>
+   </div>
+   <div class="async">
+      </br>
+      Cone TRIANGLES (grad), asynchronous, delayed by 10 seconds</br>
+      Geometry <br/>
+      <canvas id = "cone1 heart geometry" width = "400" height = "400"  class="yellow">
+         <script src="./draw.simple.1.glsl300.vao.auto/cone1HeartGeometry2_async.js"></script>
+      </canvas>
+   </div>
+   <br/>
+   <canvas id = "mycanvas1"  width = "310" height =  "40" class = "red"  ><script src="./draw.simple.1.glsl300.vao.auto/2d.js"    ></script></canvas>
+   <canvas id = "mycanvas2"  width =  "40" height =  "40" class = "green"><script src="./draw.simple.1.glsl300.vao.auto/simple.js"></script></canvas><br/>
+   <a href="./tutorials.html">Tutorials</a>
+
+
+</body>
+</html>
