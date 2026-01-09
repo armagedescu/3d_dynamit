@@ -1,0 +1,677 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamit JS - WebGL2 Graphics & Expression Library</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --accent: #10b981;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-code: #0d1117;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            padding: 3rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+            header h1 {
+                font-size: 2.5rem;
+                background: linear-gradient(90deg, #60a5fa, #34d399);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin-bottom: 0.5rem;
+            }
+
+            header p {
+                color: var(--text-muted);
+                font-size: 1.1rem;
+            }
+
+        nav {
+            background: var(--bg-code);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+            nav ul {
+                display: flex;
+                justify-content: center;
+                gap: 1.5rem;
+                list-style: none;
+                flex-wrap: wrap;
+            }
+
+            nav a {
+                color: var(--text);
+                text-decoration: none;
+                padding: 0.5rem 1rem;
+                border-radius: 0.5rem;
+                transition: background 0.2s;
+            }
+
+                nav a:hover {
+                    background: var(--primary);
+                }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            color: #60a5fa;
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        h3 {
+            color: var(--accent);
+            font-size: 1.25rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            transition: transform 0.2s;
+        }
+
+            .card:hover {
+                transform: translateY(-3px);
+            }
+
+            .card h4 {
+                color: #60a5fa;
+                margin-bottom: 0.5rem;
+            }
+
+            .card p {
+                color: var(--text-muted);
+                font-size: 0.9rem;
+            }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        code {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            line-height: 1.5;
+        }
+
+        .label {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            margin-bottom: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-code);
+            color: #60a5fa;
+        }
+
+        tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .kw {
+            color: #c792ea;
+        }
+
+        .str {
+            color: #c3e88d;
+        }
+
+        .num {
+            color: #f78c6c;
+        }
+
+        .fn {
+            color: #82aaff;
+        }
+
+        .cmt {
+            color: #546e7a;
+        }
+
+        footer {
+            background: var(--bg-code);
+            border-top: 1px solid var(--border);
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+            footer a {
+                color: var(--primary);
+                text-decoration: none;
+            }
+
+        .file-list {
+            background: var(--bg-card);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+            .file-list code {
+                color: var(--accent);
+            }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎨 Dynamit JS</h1>
+        <p>WebGL2 Graphics Library with Auto Shader Generation & Expression Compiler</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#setup">Setup</a></li>
+            <li><a href="#dynamit">Dynamit API</a></li>
+            <li><a href="#gl3dcalc">gl3dcalc</a></li>
+            <li><a href="#examples">Examples</a></li>
+            <li><a href="#api">API Reference</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+
+        <!-- Overview -->
+        <section id="overview">
+            <h2>📋 Overview</h2>
+            <p>
+                <strong>Dynamit JS</strong> is a WebGL2 graphics library that automatically generates GLSL ES 3.00 shaders
+                based on your vertex data configuration. It includes <code>gl3dcalc</code>, a runtime expression compiler
+                for generating parametric geometry from mathematical formulas.
+            </p>
+
+            <div class="grid">
+                <div class="card">
+                    <h4>🔧 Auto Shader Generation</h4>
+                    <p>No more manual GLSL — shaders are generated from your vertex attributes, colors, normals, and lighting setup.</p>
+                </div>
+                <div class="card">
+                    <h4>📐 Expression Compiler</h4>
+                    <p>Parse and evaluate math expressions at runtime. Generate parametric curves and surfaces from formulas.</p>
+                </div>
+                <div class="card">
+                    <h4>🔗 Fluent API</h4>
+                    <p>Chain method calls for clean, readable WebGL setup code with minimal boilerplate.</p>
+                </div>
+                <div class="card">
+                    <h4>⚡ WebGL2 / ES 3.00</h4>
+                    <p>Built for modern browsers with VAO support, layout qualifiers, and GLSL ES 3.00 shaders.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Setup -->
+        <section id="setup">
+            <h2>🚀 Setup</h2>
+
+            <h3>Required Files</h3>
+            <div class="file-list">
+                <p>Include these scripts in order:</p>
+                <pre><code><span class="cmt">&lt;!-- Core dependencies --&gt;</span>
+&lt;script src=<span class="str">"lib/js/math/3dmath.js"</span>&gt;&lt;/script&gt;
+&lt;script src=<span class="str">"lib/js/gl2js/glcanvas.js"</span>&gt;&lt;/script&gt;
+&lt;script src=<span class="str">"lib/js/gl2js/gldynamic.js"</span>&gt;&lt;/script&gt;
+
+<span class="cmt">&lt;!-- Optional: Expression compiler for parametric geometry --&gt;</span>
+&lt;script src=<span class="str">"lib/js/gl2js/gl3dcalc.js"</span>&gt;&lt;/script&gt;</code></pre>
+            </div>
+
+            <h3>Basic HTML Template</h3>
+            <pre><code><span class="label">HTML</span>
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Dynamit Demo&lt;/title&gt;
+    &lt;script src=<span class="str">"lib/js/math/3dmath.js"</span>&gt;&lt;/script&gt;
+    &lt;script src=<span class="str">"lib/js/gl2js/glcanvas.js"</span>&gt;&lt;/script&gt;
+    &lt;script src=<span class="str">"lib/js/gl2js/gldynamic.js"</span>&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;canvas id=<span class="str">"glcanvas"</span> width=<span class="str">"600"</span> height=<span class="str">"600"</span>&gt;
+        &lt;script src=<span class="str">"myDemo.js"</span>&gt;&lt;/script&gt;
+    &lt;/canvas&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+        </section>
+
+        <!-- Dynamit API -->
+        <section id="dynamit">
+            <h2>🎮 Dynamit API</h2>
+            <p>
+                The <code>Dynamit</code> class wraps WebGL2 VAO, VBO, and uniforms with a fluent builder API.
+                Shaders are automatically generated based on your data configuration.
+            </p>
+
+            <h3>Simple Colored Triangle</h3>
+            <pre><code><span class="label">JavaScript</span>
+<span class="kw">let</span> canvas = document.getElementById(<span class="str">'glcanvas'</span>);
+
+<span class="kw">let</span> triangle = <span class="kw">new</span> <span class="fn">Dynamit</span>(canvas)
+    .<span class="fn">withVertices2d</span>([
+            <span class="num">-0.5</span>, <span class="num">-0.5</span>,  <span class="cmt">// bottom-left</span>
+            <span class="num">0.5</span>, <span class="num">-0.5</span>,  <span class="cmt">// bottom-right</span>
+            <span class="num">0.0</span>,  <span class="num">0.5</span>   <span class="cmt">// top</span>
+    ])
+    .<span class="fn">withConstColor</span>([<span class="num">1.0</span>, <span class="num">0.5</span>, <span class="num">0.2</span>, <span class="num">1.0</span>]);  <span class="cmt">// orange</span>
+
+<span class="cmt">// Render</span>
+triangle.<span class="fn">drawTriangles</span>();</code></pre>
+
+            <h3>3D Shape with Lighting</h3>
+            <pre><code><span class="label">JavaScript</span>
+<span class="kw">let</span> geometry = <span class="fn">buildCone</span>(<span class="num">2</span>, <span class="num">20</span>);  <span class="cmt">// height slices, sectors</span>
+
+<span class="kw">let</span> cone = <span class="kw">new</span> <span class="fn">Dynamit</span>(canvas)
+    .<span class="fn">withConstColor</span>([<span class="num">0.0</span>, <span class="num">1.0</span>, <span class="num">0.0</span>, <span class="num">1.0</span>])  <span class="cmt">// green</span>
+    .<span class="fn">withVertices3d</span>(geometry.verts)
+    .<span class="fn">withNormals3d</span>(geometry.norms)
+    .<span class="fn">withConstLightDirection</span>([<span class="num">-1.0</span>, <span class="num">-1.0</span>, <span class="num">1.0</span>]);
+
+<span class="cmt">// Optional: view generated shaders</span>
+cone.<span class="fn">logStrategyShaders</span>(<span class="str">"Generated shaders:"</span>);
+
+<span class="cmt">// Enable depth and render</span>
+<span class="kw">let</span> gl = cone.gl;
+gl.<span class="fn">enable</span>(gl.DEPTH_TEST);
+gl.<span class="fn">clearColor</span>(<span class="num">0.5</span>, <span class="num">0.5</span>, <span class="num">0.5</span>, <span class="num">1.0</span>);
+gl.<span class="fn">clear</span>(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+cone.<span class="fn">drawTriangles</span>();</code></pre>
+
+            <h3>Animated Uniform Light</h3>
+            <pre><code><span class="label">JavaScript</span>
+<span class="kw">let</span> shape = <span class="kw">new</span> <span class="fn">Dynamit</span>(canvas)
+    .<span class="fn">withVertices3d</span>(verts)
+    .<span class="fn">withNormals3d</span>(norms)
+    .<span class="fn">withConstColor</span>([<span class="num">0.2</span>, <span class="num">0.6</span>, <span class="num">1.0</span>, <span class="num">1.0</span>])
+    .<span class="fn">withLightDirection3f</span>();  <span class="cmt">// uniform (animatable)</span>
+
+<span class="kw">function</span> <span class="fn">render</span>(time) {
+            <span class="kw">let</span> lx = Math.<span class="fn">cos</span>(time * <span class="num">0.001</span>);
+            <span class="kw">let</span> ly = Math.<span class="fn">sin</span>(time * <span class="num">0.001</span>);
+    
+    shape.<span class="fn">lightDirection3f</span>(lx, ly, <span class="num">1.0</span>);  <span class="cmt">// update</span>
+    
+    gl.<span class="fn">clear</span>(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    shape.<span class="fn">drawTriangles</span>();
+    
+            <span class="fn">requestAnimationFrame</span>(render);
+}
+<span class="fn">requestAnimationFrame</span>(render);</code></pre>
+
+            <h3>Translation Animation</h3>
+            <pre><code><span class="label">JavaScript</span>
+<span class="kw">let</span> shape = <span class="kw">new</span> <span class="fn">Dynamit</span>(canvas)
+    .<span class="fn">withVertices3d</span>(verts)
+    .<span class="fn">withNormals3d</span>(norms)
+    .<span class="fn">withConstColor</span>([<span class="num">1.0</span>, <span class="num">0.5</span>, <span class="num">0.0</span>, <span class="num">1.0</span>])
+    .<span class="fn">withConstLightDirection</span>([<span class="num">-1.0</span>, <span class="num">-1.0</span>, <span class="num">1.0</span>])
+    .<span class="fn">withTranslation4f</span>();  <span class="cmt">// add translation uniform</span>
+
+<span class="kw">function</span> <span class="fn">render</span>(time) {
+            <span class="kw">let</span> x = Math.<span class="fn">sin</span>(time * <span class="num">0.001</span>) * <span class="num">0.5</span>;
+            <span class="kw">let</span> y = Math.<span class="fn">cos</span>(time * <span class="num">0.001</span>) * <span class="num">0.5</span>;
+    
+    shape.<span class="fn">translate4f</span>(x, y, <span class="num">0.0</span>, <span class="num">0.0</span>);
+    
+    gl.<span class="fn">clear</span>(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    shape.<span class="fn">drawTriangles</span>();
+    
+            <span class="fn">requestAnimationFrame</span>(render);
+}</code></pre>
+
+            <h3>Indexed Drawing</h3>
+            <pre><code><span class="label">JavaScript</span>
+<span class="kw">let</span> quad = <span class="kw">new</span> <span class="fn">Dynamit</span>(canvas)
+    .<span class="fn">withVertices3d</span>([
+            <span class="num">-0.5</span>, <span class="num">-0.5</span>, <span class="num">0.0</span>,  <span class="cmt">// 0: bottom-left</span>
+            <span class="num">0.5</span>, <span class="num">-0.5</span>, <span class="num">0.0</span>,  <span class="cmt">// 1: bottom-right</span>
+            <span class="num">0.5</span>,  <span class="num">0.5</span>, <span class="num">0.0</span>,  <span class="cmt">// 2: top-right</span>
+            <span class="num">-0.5</span>,  <span class="num">0.5</span>, <span class="num">0.0</span>   <span class="cmt">// 3: top-left</span>
+    ])
+    .<span class="fn">withIndices</span>([
+            <span class="num">0</span>, <span class="num">1</span>, <span class="num">2</span>,  <span class="cmt">// first triangle</span>
+            <span class="num">2</span>, <span class="num">3</span>, <span class="num">0</span>   <span class="cmt">// second triangle</span>
+    ], Uint16Array)
+    .<span class="fn">withConstColor</span>([<span class="num">0.8</span>, <span class="num">0.2</span>, <span class="num">0.8</span>, <span class="num">1.0</span>]);
+
+quad.<span class="fn">drawTrianglesIndexed</span>();</code></pre>
+        </section>
+
+        <!-- gl3dcalc -->
+        <section id="gl3dcalc">
+            <h2>📐 gl3dcalc - Expression Compiler</h2>
+            <p>
+                The <code>gl3dcalc.js</code> module provides runtime mathematical expression parsing and evaluation,
+                plus geometry builders that generate meshes from polar formulas.
+            </p>
+
+            <h3>Expression Basics</h3>
+            <pre><code><span class="label">JavaScript</span>
+<span class="kw">let</span> compiler = <span class="kw">new</span> <span class="fn">ExpressionCompiler</span>();
+
+<span class="cmt">// Compile a formula</span>
+<span class="kw">let</span> expr = compiler.<span class="fn">compile</span>(<span class="str">"sin(theta) * 2 + 1"</span>);
+
+<span class="cmt">// Bind variable</span>
+expr.<span class="fn">bind</span>(<span class="str">"theta"</span>, Math.PI / <span class="num">4</span>);
+
+<span class="cmt">// Evaluate</span>
+console.<span class="fn">log</span>(expr.<span class="fn">eval</span>());  <span class="cmt">// ~2.414</span></code></pre>
+
+            <h3>Polar Geometry Builder</h3>
+            <pre><code><span class="label">JavaScript</span>
+<span class="cmt">// Build cone from polar formula r(theta)</span>
+<span class="cmt">// Creates a 3D cone where radius varies with angle</span>
+
+<span class="cmt">// Heart shape (cardioid-like)</span>
+<span class="kw">let</span> heart = <span class="fn">buildConePolar</span>(
+            <span class="str">"theta / PI"</span>,      <span class="cmt">// r(theta) formula</span>
+            <span class="num">0</span>,                   <span class="cmt">// domain start</span>
+    Math.PI,             <span class="cmt">// domain end</span>
+            <span class="num">20</span>,                  <span class="cmt">// sectors</span>
+            <span class="num">4</span>                    <span class="cmt">// slices</span>
+);
+
+<span class="cmt">// 5-pointed star</span>
+<span class="kw">let</span> star = <span class="fn">buildConePolar</span>(
+            <span class="str">"(1 + 0.5 * cos(5 * theta)) / 1.5"</span>,
+            <span class="num">0</span>, <span class="num">2</span> * Math.PI, <span class="num">60</span>, <span class="num">20</span>
+);
+
+<span class="cmt">// 5-petal rose</span>
+<span class="kw">let</span> rose = <span class="fn">buildConePolar</span>(
+            <span class="str">"cos(5 * theta)"</span>,
+            <span class="num">0</span>, <span class="num">2</span> * Math.PI, <span class="num">160</span>, <span class="num">3</span>
+);
+
+<span class="cmt">// Lemniscate (figure-8)</span>
+<span class="kw">let</span> lemniscate = <span class="fn">buildConePolar</span>(
+            <span class="str">"sqrt(abs(cos(2 * theta)))"</span>,
+            <span class="num">0</span>, <span class="num">2</span> * Math.PI, <span class="num">60</span>
+);
+
+<span class="cmt">// Returns { verts: [...], norms: [...] }</span></code></pre>
+
+            <h3>Indexed Polar Geometry</h3>
+            <pre><code><span class="label">JavaScript</span>
+<span class="cmt">// Same formulas, but returns indexed geometry for efficiency</span>
+<span class="kw">let</span> indexed = <span class="fn">buildConePolarIndexed</span>(
+            <span class="str">"(1 - cos(theta)) / (PI / 1.55)"</span>,  <span class="cmt">// cardioid</span>
+            <span class="num">0</span>, <span class="num">2</span> * Math.PI, <span class="num">40</span>, <span class="num">10</span>
+);
+
+<span class="cmt">// Returns { verts: [...], norms: [...], indices: [...] }</span>
+
+<span class="kw">let</span> shape = <span class="kw">new</span> <span class="fn">Dynamit</span>(canvas)
+    .<span class="fn">withVertices3d</span>(indexed.verts)
+    .<span class="fn">withNormals3d</span>(indexed.norms)
+    .<span class="fn">withIndices</span>(indexed.indices)
+    .<span class="fn">withConstColor</span>([<span class="num">0.0</span>, <span class="num">1.0</span>, <span class="num">0.5</span>, <span class="num">1.0</span>])
+    .<span class="fn">withConstLightDirection</span>([<span class="num">-1.0</span>, <span class="num">-1.0</span>, <span class="num">1.0</span>]);
+
+shape.<span class="fn">drawTrianglesIndexed</span>();</code></pre>
+
+            <h3>Available Math Functions</h3>
+            <table>
+                <thead>
+                    <tr><th>Function</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>sin(x)</code>, <code>cos(x)</code>, <code>tan(x)</code></td><td>Trigonometric</td></tr>
+                    <tr><td><code>asin(x)</code>, <code>acos(x)</code>, <code>atan(x)</code></td><td>Inverse trig</td></tr>
+                    <tr><td><code>atan2(y, x)</code></td><td>Two-argument arctangent</td></tr>
+                    <tr><td><code>sinh(x)</code>, <code>cosh(x)</code>, <code>tanh(x)</code></td><td>Hyperbolic</td></tr>
+                    <tr><td><code>sqrt(x)</code>, <code>abs(x)</code>, <code>sign(x)</code></td><td>Basic math</td></tr>
+                    <tr><td><code>exp(x)</code>, <code>log(x)</code>, <code>log10(x)</code>, <code>log2(x)</code></td><td>Exponential/log</td></tr>
+                    <tr><td><code>pow(a, b)</code></td><td>Power (a^b)</td></tr>
+                    <tr><td><code>floor(x)</code>, <code>ceil(x)</code>, <code>round(x)</code></td><td>Rounding</td></tr>
+                    <tr><td><code>min(a, b)</code>, <code>max(a, b)</code></td><td>Min/max</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Available Constants</h3>
+            <table>
+                <thead>
+                    <tr><th>Constant</th><th>Value</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>PI</code>, <code>M_PI</code></td><td>3.14159...</td></tr>
+                    <tr><td><code>E</code>, <code>M_E</code></td><td>2.71828...</td></tr>
+                    <tr><td><code>TAU</code></td><td>6.28318... (2π)</td></tr>
+                    <tr><td><code>M_PI_2</code></td><td>1.5708... (π/2)</td></tr>
+                    <tr><td><code>M_PI_4</code></td><td>0.7854... (π/4)</td></tr>
+                    <tr><td><code>M_SQRT2</code></td><td>1.41421...</td></tr>
+                    <tr><td><code>M_LN2</code>, <code>M_LN10</code></td><td>ln(2), ln(10)</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Examples -->
+        <section id="examples">
+            <h2>💡 Complete Examples</h2>
+
+            <h3>Heart-Shaped Cone</h3>
+            <pre><code><span class="label">JavaScript</span>
+<span class="str">"use strict"</span>;
+{
+<span class="kw">let</span> canvas = document.currentScript.parentElement;
+
+<span class="kw">let</span> glmain = () => {
+            <span class="cmt">// Build heart from two half-formulas</span>
+            <span class="kw">let</span> half1 = <span class="fn">buildConePolar</span>(<span class="str">"theta / PI"</span>, <span class="num">0</span>, Math.PI, <span class="num">20</span>, <span class="num">10</span>);
+            <span class="kw">let</span> half2 = <span class="fn">buildConePolar</span>(<span class="str">"(2*PI - theta) / PI"</span>, Math.PI, <span class="num">2</span>*Math.PI, <span class="num">20</span>, <span class="num">10</span>);
+    
+            <span class="kw">let</span> shape = <span class="kw">new</span> <span class="fn">Dynamit</span>(canvas)
+        .<span class="fn">withConstColor</span>([<span class="num">1.0</span>, <span class="num">0.2</span>, <span class="num">0.3</span>, <span class="num">1.0</span>])  <span class="cmt">// red</span>
+        .<span class="fn">withVertices3d</span>(half1.verts)
+        .<span class="fn">withNormals3d</span>(half1.norms)
+        .<span class="fn">withConstLightDirection</span>([<span class="num">-1.0</span>, <span class="num">-1.0</span>, <span class="num">1.0</span>]);
+    
+            <span class="cmt">// Chain second half (shares shader program)</span>
+            <span class="kw">new</span> <span class="fn">Dynamit</span>(shape)
+        .<span class="fn">withVertices3d</span>(half2.verts)
+        .<span class="fn">withNormals3d</span>(half2.norms);
+    
+            <span class="kw">let</span> gl = shape.gl;
+    gl.<span class="fn">clearColor</span>(<span class="num">0.1</span>, <span class="num">0.1</span>, <span class="num">0.2</span>, <span class="num">1.0</span>);
+    gl.<span class="fn">enable</span>(gl.DEPTH_TEST);
+    gl.<span class="fn">clear</span>(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    
+    shape.<span class="fn">drawTriangles</span>();  <span class="cmt">// draws both halves via chain</span>
+};
+
+document.<span class="fn">addEventListener</span>(<span class="str">'DOMContentLoaded'</span>, glmain);
+}</code></pre>
+
+            <h3>Animated Rose Curve</h3>
+            <pre><code><span class="label">JavaScript</span>
+<span class="str">"use strict"</span>;
+{
+<span class="kw">let</span> canvas = document.currentScript.parentElement;
+
+<span class="kw">let</span> glmain = () => {
+            <span class="kw">let</span> petals = <span class="num">5</span>;
+            <span class="kw">let</span> geometry = <span class="fn">buildConePolar</span>(
+            <span class="str">`cos(${petals} * theta)`</span>,
+            <span class="num">0</span>, <span class="num">2</span> * Math.PI, <span class="num">120</span>, <span class="num">4</span>
+    );
+    
+            <span class="kw">let</span> shape = <span class="kw">new</span> <span class="fn">Dynamit</span>(canvas)
+        .<span class="fn">withConstColor</span>([<span class="num">1.0</span>, <span class="num">0.4</span>, <span class="num">0.7</span>, <span class="num">1.0</span>])
+        .<span class="fn">withVertices3d</span>(geometry.verts)
+        .<span class="fn">withNormals3d</span>(geometry.norms)
+        .<span class="fn">withLightDirection3f</span>();  <span class="cmt">// animatable</span>
+    
+            <span class="kw">let</span> gl = shape.gl;
+    gl.<span class="fn">enable</span>(gl.DEPTH_TEST);
+    gl.<span class="fn">clearColor</span>(<span class="num">0.05</span>, <span class="num">0.05</span>, <span class="num">0.1</span>, <span class="num">1.0</span>);
+    
+            <span class="kw">function</span> <span class="fn">render</span>(time) {
+            <span class="kw">let</span> angle = time * <span class="num">0.001</span>;
+        shape.<span class="fn">lightDirection3f</span>(
+            Math.<span class="fn">cos</span>(angle),
+            Math.<span class="fn">sin</span>(angle),
+            <span class="num">1.0</span>
+        );
+        
+        gl.<span class="fn">clear</span>(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        shape.<span class="fn">drawTriangles</span>();
+        
+            <span class="fn">requestAnimationFrame</span>(render);
+    }
+            <span class="fn">requestAnimationFrame</span>(render);
+};
+
+document.<span class="fn">addEventListener</span>(<span class="str">'DOMContentLoaded'</span>, glmain);
+}</code></pre>
+        </section>
+
+        <!-- API Reference -->
+        <section id="api">
+            <h2>📚 API Reference</h2>
+
+            <h3>Dynamit Class</h3>
+            <table>
+                <thead>
+                    <tr><th>Method</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>new Dynamit(canvas | gl | dynamit)</code></td><td>Create from canvas element, WebGL2 context, or chain to another Dynamit</td></tr>
+                    <tr><td><code>.withVertices2d(data)</code></td><td>Set 2D vertex positions (vec2)</td></tr>
+                    <tr><td><code>.withVertices3d(data)</code></td><td>Set 3D vertex positions (vec3)</td></tr>
+                    <tr><td><code>.withNormals3d(data)</code></td><td>Set vertex normals for lighting</td></tr>
+                    <tr><td><code>.withColors3d(data)</code></td><td>Set per-vertex RGB colors</td></tr>
+                    <tr><td><code>.withColors4d(data)</code></td><td>Set per-vertex RGBA colors</td></tr>
+                    <tr><td><code>.withConstColor([r,g,b,a])</code></td><td>Set constant color for all vertices</td></tr>
+                    <tr><td><code>.withConstLightDirection([x,y,z])</code></td><td>Set fixed light direction (baked into shader)</td></tr>
+                    <tr><td><code>.withLightDirection3f()</code></td><td>Add animatable light direction uniform</td></tr>
+                    <tr><td><code>.lightDirection3f(x, y, z)</code></td><td>Update light direction uniform</td></tr>
+                    <tr><td><code>.withTranslation4f()</code></td><td>Add translation uniform</td></tr>
+                    <tr><td><code>.translate4f(x, y, z, w)</code></td><td>Update translation uniform</td></tr>
+                    <tr><td><code>.withIndices(data, type?)</code></td><td>Set element indices (Uint16Array/Uint32Array)</td></tr>
+                    <tr><td><code>.withPrimitive(type)</code></td><td>Set primitive type (gl.TRIANGLES, etc.)</td></tr>
+                    <tr><td><code>.drawTriangles()</code></td><td>Draw using glDrawArrays</td></tr>
+                    <tr><td><code>.drawTrianglesIndexed()</code></td><td>Draw using glDrawElements</td></tr>
+                    <tr><td><code>.logStrategyShaders(msg?)</code></td><td>Log generated shaders to console</td></tr>
+                </tbody>
+            </table>
+
+            <h3>gl3dcalc Functions</h3>
+            <table>
+                <thead>
+                    <tr><th>Function</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>buildConePolar(formula, start?, end?, sectors?, slices?)</code></td><td>Build cone mesh from polar r(theta) formula</td></tr>
+                    <tr><td><code>buildConePolarIndexed(formula, start?, end?, sectors?, slices?)</code></td><td>Same but returns indexed geometry</td></tr>
+                    <tr><td><code>new ExpressionCompiler()</code></td><td>Create expression compiler</td></tr>
+                    <tr><td><code>compiler.compile(formula)</code></td><td>Compile formula string to Expression</td></tr>
+                    <tr><td><code>expr.bind(name, value)</code></td><td>Bind variable to value</td></tr>
+                    <tr><td><code>expr.eval()</code></td><td>Evaluate and return result</td></tr>
+                    <tr><td><code>expr.cylX(theta)</code></td><td>Cylindrical X: eval() * cos(theta)</td></tr>
+                    <tr><td><code>expr.cylY(theta)</code></td><td>Cylindrical Y: eval() * sin(theta)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Helper Math Functions (3dmath.js)</h3>
+            <table>
+                <thead>
+                    <tr><th>Function</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>cross3p(p1, p2, p3)</code></td><td>Cross product from 3 points (right-handed)</td></tr>
+                    <tr><td><code>cross3pl(p1, p2, p3)</code></td><td>Cross product from 3 points (left-handed)</td></tr>
+                    <tr><td><code>normv(v)</code></td><td>Normalize vector</td></tr>
+                    <tr><td><code>dotv(v1, v2)</code></td><td>Dot product</td></tr>
+                    <tr><td><code>identity4()</code></td><td>4x4 identity matrix</td></tr>
+                    <tr><td><code>rad(degrees)</code></td><td>Convert degrees to radians</td></tr>
+                    <tr><td><code>deg(radians)</code></td><td>Convert radians to degrees</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>
+            <strong>Dynamit JS</strong> — Part of the 3D Dynamit project<br>
+            <a href="https://github.com/armagedescu/3d_dynamit">github.com/armagedescu/3d_dynamit</a>
+        </p>
+    </footer>
+
+</body>
+</html>

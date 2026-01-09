@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Dynamit - OpenGL Graphics & Math Expression Library</title>
+    <title>3D Dynamit - Documentation</title>
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --bg-dark: #1e293b;
-            --bg-code: #0f172a;
+            --primary: #3b82f6;
+            --accent: #10b981;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
             --text: #e2e8f0;
             --text-muted: #94a3b8;
-            --accent: #22c55e;
             --border: #334155;
         }
 
@@ -23,26 +22,27 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
             color: var(--text);
-            line-height: 1.6;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
         }
 
         header {
-            background: var(--bg-dark);
-            border-bottom: 1px solid var(--border);
-            padding: 2rem 0;
             text-align: center;
+            margin-bottom: 3rem;
         }
 
             header h1 {
                 font-size: 3rem;
-                background: linear-gradient(90deg, #60a5fa, #22c55e);
+                background: linear-gradient(90deg, #60a5fa, #34d399);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
-                background-clip: text;
                 margin-bottom: 0.5rem;
             }
 
@@ -51,812 +51,101 @@
                 font-size: 1.2rem;
             }
 
-        nav {
-            background: var(--bg-code);
-            padding: 1rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--border);
+        .cards {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
-            nav ul {
-                display: flex;
-                justify-content: center;
-                gap: 2rem;
-                list-style: none;
-                flex-wrap: wrap;
-            }
-
-            nav a {
-                color: var(--text);
-                text-decoration: none;
-                padding: 0.5rem 1rem;
-                border-radius: 0.5rem;
-                transition: all 0.3s;
-            }
-
-                nav a:hover {
-                    background: var(--primary);
-                }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        section {
-            margin-bottom: 4rem;
-        }
-
-        h2 {
-            color: #60a5fa;
-            font-size: 2rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--border);
-        }
-
-        h3 {
-            color: var(--accent);
-            font-size: 1.4rem;
-            margin: 1.5rem 0 1rem;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-
-        .feature-card {
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-            .feature-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            }
-
-            .feature-card h4 {
-                color: #60a5fa;
-                margin-bottom: 0.5rem;
-                font-size: 1.2rem;
-            }
-
-            .feature-card p {
-                color: var(--text-muted);
-            }
-
-        pre {
-            background: var(--bg-code);
-            border: 1px solid var(--border);
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            overflow-x: auto;
-            margin: 1rem 0;
-            position: relative;
-        }
-
-        code {
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-
-        .code-label {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.75rem;
-            background: var(--primary);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
-
-        .keyword {
-            color: #c792ea;
-        }
-
-        .type {
-            color: #82aaff;
-        }
-
-        .string {
-            color: #c3e88d;
-        }
-
-        .number {
-            color: #f78c6c;
-        }
-
-        .comment {
-            color: #546e7a;
-        }
-
-        .function {
-            color: #82aaff;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            background: var(--bg-dark);
-            border-radius: 0.75rem;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th {
-            background: var(--bg-code);
-            color: #60a5fa;
-            font-weight: 600;
-        }
-
-        tr:hover {
-            background: rgba(37, 99, 235, 0.1);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-right: 0.5rem;
-        }
-
-        .badge-lib {
-            background: #3b82f6;
-        }
-
-        .badge-app {
-            background: #22c55e;
-        }
-
-        .badge-demo {
-            background: #f59e0b;
-        }
-
-        .architecture-diagram {
-            background: var(--bg-dark);
+        .card {
+            background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 1rem;
             padding: 2rem;
+            width: 320px;
             text-align: center;
-            margin: 2rem 0;
+            text-decoration: none;
+            color: var(--text);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-            .architecture-diagram svg {
-                max-width: 100%;
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            }
+
+            .card h2 {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .card.js h2 {
+                color: #fbbf24;
+            }
+
+            .card.cpp h2 {
+                color: #60a5fa;
+            }
+
+            .card p {
+                color: var(--text-muted);
+                font-size: 0.95rem;
+                margin-bottom: 1rem;
+            }
+
+            .card .tag {
+                display: inline-block;
+                padding: 0.25rem 0.75rem;
+                border-radius: 1rem;
+                font-size: 0.8rem;
+                font-weight: 600;
+            }
+
+            .card.js .tag {
+                background: #fbbf24;
+                color: #000;
+            }
+
+            .card.cpp .tag {
+                background: #60a5fa;
+                color: #000;
             }
 
         footer {
-            background: var(--bg-code);
-            border-top: 1px solid var(--border);
-            padding: 2rem;
-            text-align: center;
+            margin-top: 3rem;
             color: var(--text-muted);
+            font-size: 0.9rem;
         }
 
             footer a {
                 color: var(--primary);
                 text-decoration: none;
             }
-
-        .github-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--primary);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            text-decoration: none;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-
-            .github-link:hover {
-                background: var(--primary-dark);
-            }
-
-        .toc {
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-            .toc h3 {
-                margin-top: 0;
-            }
-
-            .toc ul {
-                list-style: none;
-                padding-left: 1rem;
-            }
-
-            .toc li {
-                margin: 0.5rem 0;
-            }
-
-            .toc a {
-                color: var(--text-muted);
-                text-decoration: none;
-            }
-
-                .toc a:hover {
-                    color: var(--primary);
-                }
     </style>
 </head>
 <body>
     <header>
         <h1>🎮 3D Dynamit</h1>
-        <p>Modern C++17 OpenGL Graphics Library with Mathematical Expression Compiler</p>
-        <br>
-        <a href="https://github.com/armagedescu/3d_dynamit" class="github-link">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-            </svg>
-            View on GitHub
-        </a>
+        <p>OpenGL Graphics Library with Auto Shader Generation & Expression Compiler</p>
     </header>
 
-    <nav>
-        <ul>
-            <li><a href="#overview">Overview</a></li>
-            <li><a href="#components">Components</a></li>
-            <li><a href="#dynamit">Dynamit API</a></li>
-            <li><a href="#expressions">Expression Compiler</a></li>
-            <li><a href="#examples">Examples</a></li>
-            <li><a href="#api">API Reference</a></li>
-        </ul>
-    </nav>
-
-    <div class="container">
-        <!-- Overview Section -->
-        <section id="overview">
-            <h2>📋 Overview</h2>
-            <p>
-                <strong>3D Dynamit</strong> is a comprehensive C++17 project featuring an OpenGL graphics library
-                with automatic shader generation and a powerful mathematical expression parser with symbolic
-                differentiation support.
-            </p>
-
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h4>🎨 Auto Shader Generation</h4>
-                    <p>
-                        Automatically generates GLSL vertex and fragment shaders based on your vertex attributes,
-                        colors, normals, and lighting configuration.
-                    </p>
-                </div>
-                <div class="feature-card">
-                    <h4>📐 Expression Compiler</h4>
-                    <p>
-                        Parse and evaluate mathematical expressions at runtime with support for variables,
-                        functions, and symbolic differentiation.
-                    </p>
-                </div>
-                <div class="feature-card">
-                    <h4>🔢 Symbolic Differentiation</h4>
-                    <p>
-                        Compute derivatives of expressions symbolically using chain rule, product rule,
-                        and quotient rule.
-                    </p>
-                </div>
-                <div class="feature-card">
-                    <h4>⚡ High Performance</h4>
-                    <p>
-                        Function pointers for direct evaluation, cached variable lookups,
-                        and efficient expression tree traversal.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Components Section -->
-        <section id="components">
-            <h2>🧩 Project Components</h2>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Component</th>
-                        <th>Type</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>dynamit_gl</strong></td>
-                        <td><span class="badge badge-lib">Library</span></td>
-                        <td>Core OpenGL graphics library with Dynamit class, shader generation, and shape primitives</td>
-                    </tr>
-                    <tr>
-                        <td><strong>3DCalculator</strong></td>
-                        <td><span class="badge badge-app">Application</span></td>
-                        <td>Mathematical expression tokenizer, parser, and compiler with symbolic differentiation</td>
-                    </tr>
-                    <tr>
-                        <td><strong>3Dapi</strong></td>
-                        <td><span class="badge badge-demo">Demos</span></td>
-                        <td>Collection of OpenGL rendering examples: cones, spheres, terrain, shadows</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="architecture-diagram">
-                <h3>Architecture</h3>
-                <pre style="text-align: left; display: inline-block;">
-┌─────────────────────────────────────────────────────────────┐
-│                        3Dapi (Demos)                        │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐   │
-│  │  Cones   │ │ Spheres  │ │ Terrain  │ │ Shadow Maps  │   │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-        ┌─────────────────────┴─────────────────────┐
-        ▼                                           ▼
-┌───────────────────────┐               ┌───────────────────────┐
-│     dynamit_gl        │               │    3DCalculator       │
-│  ┌─────────────────┐  │               │  ┌─────────────────┐  │
-│  │    Dynamit      │  │               │  │    Tokenizer    │  │
-│  │  (Fluent API)   │  │               │  └────────┬────────┘  │
-│  └────────┬────────┘  │               │           ▼           │
-│           ▼           │               │  ┌─────────────────┐  │
-│  ┌─────────────────┐  │               │  │    Compiler     │  │
-│  │ ShaderStrategy  │  │               │  │  (AST Builder)  │  │
-│  │ (Auto GLSL Gen) │  │               │  └────────┬────────┘  │
-│  └─────────────────┘  │               │           ▼           │
-│                       │               │  ┌─────────────────┐  │
-│  ┌─────────────────┐  │               │  │  Differentiation│  │
-│  │ Shapes/Terrain  │  │               │  │  (Symbolic)     │  │
-│  └─────────────────┘  │               │  └─────────────────┘  │
-└───────────────────────┘               └───────────────────────┘
-        │                                           │
-        └─────────────────────┬─────────────────────┘
-                              ▼
-                    ┌───────────────────┐
-                    │  OpenGL / GLEW    │
-                    │     GLFW / GLM    │
-                    └───────────────────┘
-                </pre>
-            </div>
-        </section>
-
-        <!-- Dynamit API Section -->
-        <section id="dynamit">
-            <h2>🎮 Dynamit Graphics API</h2>
-            <p>
-                The <code>Dynamit</code> class provides a fluent API for building OpenGL shapes with
-                automatic shader generation. Simply specify your data and the library generates
-                appropriate GLSL shaders.
-            </p>
-
-            <h3>Basic Triangle with Color</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="keyword">#include</span> <span class="string">&lt;Dynamit.h&gt;</span>
-<span class="keyword">using namespace</span> dynamit;
-
-<span class="comment">// Create a simple colored triangle</span>
-Dynamit triangle;
-triangle.<span class="function">withVertices2d</span>({
-            <span class="number">-0.5f</span>, <span class="number">-0.5f</span>,  <span class="comment">// bottom-left</span>
-            <span class="number">0.5f</span>, <span class="number">-0.5f</span>,  <span class="comment">// bottom-right</span>
-            <span class="number">0.0f</span>,  <span class="number">0.5f</span>   <span class="comment">// top</span>
-})
-.<span class="function">withConstColor</span>(<span class="number">1.0f</span>, <span class="number">0.5f</span>, <span class="number">0.2f</span>, <span class="number">1.0f</span>);  <span class="comment">// orange</span>
-
-<span class="comment">// Draw in render loop</span>
-triangle.<span class="function">drawTriangles</span>();
-</code></pre>
-
-            <h3>3D Shape with Lighting</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// Create a lit 3D cone</span>
-std::vector&lt;<span class="type">float</span>&gt; vertices, normals;
-<span class="function">buildConeGeometry</span>(vertices, normals, <span class="number">20</span>);  <span class="comment">// 20 sectors</span>
-
-Dynamit cone;
-cone.<span class="function">withVertices3d</span>(vertices)
-    .<span class="function">withNormals3d</span>(normals)
-    .<span class="function">withConstColor</span>(<span class="number">0.0f</span>, <span class="number">1.0f</span>, <span class="number">0.0f</span>, <span class="number">1.0f</span>)      <span class="comment">// green</span>
-    .<span class="function">withConstLightDirection</span>(<span class="number">-1.0f</span>, <span class="number">-1.0f</span>, <span class="number">1.0f</span>);  <span class="comment">// light from top-left</span>
-
-<span class="comment">// View generated shaders</span>
-cone.<span class="function">logGeneratedShaders</span>();
-
-<span class="comment">// Render</span>
-glEnable(GL_DEPTH_TEST);
-cone.<span class="function">drawTriangles</span>();
-</code></pre>
-
-            <h3>Animated Light Direction</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// Create shape with uniform light (animatable)</span>
-Dynamit shape;
-shape.<span class="function">withVertices3d</span>(verts)
-     .<span class="function">withNormals3d</span>(norms)
-     .<span class="function">withConstColor</span>(<span class="number">0.2f</span>, <span class="number">0.6f</span>, <span class="number">1.0f</span>)
-     .<span class="function">withLightDirection3f</span>(<span class="number">1.0f</span>, <span class="number">0.0f</span>, <span class="number">1.0f</span>);  <span class="comment">// uniform, not const</span>
-
-<span class="comment">// In render loop - animate the light</span>
-<span class="keyword">float</span> time = glfwGetTime();
-<span class="keyword">float</span> lx = std::cos(time);
-<span class="keyword">float</span> ly = std::sin(time);
-shape.<span class="function">lightDirection3f</span>(lx, ly, <span class="number">1.0f</span>);  <span class="comment">// update uniform</span>
-shape.<span class="function">drawTriangles</span>();
-</code></pre>
-
-            <h3>Interleaved Vertex Data (Stride Mode)</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// Interleaved: position(3) + normal(3) + color(4)</span>
-std::vector&lt;<span class="type">float</span>&gt; interleavedData = {
-            <span class="comment">// pos          normal        color</span>
-            <span class="number">-0.5f</span>,<span class="number">-0.5f</span>,<span class="number">0</span>,  <span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,        <span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,
-            <span class="number">0.5f</span>,<span class="number">-0.5f</span>,<span class="number">0</span>,  <span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,        <span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>,
-            <span class="number">0.0f</span>, <span class="number">0.5f</span>,<span class="number">0</span>,  <span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,        <span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">1</span>,
-};
-
-Dynamit shape;
-shape.<span class="function">withStride</span>(interleavedData, <span class="number">10</span> * <span class="keyword">sizeof</span>(<span class="type">float</span>))
-     .<span class="function">withStrideVertices</span>(<span class="number">3</span>)   <span class="comment">// 3 floats for position</span>
-     .<span class="function">withStrideNormals</span>(<span class="number">3</span>)    <span class="comment">// 3 floats for normal</span>
-     .<span class="function">withStrideColors</span>(<span class="number">4</span>)     <span class="comment">// 4 floats for RGBA</span>
-     .<span class="function">withConstLightDirection</span>(<span class="number">0</span>, <span class="number">0.5f</span>, <span class="number">1.0f</span>);
-
-shape.<span class="function">drawTriangles</span>();
-</code></pre>
-
-            <h3>Indexed Drawing</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// Define vertices once, reuse with indices</span>
-std::vector&lt;<span class="type">float</span>&gt; vertices = {
-            <span class="number">-0.5f</span>, <span class="number">-0.5f</span>, <span class="number">0.0f</span>,  <span class="comment">// 0</span>
-            <span class="number">0.5f</span>, <span class="number">-0.5f</span>, <span class="number">0.0f</span>,  <span class="comment">// 1</span>
-            <span class="number">0.5f</span>,  <span class="number">0.5f</span>, <span class="number">0.0f</span>,  <span class="comment">// 2</span>
-            <span class="number">-0.5f</span>,  <span class="number">0.5f</span>, <span class="number">0.0f</span>   <span class="comment">// 3</span>
-};
-
-std::vector&lt;<span class="type">uint32_t</span>&gt; indices = {
-            <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>,  <span class="comment">// first triangle</span>
-            <span class="number">2</span>, <span class="number">3</span>, <span class="number">0</span>   <span class="comment">// second triangle</span>
-};
-
-Dynamit quad;
-quad.<span class="function">withVertices3d</span>(vertices)
-    .<span class="function">withIndices</span>(indices)
-    .<span class="function">withConstColor</span>(<span class="number">0.8f</span>, <span class="number">0.2f</span>, <span class="number">0.8f</span>);
-
-quad.<span class="function">drawTrianglesIndexed</span>();
-</code></pre>
-        </section>
-
-        <!-- Expression Compiler Section -->
-        <section id="expressions">
-            <h2>📐 Expression Compiler</h2>
-            <p>
-                The expression compiler parses mathematical formulas into an AST (Abstract Syntax Tree)
-                that can be evaluated efficiently with variable bindings and symbolically differentiated.
-            </p>
-
-            <h3>Basic Usage</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="keyword">#include</span> <span class="string">"expression_compiler.h"</span>
-<span class="keyword">using namespace</span> expresie_tokenizer;
-
-expression_token_compiler compiler;
-
-<span class="comment">// Compile a simple expression</span>
-<span class="keyword">auto</span> expr = compiler.<span class="function">compile</span>(L<span class="string">"3 + 4 * 2"</span>);
-std::wcout &lt;&lt; expr-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// Output: 11</span>
-
-<span class="comment">// With parentheses</span>
-expr = compiler.<span class="function">compile</span>(L<span class="string">"(3 + 4) * 2"</span>);
-std::wcout &lt;&lt; expr-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// Output: 14</span>
-
-<span class="comment">// Power operator (right-associative)</span>
-expr = compiler.<span class="function">compile</span>(L<span class="string">"2 ** 3 ** 2"</span>);  <span class="comment">// 2^(3^2) = 2^9 = 512</span>
-std::wcout &lt;&lt; expr-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;
-</code></pre>
-
-            <h3>Variables and Binding</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// Compile expression with variables</span>
-<span class="keyword">auto</span> expr = compiler.<span class="function">compile</span>(L<span class="string">"x*x + y*y + z*z"</span>);
-
-<span class="comment">// Create variables and bind them</span>
-<span class="type">long double</span> x = <span class="number">3</span>, y = <span class="number">4</span>, z = <span class="number">0</span>;
-expr-&gt;<span class="function">bind</span>(L<span class="string">"x"</span>, &amp;x);
-expr-&gt;<span class="function">bind</span>(L<span class="string">"y"</span>, &amp;y);
-expr-&gt;<span class="function">bind</span>(L<span class="string">"z"</span>, &amp;z);
-
-std::wcout &lt;&lt; expr-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// Output: 25 (3² + 4² + 0²)</span>
-
-<span class="comment">// Change values and re-evaluate</span>
-x = <span class="number">1</span>; y = <span class="number">1</span>; z = <span class="number">1</span>;
-std::wcout &lt;&lt; expr-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// Output: 3</span>
-</code></pre>
-
-            <h3>Built-in Functions</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// Trigonometric functions</span>
-<span class="keyword">auto</span> expr = compiler.<span class="function">compile</span>(L<span class="string">"sin(PI / 6)"</span>);
-std::wcout &lt;&lt; expr-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// Output: 0.5</span>
-
-<span class="comment">// Nested functions</span>
-expr = compiler.<span class="function">compile</span>(L<span class="string">"sqrt(sin(x)**2 + cos(x)**2)"</span>);
-<span class="type">long double</span> x = <span class="number">1.5</span>;
-expr-&gt;<span class="function">bind</span>(L<span class="string">"x"</span>, &amp;x);
-std::wcout &lt;&lt; expr-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// Output: 1.0 (identity)</span>
-
-<span class="comment">// Two-argument functions</span>
-expr = compiler.<span class="function">compile</span>(L<span class="string">"pow(2, 10)"</span>);
-std::wcout &lt;&lt; expr-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// Output: 1024</span>
-
-expr = compiler.<span class="function">compile</span>(L<span class="string">"atan2(1, 1)"</span>);
-std::wcout &lt;&lt; expr-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// Output: π/4</span>
-</code></pre>
-
-            <h3>Symbolic Differentiation</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// Compile: f(x) = x³ + 2x² - 5x + 3</span>
-<span class="keyword">auto</span> f = compiler.<span class="function">compile</span>(L<span class="string">"x**3 + 2*x**2 - 5*x + 3"</span>);
-
-<span class="comment">// Compute derivative: f'(x) = 3x² + 4x - 5</span>
-<span class="keyword">auto</span> df = f-&gt;<span class="function">derivative</span>(L<span class="string">"x"</span>);
-
-<span class="type">long double</span> x = <span class="number">2.0</span>;
-f-&gt;<span class="function">bind</span>(L<span class="string">"x"</span>, &amp;x);
-df-&gt;<span class="function">bind</span>(L<span class="string">"x"</span>, &amp;x);
-
-std::wcout &lt;&lt; L<span class="string">"f(2) = "</span> &lt;&lt; f-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;   <span class="comment">// 8 + 8 - 10 + 3 = 9</span>
-std::wcout &lt;&lt; L<span class="string">"f'(2) = "</span> &lt;&lt; df-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// 12 + 8 - 5 = 15</span>
-</code></pre>
-
-            <h3>Chain Rule with Functions</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// f(x) = sin(x²)</span>
-<span class="keyword">auto</span> f = compiler.<span class="function">compile</span>(L<span class="string">"sin(x**2)"</span>);
-
-<span class="comment">// f'(x) = cos(x²) · 2x  (chain rule)</span>
-<span class="keyword">auto</span> df = f-&gt;<span class="function">derivative</span>(L<span class="string">"x"</span>);
-
-<span class="type">long double</span> x = <span class="number">1.0</span>;
-df-&gt;<span class="function">bind</span>(L<span class="string">"x"</span>, &amp;x);
-std::wcout &lt;&lt; df-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// cos(1) · 2 ≈ 1.0806</span>
-</code></pre>
-
-            <h3>Cylindrical Coordinates</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// Expression for radius: r = 1 + 0.5*sin(3*theta)</span>
-<span class="keyword">auto</span> r_expr = compiler.<span class="function">compile</span>(L<span class="string">"1 + 0.5*sin(3*t)"</span>);
-<span class="type">long double</span> t;
-r_expr-&gt;<span class="function">bind</span>(L<span class="string">"t"</span>, &amp;t);
-
-<span class="comment">// Generate points on a rose curve</span>
-<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">360</span>; i++) {
-    t = i * M_PI / <span class="number">180.0</span>;
-    
-            <span class="comment">// Use built-in cylindrical conversion</span>
-            <span class="type">long double</span> x = r_expr-&gt;<span class="function">cyl_x</span>(t);  <span class="comment">// r * cos(theta)</span>
-            <span class="type">long double</span> y = r_expr-&gt;<span class="function">cyl_y</span>(t);  <span class="comment">// r * sin(theta)</span>
-    
-            <span class="comment">// Use x, y for plotting...</span>
-}
-</code></pre>
-
-            <h3>Available Functions</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Function</th>
-                        <th>Arguments</th>
-                        <th>Description</th>
-                        <th>Derivative</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td><code>sin(x)</code></td><td>1</td><td>Sine</td><td>cos(x)</td></tr>
-                    <tr><td><code>cos(x)</code></td><td>1</td><td>Cosine</td><td>-sin(x)</td></tr>
-                    <tr><td><code>tan(x)</code></td><td>1</td><td>Tangent</td><td>1/cos²(x)</td></tr>
-                    <tr><td><code>sqrt(x)</code></td><td>1</td><td>Square root</td><td>0.5/√x</td></tr>
-                    <tr><td><code>exp(x)</code></td><td>1</td><td>Exponential</td><td>exp(x)</td></tr>
-                    <tr><td><code>log(x)</code></td><td>1</td><td>Natural logarithm</td><td>1/x</td></tr>
-                    <tr><td><code>abs(x)</code></td><td>1</td><td>Absolute value</td><td>sign(x)</td></tr>
-                    <tr><td><code>asin(x)</code></td><td>1</td><td>Arc sine</td><td>1/√(1-x²)</td></tr>
-                    <tr><td><code>acos(x)</code></td><td>1</td><td>Arc cosine</td><td>-1/√(1-x²)</td></tr>
-                    <tr><td><code>atan(x)</code></td><td>1</td><td>Arc tangent</td><td>1/(1+x²)</td></tr>
-                    <tr><td><code>sinh(x)</code></td><td>1</td><td>Hyperbolic sine</td><td>cosh(x)</td></tr>
-                    <tr><td><code>cosh(x)</code></td><td>1</td><td>Hyperbolic cosine</td><td>sinh(x)</td></tr>
-                    <tr><td><code>tanh(x)</code></td><td>1</td><td>Hyperbolic tangent</td><td>1-tanh²(x)</td></tr>
-                    <tr><td><code>pow(a,b)</code></td><td>2</td><td>Power</td><td>✓</td></tr>
-                    <tr><td><code>atan2(y,x)</code></td><td>2</td><td>Two-argument arctangent</td><td>✓</td></tr>
-                    <tr><td><code>min(a,b)</code></td><td>2</td><td>Minimum</td><td>—</td></tr>
-                    <tr><td><code>max(a,b)</code></td><td>2</td><td>Maximum</td><td>—</td></tr>
-                </tbody>
-            </table>
-
-            <h3>Available Constants</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Constant</th>
-                        <th>Value</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td><code>PI</code>, <code>M_PI</code></td><td>3.14159265...</td><td>π</td></tr>
-                    <tr><td><code>E</code>, <code>M_E</code></td><td>2.71828182...</td><td>Euler's number</td></tr>
-                    <tr><td><code>TAU</code></td><td>6.28318530...</td><td>2π</td></tr>
-                    <tr><td><code>M_PI_2</code></td><td>1.57079632...</td><td>π/2</td></tr>
-                    <tr><td><code>M_PI_4</code></td><td>0.78539816...</td><td>π/4</td></tr>
-                    <tr><td><code>M_SQRT2</code></td><td>1.41421356...</td><td>√2</td></tr>
-                    <tr><td><code>M_LN2</code></td><td>0.69314718...</td><td>ln(2)</td></tr>
-                    <tr><td><code>M_LN10</code></td><td>2.30258509...</td><td>ln(10)</td></tr>
-                </tbody>
-            </table>
-        </section>
-
-        <!-- Examples Section -->
-        <section id="examples">
-            <h2>💡 Complete Examples</h2>
-
-            <h3>Dodecahedron Sphere Generator</h3>
-            <p>Generate a smooth sphere by subdividing a dodecahedron:</p>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// Generate sphere mesh with subdivision level 3</span>
-Mesh mesh = <span class="function">generateSphereMesh</span>(<span class="number">3</span>, WindingOrder::CCW);
-
-<span class="comment">// Convert to flat arrays for Dynamit</span>
-std::vector&lt;<span class="type">float</span>&gt; verts, norms;
-<span class="function">meshToFlatArrays</span>(mesh, verts, norms);
-
-<span class="comment">// Create and render</span>
-Dynamit sphere;
-sphere.<span class="function">withVertices3d</span>(verts)
-      .<span class="function">withNormals3d</span>(norms)
-      .<span class="function">withConstColor</span>(<span class="number">0.2f</span>, <span class="number">1.0f</span>, <span class="number">0.2f</span>)
-      .<span class="function">withConstLightDirection</span>(<span class="number">-1.0f</span>, <span class="number">-1.0f</span>, <span class="number">1.0f</span>);
-
-glEnable(GL_DEPTH_TEST);
-glEnable(GL_CULL_FACE);
-
-<span class="keyword">while</span> (!glfwWindowShouldClose(window)) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    sphere.<span class="function">drawTriangles</span>();
-    glfwSwapBuffers(window);
-    glfwPollEvents();
-}
-</code></pre>
-
-            <h3>Expression-Driven Parametric Curve</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// Create parametric expressions</span>
-expression_token_compiler compiler;
-
-<span class="comment">// Lissajous curve: x = sin(3t), y = cos(2t)</span>
-<span class="keyword">auto</span> x_expr = compiler.<span class="function">compile</span>(L<span class="string">"sin(3*t)"</span>);
-<span class="keyword">auto</span> y_expr = compiler.<span class="function">compile</span>(L<span class="string">"cos(2*t)"</span>);
-
-<span class="type">long double</span> t;
-x_expr-&gt;<span class="function">bind</span>(L<span class="string">"t"</span>, &amp;t);
-y_expr-&gt;<span class="function">bind</span>(L<span class="string">"t"</span>, &amp;t);
-
-<span class="comment">// Generate curve vertices</span>
-std::vector&lt;<span class="type">float</span>&gt; curveVerts;
-<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt;= <span class="number">1000</span>; i++) {
-    t = i * <span class="number">2.0</span> * M_PI / <span class="number">1000</span>;
-    curveVerts.push_back(<span class="keyword">static_cast</span>&lt;<span class="type">float</span>&gt;(x_expr-&gt;<span class="function">eval</span>()));
-    curveVerts.push_back(<span class="keyword">static_cast</span>&lt;<span class="type">float</span>&gt;(y_expr-&gt;<span class="function">eval</span>()));
-}
-
-<span class="comment">// Render as line strip</span>
-Dynamit curve;
-curve.<span class="function">withVertices2d</span>(curveVerts)
-     .<span class="function">withConstColor</span>(<span class="number">1.0f</span>, <span class="number">0.5f</span>, <span class="number">0.0f</span>)
-     .<span class="function">withPrimitive</span>(GL_LINE_STRIP);
-</code></pre>
-
-            <h3>Newton-Raphson Root Finding</h3>
-            <pre><code><span class="code-label">C++</span>
-<span class="comment">// Find root of f(x) = x³ - 2x - 5 using Newton-Raphson</span>
-<span class="keyword">auto</span> f = compiler.<span class="function">compile</span>(L<span class="string">"x**3 - 2*x - 5"</span>);
-<span class="keyword">auto</span> df = f-&gt;<span class="function">derivative</span>(L<span class="string">"x"</span>);
-
-<span class="type">long double</span> x = <span class="number">2.0</span>;  <span class="comment">// initial guess</span>
-f-&gt;<span class="function">bind</span>(L<span class="string">"x"</span>, &amp;x);
-df-&gt;<span class="function">bind</span>(L<span class="string">"x"</span>, &amp;x);
-
-<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) {
-            <span class="type">long double</span> fx = f-&gt;<span class="function">eval</span>();
-            <span class="type">long double</span> dfx = df-&gt;<span class="function">eval</span>();
-    
-    std::wcout &lt;&lt; L<span class="string">"x = "</span> &lt;&lt; x &lt;&lt; L<span class="string">", f(x) = "</span> &lt;&lt; fx &lt;&lt; std::endl;
-    
-            <span class="keyword">if</span> (std::abs(fx) &lt; <span class="number">1e-12</span>) <span class="keyword">break</span>;
-    
-    x = x - fx / dfx;  <span class="comment">// Newton-Raphson step</span>
-}
-<span class="comment">// Output: x ≈ 2.0945514815...</span>
-</code></pre>
-        </section>
-
-        <!-- API Reference Section -->
-        <section id="api">
-            <h2>📚 API Reference</h2>
-
-            <h3>Dynamit Class Methods</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Method</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td><code>withVertices2d(data)</code></td><td>Set 2D vertex positions</td></tr>
-                    <tr><td><code>withVertices3d(data)</code></td><td>Set 3D vertex positions</td></tr>
-                    <tr><td><code>withNormals3d(data)</code></td><td>Set vertex normals for lighting</td></tr>
-                    <tr><td><code>withColors3d/4d(data)</code></td><td>Set per-vertex colors (RGB/RGBA)</td></tr>
-                    <tr><td><code>withConstColor(r,g,b,a)</code></td><td>Set constant color for all vertices</td></tr>
-                    <tr><td><code>withConstLightDirection(x,y,z)</code></td><td>Set fixed light direction</td></tr>
-                    <tr><td><code>withLightDirection3f(x,y,z)</code></td><td>Set animatable light direction uniform</td></tr>
-                    <tr><td><code>withIndices(indices)</code></td><td>Set element indices for indexed drawing</td></tr>
-                    <tr><td><code>withStride(data, bytes)</code></td><td>Set interleaved vertex data</td></tr>
-                    <tr><td><code>withPrimitive(type)</code></td><td>Set primitive type (GL_TRIANGLES, etc.)</td></tr>
-                    <tr><td><code>drawTriangles()</code></td><td>Draw using glDrawArrays</td></tr>
-                    <tr><td><code>drawTrianglesIndexed()</code></td><td>Draw using glDrawElements</td></tr>
-                    <tr><td><code>logGeneratedShaders()</code></td><td>Print auto-generated GLSL to console</td></tr>
-                </tbody>
-            </table>
-
-            <h3>Expression Class Methods</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Method</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td><code>eval()</code></td><td>Evaluate expression and return result</td></tr>
-                    <tr><td><code>bind(name, ptr)</code></td><td>Bind variable name to memory address</td></tr>
-                    <tr><td><code>unbind(name)</code></td><td>Remove variable binding</td></tr>
-                    <tr><td><code>derivative(wrt)</code></td><td>Return symbolic derivative expression</td></tr>
-                    <tr><td><code>clone()</code></td><td>Deep copy the expression tree</td></tr>
-                    <tr><td><code>is_constant()</code></td><td>Check if expression has no variables</td></tr>
-                    <tr><td><code>cyl_x(theta)</code></td><td>Cylindrical X: eval() * cos(theta)</td></tr>
-                    <tr><td><code>cyl_y(theta)</code></td><td>Cylindrical Y: eval() * sin(theta)</td></tr>
-                </tbody>
-            </table>
-        </section>
+    <div class="cards">
+        <a href="dynamit_js.html" class="card js">
+            <h2>Dynamit JS</h2>
+            <p>WebGL2 graphics library for browsers with automatic GLSL ES 3.00 shader generation and gl3dcalc expression compiler.</p>
+            <span class="tag">JavaScript / WebGL2</span>
+        </a>
+
+        <a href="dynamit_cpp.html" class="card cpp">
+            <h2>Dynamit C++</h2>
+            <p>C++17 OpenGL graphics library with automatic GLSL 3.30 shader generation and 3DCalculator expression compiler.</p>
+            <span class="tag">C++17 / OpenGL</span>
+        </a>
     </div>
 
     <footer>
-        <p>
-            <strong>3D Dynamit</strong> &mdash; MIT License<br>
-            <a href="https://github.com/armagedescu/3d_dynamit">github.com/armagedescu/3d_dynamit</a>
-        </p>
+        <a href="https://github.com/armagedescu/3d_dynamit">github.com/armagedescu/3d_dynamit</a>
     </footer>
 </body>
 </html>
