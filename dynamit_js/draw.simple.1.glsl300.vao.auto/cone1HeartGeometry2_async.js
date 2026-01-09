@@ -152,7 +152,7 @@ let glmain = async () =>
       .withConstColor ([0.0, 1.0, 0.0, 1.0])
       .withVertices3d (geometry.verts)
       .withNormals3d  (geometry.norms)
-      .withConstLightDireciton ([-1.0,  -1.0,  1.0])
+      .withConstLightDirection ([-1.0,  -1.0,  1.0])
       ;
    //shape.logStrategyShaders ("cone1HeartGeometry2_async.js");
 

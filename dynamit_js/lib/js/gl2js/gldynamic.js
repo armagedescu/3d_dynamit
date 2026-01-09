@@ -762,10 +762,6 @@ class Dynamit
       this.glSet.lightDirection  = {data:data, name: name, type: "3f", normalize:normalize, const:true};
       return this;
    }
-   // Keep old name for compatibility
-   withConstLightDireciton (data = [0.0, 0.5, 1.0], normalize=true, name = "constLightDirection") {
-      return this.withConstLightDirection(data, normalize, name);
-   }
 
    withLightDirection3f (data = null, normalize=true, name = "lightDirection") {
       this.glSet.lightDirection = {data:data, name: name, location: null, type: "3f", normalize:normalize, const:false};
