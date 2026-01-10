@@ -1,9 +1,11 @@
 @del .\ChromeRoatta.zip /Q
+@echo detect 7z.exe path
 @set zip7zPath=".\7z.exe"
-@rem if not exist %zip7zPath% set zip7zPath="%ProgramFiles%\7-Zip\7z.exe"
-@rem if not exist %zip7zPath% set zip7zPath="%ProgramFiles(x86)%\7-Zip\7z.exe"
+@if not exist %zip7zPath% set zip7zPath="%ProgramFiles%\7-Zip\7z.exe"
+@if not exist %zip7zPath% set zip7zPath="%ProgramFiles(x86)%\7-Zip\7z.exe"
 @if not exist %zip7zPath% set zip7zPath="7z.exe"
 @if not exist %zip7zPath% goto end
+@echo using following 7z %zip7zPath%
 @call cleanup.cmd
 @rem goto finish
 @call %zip7zPath% x .\glfw-3.4.bin.WIN64.zip
