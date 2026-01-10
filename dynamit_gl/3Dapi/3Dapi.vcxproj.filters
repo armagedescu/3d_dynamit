@@ -107,5 +107,8 @@
     <ClCompile Include="dynamitConeGeometryCalc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="dynamitSphereDodecahedronTextured.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
