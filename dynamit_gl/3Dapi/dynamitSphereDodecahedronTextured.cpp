@@ -34,6 +34,12 @@ enum class WindingOrder {
     CW = 1    // Clockwise
 };
 
+enum class CoatingType {
+    External,  // External surface only (default)
+    Internal,  // Internal surface only
+    Both       // Both meshes separate
+};
+
 struct Vertex {
     float x, y, z;      // position
     float nx, ny, nz;   // normal
@@ -64,6 +70,17 @@ struct Vertex {
         nx = x;
         ny = y;
         nz = z;
+        return *this;
+    }
+
+    Vertex& normalizeInterior() {
+        float len = std::hypot(x, y, z);
+        x /= len;
+        y /= len;
+        z /= len;
+        nx = -x;
+        ny = -y;
+        nz = -z;
         return *this;
     }
 
@@ -302,8 +319,132 @@ Mesh generateSubdividedMeshExternal(int subdivisionLevel, WindingOrder order) {
     return mesh;
 }
 
-Mesh generateSphereMesh(int subdivisionLevel = 3, WindingOrder order = WindingOrder::CCW) {
-    return generateSubdividedMeshExternal(subdivisionLevel, order);
+Mesh generateSubdividedMeshInternal(int subdivisionLevel, WindingOrder order) {
+    assert(subdivisionLevel > 0);
+
+    Mesh mesh;
+    int N = subdivisionLevel;
+    int verticesPerPentagon = (PENTAGON_SIDES * (N + 1) * (N + 2)) / 2 + 1;
+    int trianglesPerPentagon = PENTAGON_SIDES * (N + 1) * (N + 1);
+    int indicesPerPentagon = trianglesPerPentagon * 3;
+
+    mesh.vertices.reserve(DODECAHEDRON_FACES * verticesPerPentagon);
+    mesh.indices.reserve(DODECAHEDRON_FACES * indicesPerPentagon);
+
+    const DodecahedronTopology& topology = getDodecahedronTopology();
+
+    for (size_t faceIdx = 0; faceIdx < topology.pentagonFaces.size(); faceIdx++) {
+        const std::array<int, PENTAGON_SIDES>& pentagon = topology.pentagonFaces[faceIdx];
+        Vertex center = topology.pentagonCenters[faceIdx];
+        center.nx = -center.nx;
+        center.ny = -center.ny;
+        center.nz = -center.nz;
+
+        std::vector<std::vector<int>> rings;
+        rings.reserve(N + 1);
+
+        for (int ring = 0; ring <= N; ring++) {
+            float t = static_cast<float>(ring) / (N + 1);
+            int numSegments = N - ring + 1;
+
+            std::vector<int> ringVertices;
+            ringVertices.reserve(PENTAGON_SIDES * numSegments);
+
+            for (int edge = 0; edge < PENTAGON_SIDES; edge++) {
+                int v0_idx = pentagon[edge];
+                int v1_idx = pentagon[(edge + 1) % PENTAGON_SIDES];
+
+                const Vertex& corner0 = topology.vertices[v0_idx];
+                const Vertex& corner1 = topology.vertices[v1_idx];
+
+                Vertex radialCorner0 = corner0 * (1.0f - t) + center * t;
+                Vertex radialCorner1 = corner1 * (1.0f - t) + center * t;
+                radialCorner0.normalizeInterior();
+                radialCorner1.normalizeInterior();
+
+                for (int seg = 0; seg < numSegments; seg++) {
+                    float s = static_cast<float>(seg) / numSegments;
+                    Vertex v = radialCorner0 * (1.0f - s) + radialCorner1 * s;
+                    v.normalizeInterior();
+
+                    int vertexIdx = static_cast<int>(mesh.vertices.size());
+                    mesh.vertices.push_back(v);
+                    ringVertices.push_back(vertexIdx);
+                }
+            }
+            rings.push_back(ringVertices);
+        }
+
+        int centerIdx = static_cast<int>(mesh.vertices.size());
+        mesh.vertices.push_back(center);
+
+        for (int ring = 0; ring < N; ring++) {
+            const std::vector<int>& outerRing = rings[ring];
+            const std::vector<int>& innerRing = rings[ring + 1];
+            int outerSegments = N - ring + 1;
+            int innerSegments = N - ring;
+
+            for (int edge = 0; edge < PENTAGON_SIDES; edge++) {
+                int outerStart = edge * outerSegments;
+                int innerStart = edge * innerSegments;
+
+                for (int i = 0; i < innerSegments; i++) {
+                    int o0 = outerRing[outerStart + i];
+                    int o1 = outerRing[outerStart + i + 1];
+                    int i0 = innerRing[innerStart + i];
+                    addTriangle(mesh.indices, o0, o1, i0, order);
+
+                    int i1 = innerRing[(innerStart + i + 1) % innerRing.size()];
+                    addTriangle(mesh.indices, o1, i1, i0, order);
+                }
+
+                int o_last = outerRing[outerStart + outerSegments - 1];
+                int o_next = outerRing[(outerStart + outerSegments) % outerRing.size()];
+                int i_last = innerRing[(innerStart + innerSegments) % innerRing.size()];
+                addTriangle(mesh.indices, o_last, o_next, i_last, order);
+            }
+        }
+
+        const std::vector<int>& lastRing = rings[N];
+        for (size_t i = 0; i < lastRing.size(); i++) {
+            int next = (i + 1) % lastRing.size();
+            addTriangle(mesh.indices, lastRing[i], lastRing[next], centerIdx, order);
+        }
+    }
+
+    return mesh;
+}
+
+Mesh generateSphereMesh(int subdivisionLevel = 3, WindingOrder order = WindingOrder::CCW, CoatingType coating = CoatingType::External) {
+    switch (coating) {
+    case CoatingType::Internal:
+        return generateSubdividedMeshInternal(subdivisionLevel, order);
+    case CoatingType::External:
+    default:
+        return generateSubdividedMeshExternal(subdivisionLevel, order);
+    }
+}
+
+Mesh generateSphereMeshBoth(int subdivisionLevel = 3, WindingOrder order = WindingOrder::CCW, float interiorScale = 0.99f) {
+    Mesh external = generateSubdividedMeshExternal(subdivisionLevel, order);
+    Mesh internal = generateSubdividedMeshInternal(subdivisionLevel, order);
+
+    // Scale interior vertices slightly inward
+    for (Vertex& v : internal.vertices) {
+        v.x *= interiorScale;
+        v.y *= interiorScale;
+        v.z *= interiorScale;
+    }
+
+    uint32_t offset = static_cast<uint32_t>(external.vertices.size());
+
+    external.vertices.insert(external.vertices.end(), internal.vertices.begin(), internal.vertices.end());
+
+    for (uint32_t idx : internal.indices) {
+        external.indices.push_back(idx + offset);
+    }
+
+    return external;
 }
 
 //========================================
@@ -364,7 +505,8 @@ int main() {
     unsigned int texture = LoadTexture("bitmaps/world_map_texture.png");
 
     // Generate sphere mesh
-    Mesh mesh = generateSphereMesh(4, WindingOrder::CCW);
+    //Mesh mesh = generateSphereMesh(4, WindingOrder::CCW);
+    Mesh mesh = generateSphereMeshBoth(4, WindingOrder::CCW);
 
     // Build interleaved data: pos(3) + normal(3) + uv(2) = 8 floats per vertex
     std::vector<float> strideData;
@@ -407,8 +549,8 @@ int main() {
 
     // OpenGL setup
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glClearColor(0.5f, 0.5f, 0.55f, 1.0f);
