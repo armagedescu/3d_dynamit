@@ -190,7 +190,7 @@ DodecahedronTopology generateDodecahedronTopology() {
     topology.pentagonFaces = findPentagonalFaces(topology.vertices, topology.edges);
 
     topology.pentagonCenters.reserve(DODECAHEDRON_FACES);
-    for (const auto& pentagon : topology.pentagonFaces) {
+    for (const std::array<int, PENTAGON_SIDES>& pentagon : topology.pentagonFaces) {
         Vertex center(0, 0, 0);
         for (int idx : pentagon)
             center += topology.vertices[idx];
@@ -214,14 +214,15 @@ Mesh generateSubdividedMeshExternal(int subdivisionLevel, WindingOrder order) {
     int N = subdivisionLevel;
     int verticesPerPentagon = (PENTAGON_SIDES * (N + 1) * (N + 2)) / 2 + 1;
     int trianglesPerPentagon = PENTAGON_SIDES * (N + 1) * (N + 1);
+    int indicesPerPentagon = trianglesPerPentagon * 3;
 
     mesh.vertices.reserve(DODECAHEDRON_FACES * verticesPerPentagon);
-    mesh.indices.reserve(DODECAHEDRON_FACES * trianglesPerPentagon * 3);
+    mesh.indices.reserve(DODECAHEDRON_FACES * indicesPerPentagon);
 
     const DodecahedronTopology& topology = getDodecahedronTopology();
 
     for (size_t faceIdx = 0; faceIdx < topology.pentagonFaces.size(); faceIdx++) {
-        const auto& pentagon = topology.pentagonFaces[faceIdx];
+        const std::array<int, PENTAGON_SIDES>& pentagon = topology.pentagonFaces[faceIdx];
         const Vertex& center = topology.pentagonCenters[faceIdx];
 
         std::vector<std::vector<int>> rings;
@@ -235,8 +236,11 @@ Mesh generateSubdividedMeshExternal(int subdivisionLevel, WindingOrder order) {
             ringVertices.reserve(PENTAGON_SIDES * numSegments);
 
             for (int edge = 0; edge < PENTAGON_SIDES; edge++) {
-                const Vertex& corner0 = topology.vertices[pentagon[edge]];
-                const Vertex& corner1 = topology.vertices[pentagon[(edge + 1) % PENTAGON_SIDES]];
+                int v0_idx = pentagon[edge];
+                int v1_idx = pentagon[(edge + 1) % PENTAGON_SIDES];
+
+                const Vertex& corner0 = topology.vertices[v0_idx];
+                const Vertex& corner1 = topology.vertices[v1_idx];
 
                 Vertex radialCorner0 = corner0 * (1.0f - t) + center * t;
                 Vertex radialCorner1 = corner1 * (1.0f - t) + center * t;
@@ -248,8 +252,9 @@ Mesh generateSubdividedMeshExternal(int subdivisionLevel, WindingOrder order) {
                     Vertex v = radialCorner0 * (1.0f - s) + radialCorner1 * s;
                     v.normalizeExterior();
 
-                    ringVertices.push_back(static_cast<int>(mesh.vertices.size()));
+                    int vertexIdx = static_cast<int>(mesh.vertices.size());
                     mesh.vertices.push_back(v);
+                    ringVertices.push_back(vertexIdx);
                 }
             }
             rings.push_back(ringVertices);
@@ -259,8 +264,8 @@ Mesh generateSubdividedMeshExternal(int subdivisionLevel, WindingOrder order) {
         mesh.vertices.push_back(center);
 
         for (int ring = 0; ring < N; ring++) {
-            const auto& outerRing = rings[ring];
-            const auto& innerRing = rings[ring + 1];
+            const std::vector<int>& outerRing = rings[ring];
+            const std::vector<int>& innerRing = rings[ring + 1];
             int outerSegments = N - ring + 1;
             int innerSegments = N - ring;
 
@@ -274,10 +279,12 @@ Mesh generateSubdividedMeshExternal(int subdivisionLevel, WindingOrder order) {
                     int i0 = innerRing[innerStart + i];
                     addTriangle(mesh.indices, o0, o1, i0, order);
 
+                    // Second triangle of the quad
                     int i1 = innerRing[(innerStart + i + 1) % innerRing.size()];
                     addTriangle(mesh.indices, o1, i1, i0, order);
                 }
 
+                // Edge wrap triangle connecting last outer vertex to next edge
                 int o_last = outerRing[outerStart + outerSegments - 1];
                 int o_next = outerRing[(outerStart + outerSegments) % outerRing.size()];
                 int i_last = innerRing[(innerStart + innerSegments) % innerRing.size()];
@@ -285,7 +292,7 @@ Mesh generateSubdividedMeshExternal(int subdivisionLevel, WindingOrder order) {
             }
         }
 
-        const auto& lastRing = rings[N];
+        const std::vector<int>& lastRing = rings[N];
         for (size_t i = 0; i < lastRing.size(); i++) {
             int next = (i + 1) % lastRing.size();
             addTriangle(mesh.indices, lastRing[i], lastRing[next], centerIdx, order);
