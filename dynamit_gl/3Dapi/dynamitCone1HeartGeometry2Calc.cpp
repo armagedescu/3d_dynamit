@@ -16,8 +16,6 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-
-
 int main()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -38,7 +36,7 @@ int main()
 	// First half of first half
     PolarBuilder()
         .formula(L"theta / PI")
-        .domain(0.f, static_cast<float>(M_PI_2))
+        .domain(static_cast<float>(M_PI_2))
         .sectors(6)
         .slices(4)
         .buildCone(verts, norms);

@@ -1,4 +1,4 @@
-#include "enabler.h"
+﻿#include "enabler.h"
 #ifdef __DYNAMIT_CONE_GEOMETRY_CALC_CPP__
 
 #define _USE_MATH_DEFINES
@@ -35,73 +35,62 @@ int main()
 
     std::cout << "Heart cone vertices: " << verts.size() / 3 << " (triangles: " << verts.size() / 9 << ")" << std::endl;
 
-    bool buildHeart = false, buildCardoid = false, buildEllipse = false, build5PointerStar = false, build5PetalRose = false, buildLemniscate = true;
+    bool buildHeart = true, buildCardoid = false, buildEllipse = false, build5PointerStar = false, build5PetalRose = false, buildLemniscate = true;
     if (buildHeart)
     {
-        PolarBuilder() // hearth cone, First half:
-            .formula(L"theta / PI")
+        Builder::polar() //.turbo(false)
+            .formula(L"theta / PI")             //start build first half
+            .domain(M_PI)
+            .sectors_slices(60, 40)
+			.buildCone(verts, norms)            //end build first half
+			.formula(L"(2*PI - theta) / PI")    //start build second half
+            .domain_shift(2 * M_PI)  // [π, 2π]
+            .sectors_slices(8, 10)
+			.buildCone(verts, norms)            //end build second half
+			.formula(L"theta / PI")             //start build first half indexed
             .domain(static_cast<float>(M_PI))
+            .slices_sectors(4, 10)
+			.buildConeIndexed(vertsIndexed, normsIndexed, indices) //build first half indexed
+            .formula(L"(2*PI - theta) / PI")
+            .domain_shift(static_cast<float>(2 * M_PI))
             .slices_sectors(4, 6)
-            .buildCone(verts, norms);
-        PolarBuilder() // hearth cone, Second half:
-            .formula(L"(2*PI - theta) / PI")
-            .domain(static_cast<float>(M_PI), static_cast<float>(2 * M_PI))
-            .slices_sectors(10, 10)
-            .buildCone(verts1, norms1);
-        PolarBuilder() // hearth cone, First half:
-            .formula(L"theta / PI")
-            .domain(static_cast<float>(M_PI))
-            .slices_sectors(4, 10)
-            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
-        PolarBuilder() // hearth cone, First half:
-            .formula(L"(2*PI - theta) / PI")
-            .domain(static_cast<float>(M_PI), static_cast<float>(2 * M_PI))
-            .slices_sectors(4, 10)
-            .buildConeIndexed(vertsIndexed1, normsIndexed1, indices1);
+			.buildConeIndexed(vertsIndexed1, normsIndexed1, indices1); //build second half indexed
     }
     else if (buildCardoid)
     {
-        PolarBuilder() //cardoid
+        Builder::polar() //cardoid
             .formula(L"(1 - cos(theta)) / (PI / 1.55)")
             .sectors(60)
-            .buildCone(verts, norms);
-        PolarBuilder() //cardoid
-            .formula(L"(1 - cos(theta)) / (PI / 1.55)")
+            .buildCone(verts, norms) //build
             .sectors(10)
-            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
+			.buildConeIndexed(vertsIndexed, normsIndexed, indices); //build indexed
     }
     else if (buildEllipse)
     {
-        PolarBuilder() //ellipse
+        Builder::polar() //ellipse
             .formula(L"2 / sqrt(4 * sin(theta)**2 + cos(theta)**2) / 2")
             .sectors(10)
-            .buildCone(verts, norms);
-        PolarBuilder() //ellipse
-            .formula(L"2 / sqrt(4 * sin(theta)**2 + cos(theta)**2) / 2")
+            .buildCone(verts, norms) //build
             .sectors_slices(60, 50)
-            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
+			.buildConeIndexed(vertsIndexed, normsIndexed, indices); //build indexed
     }
     else if (build5PointerStar)
     {
-        PolarBuilder()  //star // 5-pointed star
-            .formula(L"(1 + 0.5 * cos(5 * theta)) / 1.5")
+        Builder::polar()  //star // 5-pointed star
+			.formula(L"(1 + 0.5 * cos(5 * theta)) / 1.5") //start build 5-petal star
             .sectors_slices(60, 20)
-            .buildCone(verts, norms);
-        PolarBuilder()  //star // 5-pointed star
-            .formula(L"(1 + 0.5 * cos(5 * theta)) / 1.5")
-            .sectors_slices(60, 5)
-            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
+			.buildCone(verts, norms) //end build 5-petal star
+            .slices(5)
+			.buildConeIndexed(vertsIndexed, normsIndexed, indices); // end build 5 - petal star indexed
     }
     else if (build5PetalRose)
     {
-        PolarBuilder()  //star // 5-pointed star
-            .formula(L"cos(5 * theta)")
+        Builder::polar()  //star // 5-pointed star
+			.formula(L"cos(5 * theta)") //start build 5-petal rose
             .sectors_slices(160, 3)
-            .buildCone(verts, norms);
-        PolarBuilder()  //star // 5-pointed star
-            .formula(L"cos(5 * theta)")
+            .buildCone(verts, norms) //end build 5-petal rose
             .sectors_slices(60, 20)
-            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
+            .buildConeIndexed(vertsIndexed, normsIndexed, indices); // end build 5 - petal rose indexed
 
         //build Cone Polar(verts, norms, L"cos(3 * theta)", 60); //3-petal rose
         //build Cone Polar(verts, norms, L"cos(2 * theta)", 60); //4-petal rose
@@ -109,14 +98,12 @@ int main()
     }
     else if (buildLemniscate)
     {
-        PolarBuilder()  //star // 5-pointed star
-            .formula(L"sqrt(abs(cos(2 * theta)))")
+        Builder::polar()  //star // 5-pointed star
+			.formula(L"sqrt(abs(cos(2 * theta)))") //start build lemniscate
             .sectors(30)
-            .buildCone(verts, norms);
-        PolarBuilder()  //star // 5-pointed star
-            .formula(L"sqrt(abs(cos(2 * theta)))")
+			.buildCone(verts, norms) // end build lemniscate
             .sectors(60)
-            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
+			.buildConeIndexed(vertsIndexed, normsIndexed, indices); // end build lemniscate indexed
 
         //build Cone Polar(verts, norms, L"sqrt(abs(cos(2 * theta)))", 30); //Lemniscate
         //build Cone Polar Indexed(vertsIndexed, normsIndexed, indices, L"sqrt(abs(cos(2 * theta)))", 60); //Lemniscate
@@ -156,7 +143,7 @@ int main()
             .withIndices(indices1);
     }
 
-    shape.logGeneratedShaders("cone1HeartGeometry2Calc.js:");
+    shape.logGeneratedShaders("cone1HeartGeometry2Calc.cpp:");
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);

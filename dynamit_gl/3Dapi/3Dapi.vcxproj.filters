@@ -113,5 +113,8 @@
     <ClCompile Include="dynamitCone1HeartGeometry2CalcBuilder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="dynamitCylinderGeometryCalc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
