@@ -1,6 +1,8 @@
 #include "enabler.h"
 #ifdef __DYNAMIT_CONE1_HEART_GEOMETRY2_CALC_BUILDER_CPP__
 
+//TODO: Consider to remove current. This is identical to dynamitCone1HeartGeometry2Calc.cpp
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <GL/glew.h>
