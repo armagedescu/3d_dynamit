@@ -12,8 +12,8 @@
 
 using namespace dynamit;
 
-// Build simple cone geometry
-void buildConePolar(std::vector<float>& verts, std::vector<float>& norms, int ns = 5)
+// Build simple cone geometry, m stands for manual
+void buildmConemPolar(std::vector<float>& verts, std::vector<float>& norms, int ns = 5)
 {
     verts.clear();
     norms.clear();
@@ -53,7 +53,7 @@ int main()
     
     // Build cone geometry
     std::vector<float> verts, norms;
-    buildConePolar(verts, norms, 5);
+    buildmConemPolar(verts, norms, 5);
     
     std::cout << "Cone vertices: " << verts.size() / 3 << std::endl;
     

@@ -28,54 +28,103 @@ int main()
     std::vector<float> vertsIndexed, normsIndexed, vertsIndexed1, normsIndexed1;
     std::vector<uint32_t> indices, indices1;
 
-    //buildCone (verts, norms, L"1", 6, 4);
-    //buildCone (verts, norms, L"1", 0.f, M_PI, 6, 4);
-    //buildCone (verts, norms, L"-(PI - theta) / PI", 0.f, M_PI, 6, 4);
-    //buildCone (verts, norms, L"-theta / PI", 20, 3);
+    //build Cone (verts, norms, L"1", 6, 4);
+    //build Cone (verts, norms, L"1", 0.f, M_PI, 6, 4);
+    //build Cone (verts, norms, L"-(PI - theta) / PI", 0.f, M_PI, 6, 4);
+    //build Cone (verts, norms, L"-theta / PI", 20, 3);
 
     std::cout << "Heart cone vertices: " << verts.size() / 3 << " (triangles: " << verts.size() / 9 << ")" << std::endl;
 
     bool buildHeart = false, buildCardoid = false, buildEllipse = false, build5PointerStar = false, build5PetalRose = false, buildLemniscate = true;
     if (buildHeart)
     {
-        buildConePolar(verts, norms, L"theta / PI", 0.f, M_PI, 6, 4);               // hearth cone, First half:
-        buildConePolar(verts1, norms1, L"(2*PI - theta) / PI", M_PI, 2 * M_PI, 10, 10); // hearth cone, Second half:
-        buildConePolarIndexed(vertsIndexed, normsIndexed, indices, L"theta / PI", 0.f, M_PI, 10, 4);    // hearth cone, First half:
-        buildConePolarIndexed(vertsIndexed1, normsIndexed1, indices1, L"(2*PI - theta) / PI", M_PI, 2 * M_PI, 10, 4);    // hearth cone, First half:
+        PolarBuilder() // hearth cone, First half:
+            .formula(L"theta / PI")
+            .domain(static_cast<float>(M_PI))
+            .slices_sectors(4, 6)
+            .buildCone(verts, norms);
+        PolarBuilder() // hearth cone, Second half:
+            .formula(L"(2*PI - theta) / PI")
+            .domain(static_cast<float>(M_PI), static_cast<float>(2 * M_PI))
+            .slices_sectors(10, 10)
+            .buildCone(verts1, norms1);
+        PolarBuilder() // hearth cone, First half:
+            .formula(L"theta / PI")
+            .domain(static_cast<float>(M_PI))
+            .slices_sectors(4, 10)
+            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
+        PolarBuilder() // hearth cone, First half:
+            .formula(L"(2*PI - theta) / PI")
+            .domain(static_cast<float>(M_PI), static_cast<float>(2 * M_PI))
+            .slices_sectors(4, 10)
+            .buildConeIndexed(vertsIndexed1, normsIndexed1, indices1);
     }
     else if (buildCardoid)
     {
-        buildConePolar(verts, norms, L"(1 - cos(theta)) / (PI / 1.55)", 60); //cardoid
-        buildConePolarIndexed(vertsIndexed, normsIndexed, indices, L"(1 - cos(theta)) / (PI / 1.55)", 10); //cardoid
+        PolarBuilder() //cardoid
+            .formula(L"(1 - cos(theta)) / (PI / 1.55)")
+            .sectors(60)
+            .buildCone(verts, norms);
+        PolarBuilder() //cardoid
+            .formula(L"(1 - cos(theta)) / (PI / 1.55)")
+            .sectors(10)
+            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
     }
     else if (buildEllipse)
     {
-        buildConePolar(verts, norms, L"2 / sqrt(4 * sin(theta)**2 + cos(theta)**2) / 2", 10);// ellipse
-        buildConePolarIndexed(vertsIndexed, normsIndexed, indices, L"2 / sqrt(4 * sin(theta)**2 + cos(theta)**2) / 2", 60, 50);// ellipse
+        PolarBuilder() //ellipse
+            .formula(L"2 / sqrt(4 * sin(theta)**2 + cos(theta)**2) / 2")
+            .sectors(10)
+            .buildCone(verts, norms);
+        PolarBuilder() //ellipse
+            .formula(L"2 / sqrt(4 * sin(theta)**2 + cos(theta)**2) / 2")
+            .sectors_slices(60, 50)
+            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
     }
     else if (build5PointerStar)
     {
-        buildConePolar(verts, norms, L"(1 + 0.5 * cos(5 * theta)) / 1.5", 60, 20); //star // 5-pointed star
-        buildConePolarIndexed(vertsIndexed, normsIndexed, indices, L"(1 + 0.5 * cos(5 * theta)) / 1.5", 60, 20); //star // 5-pointed star
+        PolarBuilder()  //star // 5-pointed star
+            .formula(L"(1 + 0.5 * cos(5 * theta)) / 1.5")
+            .sectors_slices(60, 20)
+            .buildCone(verts, norms);
+        PolarBuilder()  //star // 5-pointed star
+            .formula(L"(1 + 0.5 * cos(5 * theta)) / 1.5")
+            .sectors_slices(60, 5)
+            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
     }
     else if (build5PetalRose)
     {
-        buildConePolar(verts, norms, L"cos(5 * theta)", 160, 3);  //star // 5-pointed star
-        buildConePolarIndexed(vertsIndexed, normsIndexed, indices, L"cos(5 * theta)", 60, 20); //star // 5-pointed star
-        //buildConePolar(verts, norms, L"cos(3 * theta)", 60); //3-petal rose
-        //buildConePolar(verts, norms, L"cos(2 * theta)", 60); //4-petal rose
-        //buildConePolar(verts, norms, L"cos(5 * theta)", 160); //5-petal rose
+        PolarBuilder()  //star // 5-pointed star
+            .formula(L"cos(5 * theta)")
+            .sectors_slices(160, 3)
+            .buildCone(verts, norms);
+        PolarBuilder()  //star // 5-pointed star
+            .formula(L"cos(5 * theta)")
+            .sectors_slices(60, 20)
+            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
+
+        //build Cone Polar(verts, norms, L"cos(3 * theta)", 60); //3-petal rose
+        //build Cone Polar(verts, norms, L"cos(2 * theta)", 60); //4-petal rose
+        //build Cone Polar(verts, norms, L"cos(5 * theta)", 160); //5-petal rose
     }
     else if (buildLemniscate)
     {
-        buildConePolar(verts, norms, L"sqrt(abs(cos(2 * theta)))", 60); //Lemniscate
-        buildConePolarIndexed(vertsIndexed, normsIndexed, indices, L"sqrt(abs(cos(2 * theta)))", 60); //Lemniscate
-    }
-    //buildConePolar(verts, norms, L"1", 0.f, M_PI, 10, 3); //circle
-    //buildConePolar(verts1, norms1, L"1", M_PI, 2 * M_PI, 10, 3); //circle
-    //buildConePolarIndexed(vertsIndexed, normsIndexed, indices, L"1", 0.f, M_PI, 10, 3); //circle
-    //buildConePolarIndexed(vertsIndexed1, normsIndexed1, indices1, L"1", M_PI, 2 *M_PI, 10, 3); //circle
+        PolarBuilder()  //star // 5-pointed star
+            .formula(L"sqrt(abs(cos(2 * theta)))")
+            .sectors(30)
+            .buildCone(verts, norms);
+        PolarBuilder()  //star // 5-pointed star
+            .formula(L"sqrt(abs(cos(2 * theta)))")
+            .sectors(60)
+            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
 
+        //build Cone Polar(verts, norms, L"sqrt(abs(cos(2 * theta)))", 30); //Lemniscate
+        //build Cone Polar Indexed(vertsIndexed, normsIndexed, indices, L"sqrt(abs(cos(2 * theta)))", 60); //Lemniscate
+    }
+    //build Cone Polar(verts, norms, L"1", 0.f, M_PI, 10, 3); //circle
+    //build Cone Polar(verts1, norms1, L"1", M_PI, 2 * M_PI, 10, 3); //circle
+    //build Cone Polar Indexed(vertsIndexed, normsIndexed, indices, L"1", 0.f, M_PI, 10, 3); //circle
+    //build Cone Polar Indexed(vertsIndexed1, normsIndexed1, indices1, L"1", M_PI, 2 *M_PI, 10, 3); //circle
 
     // Create shape
     Dynamit shape, shapeIndexed;

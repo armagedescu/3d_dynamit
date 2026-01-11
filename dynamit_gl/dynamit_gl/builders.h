@@ -4,44 +4,38 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 namespace dynamit::builders
 {
 
-// Build indexed cone geometry - reduces vertex duplication
-void buildConePolarIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<uint32_t>& indices,
-    const std::wstring& formula,
-    float domain_start,
-    float domain_end,
-    int nsectors = 5,
-    int nslices = 1);
+class PolarBuilder
+{
+public:
+    PolarBuilder();
 
-void buildConePolarIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<uint32_t>& indices,
-    const std::wstring& formula,
-    int nsectors = 5,
-    int nslices = 1);
+    PolarBuilder& formula(const std::wstring& formula);
+    PolarBuilder& formula(const std::string& formula);
+    PolarBuilder& domain(float start, float end);
+    PolarBuilder& domain(float end);
+    PolarBuilder& sectors(int sectors);
+    PolarBuilder& slices(int slices);
+    PolarBuilder& slices_sectors(int slices, int sectors);
+    PolarBuilder& sectors_slices(int sectors, int slices);
 
-// Build cone geometry using indexed version internally, then expand to flat arrays
-void buildConePolar(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    const std::wstring& formula,
-    float domain_start,
-    float domain_end,
-    int nsectors = 5,
-    int nslices = 1);
+    void buildCone(std::vector<float>& verts, std::vector<float>& norms) const;
+    void buildConeIndexed(
+        std::vector<float>& verts,
+        std::vector<float>& norms,
+        std::vector<uint32_t>& indices) const;
 
-void buildConePolar(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    const std::wstring& formula,
-    int nsectors = 5,
-    int nslices = 1);
+private:
+    std::wstring m_formula;
+    float m_domainStart;
+    float m_domainEnd;
+    int m_sectors;
+    int m_slices;
+};
 
 } // namespace dynamit::builders

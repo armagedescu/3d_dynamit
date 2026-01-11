@@ -15,8 +15,8 @@
 using namespace dynamit;
 using namespace expresie_tokenizer;
 
-// Build cone geometry with analytical normals from gradient
-void buildConePolar(std::vector<float>& verts, std::vector<float>& norms, const std::wstring& formula, int ns = 5)
+// Build cone geometry with analytical normals from gradient, mc stands for manyal with calculator
+void buildmcConemcPolar(std::vector<float>& verts, std::vector<float>& norms, const std::wstring& formula, int ns = 5)
 {
     expression_token_compiler compiler;
 
@@ -92,7 +92,7 @@ int main()
     // Or: L"0.4 + 0.1 * cos(5 * theta)" for flower
     std::vector<float> verts, norms;
     //buildCone(verts, norms, L"1", 5);
-    buildConePolar(verts, norms, L"1", 6);
+    buildmcConemcPolar (verts, norms, L"1", 6);
     //buildCone(verts, norms, L"theta / PI", 20);
 
     std::cout << "Cone vertices: " << verts.size() / 3 << std::endl;

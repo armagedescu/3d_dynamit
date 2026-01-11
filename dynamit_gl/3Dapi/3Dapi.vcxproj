@@ -172,6 +172,7 @@
     <ClCompile Include="dynamitCone1HeartGeometry1.cpp" />
     <ClCompile Include="dynamitCone1HeartGeometry2Calc.cpp" />
     <ClCompile Include="dynamitCone1HeartGeometry2.cpp" />
+    <ClCompile Include="dynamitCone1HeartGeometry2CalcBuilder.cpp" />
     <ClCompile Include="dynamitConeGeometryCalc.cpp" />
     <ClCompile Include="dynamitDraw0.cpp" />
     <ClCompile Include="dynamitDrawStrided.cpp" />

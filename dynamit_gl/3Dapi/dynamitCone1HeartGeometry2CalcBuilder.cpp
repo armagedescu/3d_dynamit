@@ -1,5 +1,5 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_CONE1_HEART_GEOMETRY2_CALC_CPP__
+#ifdef __DYNAMIT_CONE1_HEART_GEOMETRY2_CALC_BUILDER_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -28,6 +28,7 @@ int main()
 
     //// Build heart-shaped cone with calculator
     std::vector<float> verts, norms;
+    //buildCone (verts, norms, L"1", 6, 4);
     std::cout << "Heart cone vertices: " << verts.size() / 3 << " (triangles: " << verts.size() / 9 << ")" << std::endl;
     
     // Create shape
@@ -35,16 +36,17 @@ int main()
     shape.withConstColor(0.0f, 1.0f, 0.5f, 1.0f)
          .withConstLightDirection(-1.0f, -1.0f, 1.0f);
 
-	// First half of first half
+    // First half of first half
     PolarBuilder()
         .formula(L"theta / PI")
         .domain(0.f, static_cast<float>(M_PI_2))
         .sectors(6)
         .slices(4)
         .buildCone(verts, norms);
-	shape
+    shape
         .withVertices3d(verts)
         .withNormals3d(norms);
+
     // Second half of first half
     PolarBuilder()
         .formula(L"theta / PI")
@@ -52,10 +54,10 @@ int main()
         .sectors(3)
         .slices(2)
         .buildCone(verts, norms);
-
-	shape[1]
+    shape[1]
         .withVertices3d(verts)
         .withNormals3d(norms);
+
     // Second half
     PolarBuilder()
         .formula(L"(2*PI - theta) / PI")
@@ -63,11 +65,11 @@ int main()
         .sectors(10)
         .slices(10)
         .buildCone(verts, norms);
-	shape[2]
+    shape[2]
         .withVertices3d(verts)
         .withNormals3d(norms);
     
-    shape.logGeneratedShaders("dynamitCone1HeartGeometry2Calc.cpp:");
+    shape.logGeneratedShaders("cone1HeartGeometry2CalcBuilder.js:");
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
