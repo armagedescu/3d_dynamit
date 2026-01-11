@@ -67,7 +67,8 @@ int main()
     std::vector<float> vertsIndexed, normsIndexed;
     std::vector<uint32_t> indices;
 
-    bool buildHeart = true, buildCardoid = false, buildEllipse = false, build5PointerStar = false, build5PetalRose = false, buildLemniscate = false;
+    bool buildHeart = false, buildCardoid = false, buildEllipse = false, 
+        build5PointerStar = false, build5PetalRose = false, buildLemniscate = true;
     if (buildHeart)
     {
         Builder::polar()
