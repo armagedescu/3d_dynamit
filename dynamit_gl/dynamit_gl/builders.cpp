@@ -185,10 +185,6 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
     const float z_tip = m_reversed ? 0.0f : -1.0f;
     const float z_base = m_reversed ? -1.0f : 0.0f;
 
-    // Normal sign: reversed flips normals, second coat flips again
-    float normalSign = m_reversed ? -1.0f : 1.0f;
-    if (isSecondCoat) normalSign = -normalSign;
-
     // Winding: second coat flips the winding
     const bool flipWinding = isSecondCoat;
 
@@ -224,14 +220,14 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
 
         float cos_t = std::cos(static_cast<float>(theta));
         float sin_t = std::sin(static_cast<float>(theta));
-        float nx = (dr * sin_t + r * cos_t)  ;
-        float ny = -(dr * cos_t - r * sin_t) ;
+        float nx = (dr * sin_t + r * cos_t);
+        float ny = -(dr * cos_t - r * sin_t);
         float nz = -1.0f;
-        if(isSecondCoat)
-			nz = 1.0f;
+        if (isSecondCoat)
+            nz = 1.0f;
         if (m_reversed)
         {
-			if (!isSecondCoat)
+            if (!isSecondCoat)
             {
                 nx *= -1.0f;
                 ny *= -1.0f;
@@ -266,7 +262,6 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
         baseRing[i] = addVertex(x, y, firstRingZ, baseNx[i], baseNy[i], baseNz[i], u, 1.0f / m_slices);
     }
 
-    m_reversed = m_reversed;
     // Tip triangles
     for (int i = 0; i < m_sectors; i++)
     {
@@ -282,7 +277,6 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
             indices.push_back(baseRing[i + 1]);
             indices.push_back(baseRing[i]);
         }
-
     }
 
     if (m_slices > 1)
@@ -321,9 +315,27 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
 
                     float cos_t = std::cos(static_cast<float>(theta));
                     float sin_t = std::sin(static_cast<float>(theta));
-                    nx = (dr * sin_t + r * cos_t) * normalSign;
-                    ny = -(dr * cos_t - r * sin_t) * normalSign;
+                    nx = (dr * sin_t + r * cos_t);
+                    ny = -(dr * cos_t - r * sin_t);
                     nz = -1.0f;
+                    if (isSecondCoat)
+                        nz = 1.0f;
+                    if (m_reversed)
+                    {
+                        if (!isSecondCoat)
+                        {
+                            nx *= -1.0f;
+                            ny *= -1.0f;
+                        }
+                    }
+                    else
+                    {
+                        if (isSecondCoat)
+                        {
+                            nx *= -1.0f;
+                            ny *= -1.0f;
+                        }
+                    }
 
                     float len = std::sqrt(nx * nx + ny * ny + nz * nz);
                     if (len > 0.0001f)
@@ -344,25 +356,25 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
                 uint32_t v10 = currRing[i];
                 uint32_t v11 = currRing[i + 1];
 
-                if (m_reversed != flipWinding)
+                if (isSecondCoat)
                 {
                     indices.push_back(v00);
-                    indices.push_back(v10);
                     indices.push_back(v01);
+                    indices.push_back(v10);
 
                     indices.push_back(v01);
-                    indices.push_back(v10);
                     indices.push_back(v11);
+                    indices.push_back(v10);
                 }
                 else
                 {
                     indices.push_back(v00);
-                    indices.push_back(v01);
                     indices.push_back(v10);
+                    indices.push_back(v01);
 
                     indices.push_back(v01);
-                    indices.push_back(v11);
                     indices.push_back(v10);
+                    indices.push_back(v11);
                 }
             }
 
