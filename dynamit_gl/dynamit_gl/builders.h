@@ -99,6 +99,11 @@ private:
         std::vector<float>& verts,
         std::vector<float>& norms,
         std::vector<float>& texCoords);
+    PolarBuilder& buildConeDiscreteInternal(
+        std::vector<float>& verts,
+        std::vector<float>& norms,
+        std::vector<float>& texCoords,
+        bool isSecondCoat);
 
     std::wstring m_formula;
     float m_domainStart;

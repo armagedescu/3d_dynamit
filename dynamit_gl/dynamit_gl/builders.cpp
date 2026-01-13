@@ -872,6 +872,15 @@ PolarBuilder& PolarBuilder::buildConeDiscrete(
     std::vector<float>& norms,
     std::vector<float>& texCoords)
 {
+    return buildConeDiscreteInternal(verts, norms, texCoords, false);
+}
+
+PolarBuilder& PolarBuilder::buildConeDiscreteInternal(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<float>& texCoords,
+    bool isSecondCoat)
+{
     using expresie_tokenizer::expression_token_compiler;
     using expresie_tokenizer::expression;
     expression_token_compiler compiler;
@@ -881,7 +890,10 @@ PolarBuilder& PolarBuilder::buildConeDiscrete(
     std::unique_ptr<expression> expr_r = compiler.compile(m_formula);
     expr_r->bind(L"theta", &theta);
 
-    const float z_tip = m_reversed ? 1.0f : -1.0f;
+    // Geometry position depends on m_reversed (user's choice)
+    const float z_tip = m_reversed ? 0.0f : -1.0f;
+    const float z_base = m_reversed ? -1.0f : 0.0f;
+
     float domainRange = m_domainEnd - m_domainStart;
 
     // Precompute ring positions (ring 0 is closest to tip)
@@ -892,7 +904,7 @@ PolarBuilder& PolarBuilder::buildConeDiscrete(
     for (int h = 0; h <= m_slices; h++)
     {
         float scale = static_cast<float>(h) / m_slices;
-        float z = -1.0f + scale;  // z goes from -1 (tip) to 0 (base)
+        float z = z_tip + (z_base - z_tip) * scale;
 
         for (int i = 0; i <= m_sectors; i++)
         {
@@ -908,7 +920,7 @@ PolarBuilder& PolarBuilder::buildConeDiscrete(
     }
 
     // Tip triangles (h=0 ring is at the tip, all vertices collapse to origin)
-    float tipX = 0.0f, tipY = 0.0f, tipZ = -1.0f;
+    float tipX = 0.0f, tipY = 0.0f, tipZ = z_tip;
 
     for (int i = 0; i < m_sectors; i++)
     {
@@ -921,22 +933,19 @@ PolarBuilder& PolarBuilder::buildConeDiscrete(
 
         // Compute flat normal for tip triangle
         float nx, ny, nz;
-        if (m_reversed)
-            crossProductNormalLefthanded(tipX, tipY, tipZ, x1, y1, z0, x0, y0, z0, nx, ny, nz, false);
-        else
-            crossProductNormalLefthanded(tipX, tipY, tipZ, x0, y0, z0, x1, y1, z0, nx, ny, nz, false);
-
-        if (m_reversed)
+        if (!isSecondCoat)
         {
+            crossProductNormalLefthanded(tipX, tipY, tipZ, x0, y0, z0, x1, y1, z1, nx, ny, nz, false);
             verts.insert(verts.end(), { tipX, tipY, tipZ });
-            verts.insert(verts.end(), { x1, y1, z1 });
             verts.insert(verts.end(), { x0, y0, z0 });
+            verts.insert(verts.end(), { x1, y1, z1 });
         }
         else
         {
+            crossProductNormalLefthanded(tipX, tipY, tipZ, x1, y1, z1, x0, y0, z0, nx, ny, nz, false);
             verts.insert(verts.end(), { tipX, tipY, tipZ });
-            verts.insert(verts.end(), { x0, y0, z0 });
             verts.insert(verts.end(), { x1, y1, z1 });
+            verts.insert(verts.end(), { x0, y0, z0 });
         }
 
         norms.insert(norms.end(), { nx, ny, nz });
@@ -959,7 +968,7 @@ PolarBuilder& PolarBuilder::buildConeDiscrete(
             float u0 = static_cast<float>(i) / m_sectors;
             float u1 = static_cast<float>(i + 1) / m_sectors;
 
-            // Quad corners - FIXED
+            // Quad corners
             float x00 = ringX[h][i],         y00 = ringY[h][i],         z00 = ringZ[h][i];
             float x01 = ringX[h][i + 1],     y01 = ringY[h][i + 1],     z01 = ringZ[h][i + 1];
             float x10 = ringX[h + 1][i],     y10 = ringY[h + 1][i],     z10 = ringZ[h + 1][i];
@@ -967,22 +976,19 @@ PolarBuilder& PolarBuilder::buildConeDiscrete(
 
             // Triangle 1
             float nx1, ny1, nz1;
-            if (m_reversed)
-                crossProductNormalLefthanded(x00, y00, z00, x01, y01, z01, x10, y10, z10, nx1, ny1, nz1, false);
-            else
-                crossProductNormalLefthanded(x00, y00, z00, x10, y10, z10, x01, y01, z01, nx1, ny1, nz1, false);
-
-            if (m_reversed)
+            if (!isSecondCoat)
             {
+                crossProductNormalLefthanded(x00, y00, z00, x10, y10, z10, x01, y01, z01, nx1, ny1, nz1, false);
                 verts.insert(verts.end(), { x00, y00, z00 });
-                verts.insert(verts.end(), { x01, y01, z01 });
                 verts.insert(verts.end(), { x10, y10, z10 });
+                verts.insert(verts.end(), { x01, y01, z01 });
             }
             else
             {
+                crossProductNormalLefthanded(x00, y00, z00, x01, y01, z01, x10, y10, z10, nx1, ny1, nz1, false);
                 verts.insert(verts.end(), { x00, y00, z00 });
-                verts.insert(verts.end(), { x10, y10, z10 });
                 verts.insert(verts.end(), { x01, y01, z01 });
+                verts.insert(verts.end(), { x10, y10, z10 });
             }
 
             norms.insert(norms.end(), { nx1, ny1, nz1 });
@@ -990,27 +996,24 @@ PolarBuilder& PolarBuilder::buildConeDiscrete(
             norms.insert(norms.end(), { nx1, ny1, nz1 });
 
             texCoords.insert(texCoords.end(), { u0, v0 });
-            texCoords.insert(texCoords.end(), { m_reversed ? u1 : u0, m_reversed ? v0 : v1 });
-            texCoords.insert(texCoords.end(), { m_reversed ? u0 : u1, m_reversed ? v1 : v0 });
+            texCoords.insert(texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v0 : v1 });
+            texCoords.insert(texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v1 : v0 });
 
             // Triangle 2
             float nx2, ny2, nz2;
-            if (m_reversed)
-                crossProductNormalLefthanded(x01, y01, z01, x11, y11, z11, x10, y10, z10, nx2, ny2, nz2, false);
-            else
-                crossProductNormalLefthanded(x01, y01, z01, x10, y10, z10, x11, y11, z11, nx2, ny2, nz2, false);
-
-            if (m_reversed)
+            if (!isSecondCoat)
             {
+                crossProductNormalLefthanded(x01, y01, z01, x10, y10, z10, x11, y11, z11, nx2, ny2, nz2, false);
                 verts.insert(verts.end(), { x01, y01, z01 });
-                verts.insert(verts.end(), { x11, y11, z11 });
                 verts.insert(verts.end(), { x10, y10, z10 });
+                verts.insert(verts.end(), { x11, y11, z11 });
             }
             else
             {
+                crossProductNormalLefthanded(x01, y01, z01, x11, y11, z11, x10, y10, z10, nx2, ny2, nz2, false);
                 verts.insert(verts.end(), { x01, y01, z01 });
-                verts.insert(verts.end(), { x10, y10, z10 });
                 verts.insert(verts.end(), { x11, y11, z11 });
+                verts.insert(verts.end(), { x10, y10, z10 });
             }
 
             norms.insert(norms.end(), { nx2, ny2, nz2 });
@@ -1018,20 +1021,14 @@ PolarBuilder& PolarBuilder::buildConeDiscrete(
             norms.insert(norms.end(), { nx2, ny2, nz2 });
 
             texCoords.insert(texCoords.end(), { u1, v0 });
-            texCoords.insert(texCoords.end(), { m_reversed ? u1 : u0, m_reversed ? v1 : v1 });
-            texCoords.insert(texCoords.end(), { m_reversed ? u0 : u1, m_reversed ? v0 : v1 });
+            texCoords.insert(texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v1 : v1 });
+            texCoords.insert(texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v0 : v1 });
         }
     }
 
-    // Double coating
-    if (m_doubleCoated)
+    if (!isSecondCoat && m_doubleCoated)
     {
-        m_doubleCoated = false;
-        bool wasReversed = m_reversed;
-        m_reversed = !m_reversed;
-        buildConeDiscrete(verts, norms, texCoords);
-        m_reversed = wasReversed;
-        m_doubleCoated = true;
+        buildConeDiscreteInternal(verts, norms, texCoords, true);
     }
 
     return *this;
