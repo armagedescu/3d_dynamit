@@ -38,6 +38,13 @@ public:
         std::vector<float>& norms,
         std::vector<float>& texCoords,
         std::vector<uint32_t>& indices);
+    PolarBuilder& buildConeIndexedInternal(
+        std::vector<float>& verts,
+        std::vector<float>& norms,
+        std::vector<float>& texCoords,
+        std::vector<uint32_t>& indices,
+        bool isSecondCoat
+    );
     PolarBuilder& reBuildCone(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords);
     PolarBuilder& reBuildConeIndexed(
         std::vector<float>& verts,

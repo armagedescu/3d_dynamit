@@ -67,21 +67,23 @@ int main()
     std::vector<float> vertsIndexed, normsIndexed;
     std::vector<uint32_t> indices;
 
-    bool buildHeart = false, buildCardoid = false, buildEllipse = false, 
+    bool buildHeart = true, buildCardoid = false, buildEllipse = false, 
         build5PointerStar = false, build5PetalRose = false, buildLemniscate = true;
     if (buildHeart)
     {
         Builder::polar()
+            .edged(false).reversed(false).doubleCoated(true)
             .formula(L"theta / PI")             // first half
             .domain(M_PI)
-            .sectors_slices(60, 10)
-            .buildCylinder(verts, norms)
+            .sectors_slices(6, 1)
+            .buildCone(verts, norms) //.buildCylinder(verts, norms)
+            ////.nonreversed().smooth().doubleCoated() //// 
             .formula(L"(2*PI - theta) / PI")    // second half
             .domain_shift(2 * M_PI)
-            .sectors_slices(60, 10)
-            .buildCylinder(verts, norms)
-            // indexed version
-            .formula(L"theta / PI")
+            //.sectors_slices(6, 1)//.sectors_slices(10, 10)
+            .buildCone(verts, norms) //.buildCylinder(verts, norms)
+            ////// indexed version
+            .formula(L"theta / PI").nonreversed().doubleCoated()
             .domain(static_cast<float>(M_PI))
             .sectors_slices(30, 5)
             .buildCylinderIndexed(vertsIndexed, normsIndexed, indices)
@@ -170,15 +172,22 @@ int main()
     glClearColor(0.0f, 0.0f, 1.f, 0.9f);
 
     // Render loop
+    double time = glfwGetTime();
+	float angle = 0.f;
     while (!glfwWindowShouldClose(window))
     {
+		double currentTime = glfwGetTime();
+		double deltaTime = currentTime - time;
+		time = currentTime;
+        if (glfwGetKey(window, GLFW_KEY_F12) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ? -0.5 : 0.5f); // slow rotation
         glPolygonMode(GL_FRONT_AND_BACK, glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS ? GL_LINE : GL_FILL);
 
         processInputs(window);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float angle = static_cast<float>(glfwGetTime()) * 0.5f; // slow rotation
+        //float angle = 0.f; //static_cast<float>(glfwGetTime()) * 0.5f; // slow rotation
+        //float angle = static_cast<float>(glfwGetTime()) * 0.5f; // slow rotation
 
         switch (currentShape)
         {

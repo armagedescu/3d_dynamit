@@ -156,12 +156,22 @@ PolarBuilder& PolarBuilder::buildConeIndexed(
     std::vector<float>& texCoords,
     std::vector<uint32_t>& indices)
 {
-    std::cout << "buildConeIndexed called, doubleCoated=" << m_doubleCoated << ", reversed=" << m_reversed << std::endl;
+    return buildConeIndexedInternal(
+        verts,
+        norms,
+        texCoords,
+        indices, false);
+}
+
+PolarBuilder& PolarBuilder::buildConeIndexedInternal(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<float>& texCoords,
+    std::vector<uint32_t>& indices, bool isSecondCoat)
+{
     using expresie_tokenizer::expression_token_compiler;
     using expresie_tokenizer::expression;
     expression_token_compiler compiler;
-
-    uint32_t indexOffset = static_cast<uint32_t>(verts.size() / 3);
 
     long double theta = 0.0L;
 
@@ -171,23 +181,23 @@ PolarBuilder& PolarBuilder::buildConeIndexed(
     std::unique_ptr<expression> expr_dr = simplify(expr_r->derivative(L"theta"));
     expr_dr->bind(L"theta", &theta);
 
-    // Tip is ALWAYS at z = -1, base at z = 0
-    // m_reversed only affects normals and winding order
-    const float z_tip = -1.0f;
-    const float normalSign = m_reversed ? -1.0f : 1.0f;
+    // For second coat, flip winding and normals but NOT geometry position
+    const bool effectiveReversed = isSecondCoat ? !m_reversed : m_reversed;
+
+    // Geometry position depends on m_reversed (user's choice), not coat
+    const float z_tip = m_reversed ? 0.0f : -1.0f;
+    const float z_base = m_reversed ? -1.0f : 0.0f;
 
     auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
         uint32_t idx = static_cast<uint32_t>(verts.size() / 3);
         verts.insert(verts.end(), { x, y, z });
-        norms.insert(norms.end(), { nx * normalSign, ny * normalSign, nz * normalSign });
+        norms.insert(norms.end(), { nx, ny, nz });
         texCoords.insert(texCoords.end(), { u, v });
         return idx;
     };
 
-    // Add tip vertex at z = -1
-    uint32_t tipIndex = addVertex(0.0f, 0.0f, z_tip, 0.0f, 0.0f, -1.0f, 0.5f, 0.0f);
+    uint32_t tipIndex = addVertex(0.0f, 0.0f, z_tip, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f);
 
-    // Store base ring data
     std::vector<float> baseX(m_sectors + 1);
     std::vector<float> baseY(m_sectors + 1);
     std::vector<float> baseNx(m_sectors + 1);
@@ -196,6 +206,7 @@ PolarBuilder& PolarBuilder::buildConeIndexed(
     std::vector<uint32_t> baseRing(m_sectors + 1);
 
     float domainRange = m_domainEnd - m_domainStart;
+    float normalSign = effectiveReversed ? -1.0f : 1.0f;
 
     for (int i = 0; i <= m_sectors; i++)
     {
@@ -210,9 +221,9 @@ PolarBuilder& PolarBuilder::buildConeIndexed(
 
         float cos_t = std::cos(static_cast<float>(theta));
         float sin_t = std::sin(static_cast<float>(theta));
-        float nx = dr * sin_t + r * cos_t;
-        float ny = -(dr * cos_t - r * sin_t);
-        float nz = z_tip;
+        float nx = (dr * sin_t + r * cos_t) * normalSign;
+        float ny = -(dr * cos_t - r * sin_t) * normalSign;
+        float nz = -1.0f;
 
         float len = std::sqrt(nx * nx + ny * ny + nz * nz);
         if (len > 0.0001f)
@@ -231,30 +242,26 @@ PolarBuilder& PolarBuilder::buildConeIndexed(
         baseX[i] = x * m_slices;
         baseY[i] = y * m_slices;
 
-        float v = 1.0f / m_slices;
-        // First ring after tip - at z = -1 + 1/slices (moving toward 0)
-        float firstRingZ = -1.0f + 1.0f / m_slices;
-        baseRing[i] = addVertex(x, y, firstRingZ, baseNx[i], baseNy[i], baseNz[i], u, v);
+        float firstRingZ = z_tip + (z_base - z_tip) / m_slices;
+        baseRing[i] = addVertex(x, y, firstRingZ, baseNx[i], baseNy[i], baseNz[i], u, 1.0f / m_slices);
     }
 
-    // Generate tip triangles
     for (int i = 0; i < m_sectors; i++)
     {
-        if (m_reversed)
+        if (effectiveReversed)
         {
             indices.push_back(tipIndex);
-            indices.push_back(baseRing[i + 1]);
             indices.push_back(baseRing[i]);
+            indices.push_back(baseRing[i + 1]);
         }
         else
         {
             indices.push_back(tipIndex);
-            indices.push_back(baseRing[i]);
             indices.push_back(baseRing[i + 1]);
+            indices.push_back(baseRing[i]);
         }
     }
 
-    // Build remaining rings
     if (m_slices > 1)
     {
         std::vector<uint32_t> prevRing = baseRing;
@@ -262,8 +269,7 @@ PolarBuilder& PolarBuilder::buildConeIndexed(
         for (int h = 1; h < m_slices; h++)
         {
             float h2n = static_cast<float>(h + 1) / m_slices;
-            float z = -1.0f + h2n;  // z goes from -1 to 0
-            float v = h2n;
+            float z = z_tip + (z_base - z_tip) * h2n;
 
             std::vector<uint32_t> currRing(m_sectors + 1);
 
@@ -292,9 +298,9 @@ PolarBuilder& PolarBuilder::buildConeIndexed(
 
                     float cos_t = std::cos(static_cast<float>(theta));
                     float sin_t = std::sin(static_cast<float>(theta));
-                    nx = dr * sin_t + r * cos_t;
-                    ny = -(dr * cos_t - r * sin_t);
-                    nz = z_tip;
+                    nx = (dr * sin_t + r * cos_t) * normalSign;
+                    ny = -(dr * cos_t - r * sin_t) * normalSign;
+                    nz = -1.0f;
 
                     float len = std::sqrt(nx * nx + ny * ny + nz * nz);
                     if (len > 0.0001f)
@@ -305,7 +311,7 @@ PolarBuilder& PolarBuilder::buildConeIndexed(
                     }
                 }
 
-                currRing[i] = addVertex(x, y, z, nx, ny, nz, u, v);
+                currRing[i] = addVertex(x, y, z, nx, ny, nz, u, h2n);
             }
 
             for (int i = 0; i < m_sectors; i++)
@@ -315,25 +321,25 @@ PolarBuilder& PolarBuilder::buildConeIndexed(
                 uint32_t v10 = currRing[i];
                 uint32_t v11 = currRing[i + 1];
 
-                if (m_reversed)
+                if (effectiveReversed)
                 {
                     indices.push_back(v00);
-                    indices.push_back(v01);
                     indices.push_back(v10);
+                    indices.push_back(v01);
 
                     indices.push_back(v01);
-                    indices.push_back(v11);
                     indices.push_back(v10);
+                    indices.push_back(v11);
                 }
                 else
                 {
                     indices.push_back(v00);
-                    indices.push_back(v10);
                     indices.push_back(v01);
+                    indices.push_back(v10);
 
                     indices.push_back(v01);
-                    indices.push_back(v10);
                     indices.push_back(v11);
+                    indices.push_back(v10);
                 }
             }
 
@@ -341,15 +347,9 @@ PolarBuilder& PolarBuilder::buildConeIndexed(
         }
     }
 
-    // Double coating: append reversed geometry
-    if (m_doubleCoated)
+    if (!isSecondCoat && m_doubleCoated)
     {
-        m_doubleCoated = false;  // Prevent infinite recursion
-        bool wasReversed = m_reversed;
-        m_reversed = !m_reversed;
-        buildConeIndexed(verts, norms, texCoords, indices);
-        m_reversed = wasReversed;
-        m_doubleCoated = true;   // Restore state
+        buildConeIndexedInternal(verts, norms, texCoords, indices, true);
     }
 
     return *this;
@@ -419,7 +419,6 @@ PolarBuilder& PolarBuilder::buildCylinderIndexed(
     std::vector<float>& texCoords,
     std::vector<uint32_t>& indices)
 {
-    std::cout << "buildCylinderIndexed called, doubleCoated=" << m_doubleCoated << ", reversed=" << m_reversed << std::endl;
     using expresie_tokenizer::expression_token_compiler;
     using expresie_tokenizer::expression;
     expression_token_compiler compiler;
@@ -539,22 +538,22 @@ PolarBuilder& PolarBuilder::buildCylinderIndexed(
             if (m_reversed)
             {
                 indices.push_back(v00);
-                indices.push_back(v01);
                 indices.push_back(v10);
+                indices.push_back(v01);
 
                 indices.push_back(v01);
-                indices.push_back(v11);
                 indices.push_back(v10);
+                indices.push_back(v11);
             }
             else
             {
                 indices.push_back(v00);
-                indices.push_back(v10);
                 indices.push_back(v01);
+                indices.push_back(v10);
 
                 indices.push_back(v01);
-                indices.push_back(v10);
                 indices.push_back(v11);
+                indices.push_back(v10);
             }
         }
 
