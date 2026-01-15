@@ -492,7 +492,8 @@ void main() {
 //========================================
 // Main Application
 //========================================
-int main() {
+int main()
+{
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
         return -1;

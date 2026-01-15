@@ -1,5 +1,5 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_CYLINDER_GEOMETRY_CALC_CPP__
+#ifdef __DYNAMIT_CONE_BUILDERS_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -67,77 +67,30 @@ int main()
     std::vector<float> vertsIndexed, normsIndexed;
     std::vector<uint32_t> indices;
 
-    bool buildHeart = true, buildCardoid = false, buildEllipse = false, 
+    bool buildHeart = true, buildCardoid = false, buildEllipse = false,
         build5PointerStar = false, build5PetalRose = false, buildLemniscate = true;
     if (buildHeart)
     {
         Builder::polar()
-            .edged(false).reversed(false).doubleCoated().turbo(true)
+            .edged(false).reversed(false).doubleCoated(true).turbo(false)
             .formula(L"theta / PI")             // first half
             .domain(M_PI)
             .sectors_slices(6, 2)
-            .buildCylinder(verts, norms)
+            .buildCone(verts, norms)
             .formula(L"(2*PI - theta) / PI")    // second half
             .domain_shift(2 * M_PI)
-            .buildCylinder(verts, norms)
-            //////// indexed version
+            .buildCone(verts, norms)
             .formula(L"theta / PI")
             .domain(static_cast<float>(M_PI))
             .sectors_slices(10, 5)
-            .buildCylinderIndexed(vertsIndexed, normsIndexed, indices)
+            .buildConeIndexed(vertsIndexed, normsIndexed, indices)
             .formula(L"(2*PI - theta) / PI")
             .domain_shift(static_cast<float>(2 * M_PI))
-            .buildCylinderIndexed(vertsIndexed, normsIndexed, indices);
+            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
         ;
     }
-    else if (buildCardoid)
-    {
-        Builder::polar()
-            .formula(L"(1 - cos(theta)) / (PI / 1.55)")
-            .sectors_slices(60, 10)
-            .buildCylinder(verts, norms)
-            .sectors_slices(30, 5)
-            .buildCylinderIndexed(vertsIndexed, normsIndexed, indices);
-    }
-    else if (buildEllipse)
-    {
-        Builder::polar()
-            .formula(L"2 / sqrt(4 * sin(theta)**2 + cos(theta)**2) / 2")
-            .sectors_slices(60, 10)
-            .buildCylinder(verts, norms)
-            .sectors_slices(30, 5)
-            .buildCylinderIndexed(vertsIndexed, normsIndexed, indices);
-    }
-    else if (build5PointerStar)
-    {
-        Builder::polar()
-            .formula(L"(1 + 0.5 * cos(5 * theta)) / 1.5")
-            .sectors_slices(60, 10)
-            .buildCylinder(verts, norms)
-            .sectors_slices(30, 5)
-            .buildCylinderIndexed(vertsIndexed, normsIndexed, indices);
-    }
-    else if (build5PetalRose)
-    {
-        Builder::polar()
-            .formula(L"cos(5 * theta)")
-            .sectors_slices(160, 10)
-            .buildCylinder(verts, norms)
-            .sectors_slices(60, 5)
-            .buildCylinderIndexed(vertsIndexed, normsIndexed, indices);
-    }
-    else if (buildLemniscate)
-    {
-        Builder::polar()
-            .formula(L"sqrt(abs(cos(2 * theta)))")
-            .sectors_slices(60, 10)
-            .buildCylinder(verts, norms)
-            .sectors_slices(30, 5)
-            .buildCylinderIndexed(vertsIndexed, normsIndexed, indices);
-    }
-
-    std::cout << "Cylinder vertices: " << verts.size() / 3 << " (triangles: " << verts.size() / 9 << ")" << std::endl;
-    std::cout << "Cylinder indexed vertices: " << vertsIndexed.size() / 3 << " (indices: " << indices.size() << ")" << std::endl;
+    std::cout << "Cone vertices: " << verts.size() / 3 << " (triangles: " << verts.size() / 9 << ")" << std::endl;
+    std::cout << "Cone indexed vertices: " << vertsIndexed.size() / 3 << " (indices: " << indices.size() << ")" << std::endl;
 
     // Create shape with custom shaders for X rotation
     Dynamit shape, shapeIndexed;
@@ -162,7 +115,7 @@ int main()
     // Build programs and get uniform locations
     GLint rotationLocShape = -1;
     GLint rotationLocIndexed = -1;
-    if (!verts.empty()) 
+    if (!verts.empty())
     {
         shape.buildProgram();
         rotationLocShape = glGetUniformLocation(shape.program.id, "rotationAngle");
@@ -179,21 +132,18 @@ int main()
 
     // Render loop
     double time = glfwGetTime();
-	float angle = 0.f;
+    float angle = 0.f;
     while (!glfwWindowShouldClose(window))
     {
-		double currentTime = glfwGetTime();
-		double deltaTime = currentTime - time;
-		time = currentTime;
+        double currentTime = glfwGetTime();
+        double deltaTime = currentTime - time;
+        time = currentTime;
         if (glfwGetKey(window, GLFW_KEY_F12) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ? -0.5 : 0.5f); // slow rotation
         glPolygonMode(GL_FRONT_AND_BACK, glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS ? GL_LINE : GL_FILL);
 
         processInputs(window);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        //float angle = 0.f; //static_cast<float>(glfwGetTime()) * 0.5f; // slow rotation
-        //float angle = static_cast<float>(glfwGetTime()) * 0.5f; // slow rotation
 
         switch (currentShape)
         {

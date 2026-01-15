@@ -104,7 +104,26 @@ private:
         std::vector<float>& norms,
         std::vector<float>& texCoords,
         bool isSecondCoat);
+private:
+    PolarBuilder& buildCylinderIndexedInternal(
+        std::vector<float>& verts,
+        std::vector<float>& norms,
+        std::vector<float>& texCoords,
+        std::vector<uint32_t>& indices,
+        bool isSecondCoat);
 
+    PolarBuilder& buildCylinderDiscreteIndexedInternal(
+        std::vector<float>& verts,
+        std::vector<float>& norms,
+        std::vector<float>& texCoords,
+        std::vector<uint32_t>& indices,
+        bool isSecondCoat);
+
+    PolarBuilder& buildCylinderDiscreteInternal(
+        std::vector<float>& verts,
+        std::vector<float>& norms,
+        std::vector<float>& texCoords,
+        bool isSecondCoat);
     std::wstring m_formula;
     float m_domainStart;
     float m_domainEnd;

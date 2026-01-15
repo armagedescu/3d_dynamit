@@ -359,22 +359,22 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
                 if (isSecondCoat)
                 {
                     indices.push_back(v00);
-                    indices.push_back(v01);
                     indices.push_back(v10);
+                    indices.push_back(v01);
 
                     indices.push_back(v01);
-                    indices.push_back(v11);
                     indices.push_back(v10);
+                    indices.push_back(v11);
                 }
                 else
                 {
                     indices.push_back(v00);
-                    indices.push_back(v10);
                     indices.push_back(v01);
+                    indices.push_back(v10);
 
                     indices.push_back(v01);
-                    indices.push_back(v10);
                     indices.push_back(v11);
+                    indices.push_back(v10);
                 }
             }
 
@@ -448,166 +448,6 @@ PolarBuilder& PolarBuilder::reBuildConeIndexed(
     return buildConeIndexed(verts, norms, texCoords, indices);
 }
 
-PolarBuilder& PolarBuilder::buildCylinderIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords,
-    std::vector<uint32_t>& indices)
-{
-    using expresie_tokenizer::expression_token_compiler;
-    using expresie_tokenizer::expression;
-    expression_token_compiler compiler;
-
-    long double theta = 0.0L;
-
-    std::unique_ptr<expression> expr_r = compiler.compile(m_formula);
-    expr_r->bind(L"theta", &theta);
-
-    std::unique_ptr<expression> expr_dr = simplify(expr_r->derivative(L"theta"));
-    expr_dr->bind(L"theta", &theta);
-
-    const float normalSign = m_reversed ? -1.0f : 1.0f;
-
-    auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
-        uint32_t idx = static_cast<uint32_t>(verts.size() / 3);
-        verts.insert(verts.end(), { x, y, z });
-        norms.insert(norms.end(), { nx * normalSign, ny * normalSign, nz * normalSign });
-        texCoords.insert(texCoords.end(), { u, v });
-        return idx;
-    };
-
-    // Store first ring data for turbo mode
-    std::vector<float> baseX(m_sectors + 1);
-    std::vector<float> baseY(m_sectors + 1);
-    std::vector<float> baseNx(m_sectors + 1);
-    std::vector<float> baseNy(m_sectors + 1);
-
-    float domainRange = m_domainEnd - m_domainStart;
-
-    // Build first ring at z = 0
-    std::vector<uint32_t> prevRing(m_sectors + 1);
-    for (int i = 0; i <= m_sectors; i++)
-    {
-        theta = m_domainStart + domainRange * i / m_sectors;
-        float u = static_cast<float>(i) / m_sectors;
-
-        float r = static_cast<float>(expr_r->eval());
-        float dr = static_cast<float>(expr_dr->eval());
-
-        float x = static_cast<float>(expr_r->cyl_x(theta));
-        float y = static_cast<float>(expr_r->cyl_y(theta));
-
-        float cos_t = std::cos(static_cast<float>(theta));
-        float sin_t = std::sin(static_cast<float>(theta));
-        float nx = dr * sin_t + r * cos_t;
-        float ny = -(dr * cos_t - r * sin_t);
-
-        float len = std::sqrt(nx * nx + ny * ny);
-        if (len > 0.0001f)
-        {
-            nx /= len;
-            ny /= len;
-        }
-
-        baseX[i] = x;
-        baseY[i] = y;
-        baseNx[i] = nx;
-        baseNy[i] = ny;
-
-        prevRing[i] = addVertex(x, y, 0.0f, nx, ny, 0.0f, u, 0.0f);
-    }
-
-    // Build remaining rings and quads
-    for (int h = 1; h <= m_slices; h++)
-    {
-        float z = static_cast<float>(h) / m_slices;
-        float v = z;
-
-        std::vector<uint32_t> currRing(m_sectors + 1);
-
-        for (int i = 0; i <= m_sectors; i++)
-        {
-            float x, y, nx, ny;
-            float u = static_cast<float>(i) / m_sectors;
-
-            if (m_turbo)
-            {
-                x = baseX[i];
-                y = baseY[i];
-                nx = baseNx[i];
-                ny = baseNy[i];
-            }
-            else
-            {
-                theta = m_domainStart + domainRange * i / m_sectors;
-
-                float r = static_cast<float>(expr_r->eval());
-                float dr = static_cast<float>(expr_dr->eval());
-
-                x = static_cast<float>(expr_r->cyl_x(theta));
-                y = static_cast<float>(expr_r->cyl_y(theta));
-
-                float cos_t = std::cos(static_cast<float>(theta));
-                float sin_t = std::sin(static_cast<float>(theta));
-                nx = dr * sin_t + r * cos_t;
-                ny = -(dr * cos_t - r * sin_t);
-
-                float len = std::sqrt(nx * nx + ny * ny);
-                if (len > 0.0001f)
-                {
-                    nx /= len;
-                    ny /= len;
-                }
-            }
-
-            currRing[i] = addVertex(x, y, z, nx, ny, 0.0f, u, v);
-        }
-
-        for (int i = 0; i < m_sectors; i++)
-        {
-            uint32_t v00 = prevRing[i];
-            uint32_t v01 = prevRing[i + 1];
-            uint32_t v10 = currRing[i];
-            uint32_t v11 = currRing[i + 1];
-
-            if (m_reversed)
-            {
-                indices.push_back(v00);
-                indices.push_back(v10);
-                indices.push_back(v01);
-
-                indices.push_back(v01);
-                indices.push_back(v10);
-                indices.push_back(v11);
-            }
-            else
-            {
-                indices.push_back(v00);
-                indices.push_back(v01);
-                indices.push_back(v10);
-
-                indices.push_back(v01);
-                indices.push_back(v11);
-                indices.push_back(v10);
-            }
-        }
-
-        prevRing = currRing;
-    }
-
-    // Double coating
-    if (m_doubleCoated)
-    {
-        m_doubleCoated = false;  // Prevent infinite recursion
-        bool wasReversed = m_reversed;
-        m_reversed = !m_reversed;
-        buildCylinderIndexed(verts, norms, texCoords, indices);  // Make sure this says buildCylinderIndexed, NOT buildConeIndexed
-        m_reversed = wasReversed;
-        m_doubleCoated = true;   // Restore state
-    }
-
-    return *this;
-}
 
 PolarBuilder& PolarBuilder::buildCylinder(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
 {
@@ -735,133 +575,6 @@ PolarBuilder Builder::polar()
 // ============================================================================
 // CYLINDER - DISCRETE (FLAT SHADING)
 // ============================================================================
-
-PolarBuilder& PolarBuilder::buildCylinderDiscrete(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords)
-{
-    using expresie_tokenizer::expression_token_compiler;
-    using expresie_tokenizer::expression;
-    expression_token_compiler compiler;
-
-    long double theta = 0.0L;
-
-    std::unique_ptr<expression> expr_r = compiler.compile(m_formula);
-    expr_r->bind(L"theta", &theta);
-
-    float domainRange = m_domainEnd - m_domainStart;
-
-    // Precompute ring positions
-    std::vector<std::vector<float>> ringX(m_slices + 1, std::vector<float>(m_sectors + 1));
-    std::vector<std::vector<float>> ringY(m_slices + 1, std::vector<float>(m_sectors + 1));
-    std::vector<std::vector<float>> ringZ(m_slices + 1, std::vector<float>(m_sectors + 1));
-
-    for (int h = 0; h <= m_slices; h++)
-    {
-        float z = static_cast<float>(h) / m_slices;
-
-        for (int i = 0; i <= m_sectors; i++)
-        {
-            theta = m_domainStart + domainRange * i / m_sectors;
-
-            float x = static_cast<float>(expr_r->cyl_x(theta));
-            float y = static_cast<float>(expr_r->cyl_y(theta));
-
-            ringX[h][i] = x;
-            ringY[h][i] = y;
-            ringZ[h][i] = z;
-        }
-    }
-
-    // Generate triangles with flat normals
-    for (int h = 0; h < m_slices; h++)
-    {
-        float v0 = static_cast<float>(h) / m_slices;
-        float v1 = static_cast<float>(h + 1) / m_slices;
-
-        for (int i = 0; i < m_sectors; i++)
-        {
-            float u0 = static_cast<float>(i) / m_sectors;
-            float u1 = static_cast<float>(i + 1) / m_sectors;
-
-            // Quad corners
-            float x00 = ringX[h][i],         y00 = ringY[h][i],         z00 = ringZ[h][i];
-            float x01 = ringX[h][i + 1],     y01 = ringY[h][i + 1],     z01 = ringZ[h][i + 1];
-            float x10 = ringX[h + 1][i],     y10 = ringY[h + 1][i],     z10 = ringZ[h + 1][i];
-            float x11 = ringX[h + 1][i + 1], y11 = ringY[h + 1][i + 1], z11 = ringZ[h + 1][i + 1];
-
-            // Triangle 1: v00, v10, v01
-            float nx1, ny1, nz1;
-            if (m_reversed)
-                crossProductNormalLefthanded(x00, y00, z00, x01, y01, z01, x10, y10, z10, nx1, ny1, nz1, false);
-            else
-                crossProductNormalLefthanded(x00, y00, z00, x10, y10, z10, x01, y01, z01, nx1, ny1, nz1, false);
-
-            if (m_reversed)
-            {
-                verts.insert(verts.end(), { x00, y00, z00 });
-                verts.insert(verts.end(), { x01, y01, z01 });
-                verts.insert(verts.end(), { x10, y10, z10 });
-            }
-            else
-            {
-                verts.insert(verts.end(), { x00, y00, z00 });
-                verts.insert(verts.end(), { x10, y10, z10 });
-                verts.insert(verts.end(), { x01, y01, z01 });
-            }
-
-            norms.insert(norms.end(), { nx1, ny1, nz1 });
-            norms.insert(norms.end(), { nx1, ny1, nz1 });
-            norms.insert(norms.end(), { nx1, ny1, nz1 });
-
-            texCoords.insert(texCoords.end(), { u0, v0 });
-            texCoords.insert(texCoords.end(), { m_reversed ? u1 : u0, m_reversed ? v0 : v1 });
-            texCoords.insert(texCoords.end(), { m_reversed ? u0 : u1, m_reversed ? v1 : v0 });
-
-            // Triangle 2: v01, v10, v11
-            float nx2, ny2, nz2;
-            if (m_reversed)
-                crossProductNormalLefthanded(x01, y01, z01, x11, y11, z11, x10, y10, z10, nx2, ny2, nz2, false);
-            else
-                crossProductNormalLefthanded(x01, y01, z01, x10, y10, z10, x11, y11, z11, nx2, ny2, nz2, false);
-
-            if (m_reversed)
-            {
-                verts.insert(verts.end(), { x01, y01, z01 });
-                verts.insert(verts.end(), { x11, y11, z11 });
-                verts.insert(verts.end(), { x10, y10, z10 });
-            }
-            else
-            {
-                verts.insert(verts.end(), { x01, y01, z01 });
-                verts.insert(verts.end(), { x10, y10, z10 });
-                verts.insert(verts.end(), { x11, y11, z11 });
-            }
-
-            norms.insert(norms.end(), { nx2, ny2, nz2 });
-            norms.insert(norms.end(), { nx2, ny2, nz2 });
-            norms.insert(norms.end(), { nx2, ny2, nz2 });
-
-            texCoords.insert(texCoords.end(), { u1, v0 });
-            texCoords.insert(texCoords.end(), { m_reversed ? u1 : u0, m_reversed ? v1 : v1 });
-            texCoords.insert(texCoords.end(), { m_reversed ? u0 : u1, m_reversed ? v0 : v1 });
-        }
-    }
-
-    // Double coating
-    if (m_doubleCoated)
-    {
-        m_doubleCoated = false;
-        bool wasReversed = m_reversed;
-        m_reversed = !m_reversed;
-        buildCylinderDiscrete(verts, norms, texCoords);
-        m_reversed = wasReversed;
-        m_doubleCoated = true;
-    }
-
-    return *this;
-}
 
 // ============================================================================
 // CONE - DISCRETE (FLAT SHADING)
@@ -1033,6 +746,440 @@ PolarBuilder& PolarBuilder::buildConeDiscreteInternal(
 
     return *this;
 }
+// ============================================================================
+// CYLINDER - INDEXED (SMOOTH SHADING)
+// ============================================================================
 
+PolarBuilder& PolarBuilder::buildCylinderIndexed(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<float>& texCoords,
+    std::vector<uint32_t>& indices)
+{
+    if (!m_smooth)
+    {
+        return buildCylinderDiscreteIndexedInternal(verts, norms, texCoords, indices, false);
+    }
+    return buildCylinderIndexedInternal(verts, norms, texCoords, indices, false);
+}
+
+PolarBuilder& PolarBuilder::buildCylinderIndexedInternal(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<float>& texCoords,
+    std::vector<uint32_t>& indices,
+    bool isSecondCoat)
+{
+    using expresie_tokenizer::expression_token_compiler;
+    using expresie_tokenizer::expression;
+    expression_token_compiler compiler;
+
+    long double theta = 0.0L;
+
+    std::unique_ptr<expression> expr_r = compiler.compile(m_formula);
+    expr_r->bind(L"theta", &theta);
+
+    std::unique_ptr<expression> expr_dr = simplify(expr_r->derivative(L"theta"));
+    expr_dr->bind(L"theta", &theta);
+
+    auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
+        uint32_t idx = static_cast<uint32_t>(verts.size() / 3);
+        verts.insert(verts.end(), { x, y, z });
+        norms.insert(norms.end(), { nx, ny, nz });
+        texCoords.insert(texCoords.end(), { u, v });
+        return idx;
+    };
+
+    // Store first ring data for turbo mode
+    std::vector<float> baseX(m_sectors + 1);
+    std::vector<float> baseY(m_sectors + 1);
+    std::vector<float> baseNx(m_sectors + 1);
+    std::vector<float> baseNy(m_sectors + 1);
+
+    float domainRange = m_domainEnd - m_domainStart;
+
+    // Build first ring at z = 0
+    std::vector<uint32_t> prevRing(m_sectors + 1);
+    for (int i = 0; i <= m_sectors; i++)
+    {
+        theta = m_domainStart + domainRange * i / m_sectors;
+        float u = static_cast<float>(i) / m_sectors;
+
+        float r = static_cast<float>(expr_r->eval());
+        float dr = static_cast<float>(expr_dr->eval());
+
+        float x = static_cast<float>(expr_r->cyl_x(theta));
+        float y = static_cast<float>(expr_r->cyl_y(theta));
+
+        float cos_t = std::cos(static_cast<float>(theta));
+        float sin_t = std::sin(static_cast<float>(theta));
+        float nx = dr * sin_t + r * cos_t;
+        float ny = -(dr * cos_t - r * sin_t);
+
+        float len = std::sqrt(nx * nx + ny * ny);
+        if (len > 0.0001f)
+        {
+            nx /= len;
+            ny /= len;
+        }
+
+        // Flip normals for second coat
+        if (isSecondCoat)
+        {
+            nx = -nx;
+            ny = -ny;
+        }
+
+        baseX[i] = x;
+        baseY[i] = y;
+        baseNx[i] = nx;
+        baseNy[i] = ny;
+
+        prevRing[i] = addVertex(x, y, 0.0f, nx, ny, 0.0f, u, 0.0f);
+    }
+
+    // Build remaining rings and quads
+    for (int h = 1; h <= m_slices; h++)
+    {
+        float t = static_cast<float>(h) / m_slices;
+        float z = -t;  // Goes from 0 to -1
+        float v = t;
+
+        std::vector<uint32_t> currRing(m_sectors + 1);
+
+        for (int i = 0; i <= m_sectors; i++)
+        {
+            float x, y, nx, ny;
+            float u = static_cast<float>(i) / m_sectors;
+
+            if (m_turbo)
+            {
+                x = baseX[i];
+                y = baseY[i];
+                nx = baseNx[i];
+                ny = baseNy[i];
+            }
+            else
+            {
+                theta = m_domainStart + domainRange * i / m_sectors;
+
+                float r = static_cast<float>(expr_r->eval());
+                float dr = static_cast<float>(expr_dr->eval());
+
+                x = static_cast<float>(expr_r->cyl_x(theta));
+                y = static_cast<float>(expr_r->cyl_y(theta));
+
+                float cos_t = std::cos(static_cast<float>(theta));
+                float sin_t = std::sin(static_cast<float>(theta));
+                nx = dr * sin_t + r * cos_t;
+                ny = -(dr * cos_t - r * sin_t);
+
+                float len = std::sqrt(nx * nx + ny * ny);
+                if (len > 0.0001f)
+                {
+                    nx /= len;
+                    ny /= len;
+                }
+
+                // Flip normals for second coat
+                if (isSecondCoat)
+                {
+                    nx = -nx;
+                    ny = -ny;
+                }
+            }
+
+            currRing[i] = addVertex(x, y, z, nx, ny, 0.0f, u, v);
+        }
+
+        for (int i = 0; i < m_sectors; i++)
+        {
+            uint32_t v00 = prevRing[i];
+            uint32_t v01 = prevRing[i + 1];
+            uint32_t v10 = currRing[i];
+            uint32_t v11 = currRing[i + 1];
+
+            if (isSecondCoat)
+            {
+                indices.push_back(v00);
+                indices.push_back(v10);
+                indices.push_back(v01);
+
+                indices.push_back(v01);
+                indices.push_back(v10);
+                indices.push_back(v11);
+            }
+            else
+            {
+                indices.push_back(v00);
+                indices.push_back(v01);
+                indices.push_back(v10);
+
+                indices.push_back(v01);
+                indices.push_back(v11);
+                indices.push_back(v10);
+            }
+        }
+
+        prevRing = currRing;
+    }
+
+    if (!isSecondCoat && m_doubleCoated)
+    {
+        buildCylinderIndexedInternal(verts, norms, texCoords, indices, true);
+    }
+
+    return *this;
+}
+
+PolarBuilder& PolarBuilder::buildCylinderDiscreteIndexedInternal(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<float>& texCoords,
+    std::vector<uint32_t>& indices,
+    bool isSecondCoat)
+{
+    using expresie_tokenizer::expression_token_compiler;
+    using expresie_tokenizer::expression;
+    expression_token_compiler compiler;
+
+    long double theta = 0.0L;
+
+    std::unique_ptr<expression> expr_r = compiler.compile(m_formula);
+    expr_r->bind(L"theta", &theta);
+
+    float domainRange = m_domainEnd - m_domainStart;
+
+    // Precompute ring positions
+    std::vector<std::vector<float>> ringX(m_slices + 1, std::vector<float>(m_sectors + 1));
+    std::vector<std::vector<float>> ringY(m_slices + 1, std::vector<float>(m_sectors + 1));
+    std::vector<std::vector<float>> ringZ(m_slices + 1, std::vector<float>(m_sectors + 1));
+
+    for (int h = 0; h <= m_slices; h++)
+    {
+        float t = static_cast<float>(h) / m_slices;
+        float z = -t;  // Goes from 0 to -1
+
+        for (int i = 0; i <= m_sectors; i++)
+        {
+            theta = m_domainStart + domainRange * i / m_sectors;
+
+            float x = static_cast<float>(expr_r->cyl_x(theta));
+            float y = static_cast<float>(expr_r->cyl_y(theta));
+
+            ringX[h][i] = x;
+            ringY[h][i] = y;
+            ringZ[h][i] = z;
+        }
+    }
+
+    auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
+        uint32_t idx = static_cast<uint32_t>(verts.size() / 3);
+        verts.insert(verts.end(), { x, y, z });
+        norms.insert(norms.end(), { nx, ny, nz });
+        texCoords.insert(texCoords.end(), { u, v });
+        return idx;
+    };
+
+    // Generate triangles with flat normals
+    for (int h = 0; h < m_slices; h++)
+    {
+        float v0 = static_cast<float>(h) / m_slices;
+        float v1 = static_cast<float>(h + 1) / m_slices;
+
+        for (int i = 0; i < m_sectors; i++)
+        {
+            float u0 = static_cast<float>(i) / m_sectors;
+            float u1 = static_cast<float>(i + 1) / m_sectors;
+
+            // Quad corners
+            float x00 = ringX[h][i], y00 = ringY[h][i], z00 = ringZ[h][i];
+            float x01 = ringX[h][i + 1], y01 = ringY[h][i + 1], z01 = ringZ[h][i + 1];
+            float x10 = ringX[h + 1][i], y10 = ringY[h + 1][i], z10 = ringZ[h + 1][i];
+            float x11 = ringX[h + 1][i + 1], y11 = ringY[h + 1][i + 1], z11 = ringZ[h + 1][i + 1];
+
+            // Triangle 1
+            float nx1, ny1, nz1;
+            if (!isSecondCoat)
+            {
+                crossProductNormalLefthanded(x00, y00, z00, x10, y10, z10, x01, y01, z01, nx1, ny1, nz1, false);
+                uint32_t i0 = addVertex(x00, y00, z00, nx1, ny1, nz1, u0, v0);
+                uint32_t i1 = addVertex(x10, y10, z10, nx1, ny1, nz1, u0, v1);
+                uint32_t i2 = addVertex(x01, y01, z01, nx1, ny1, nz1, u1, v0);
+                indices.push_back(i0);
+                indices.push_back(i1);
+                indices.push_back(i2);
+            }
+            else
+            {
+                crossProductNormalLefthanded(x00, y00, z00, x01, y01, z01, x10, y10, z10, nx1, ny1, nz1, false);
+                uint32_t i0 = addVertex(x00, y00, z00, nx1, ny1, nz1, u0, v0);
+                uint32_t i1 = addVertex(x01, y01, z01, nx1, ny1, nz1, u1, v0);
+                uint32_t i2 = addVertex(x10, y10, z10, nx1, ny1, nz1, u0, v1);
+                indices.push_back(i0);
+                indices.push_back(i1);
+                indices.push_back(i2);
+            }
+
+            // Triangle 2
+            float nx2, ny2, nz2;
+            if (!isSecondCoat)
+            {
+                crossProductNormalLefthanded(x01, y01, z01, x10, y10, z10, x11, y11, z11, nx2, ny2, nz2, false);
+                uint32_t i0 = addVertex(x01, y01, z01, nx2, ny2, nz2, u1, v0);
+                uint32_t i1 = addVertex(x10, y10, z10, nx2, ny2, nz2, u0, v1);
+                uint32_t i2 = addVertex(x11, y11, z11, nx2, ny2, nz2, u1, v1);
+                indices.push_back(i0);
+                indices.push_back(i1);
+                indices.push_back(i2);
+            }
+            else
+            {
+                crossProductNormalLefthanded(x01, y01, z01, x11, y11, z11, x10, y10, z10, nx2, ny2, nz2, false);
+                uint32_t i0 = addVertex(x01, y01, z01, nx2, ny2, nz2, u1, v0);
+                uint32_t i1 = addVertex(x11, y11, z11, nx2, ny2, nz2, u1, v1);
+                uint32_t i2 = addVertex(x10, y10, z10, nx2, ny2, nz2, u0, v1);
+                indices.push_back(i0);
+                indices.push_back(i1);
+                indices.push_back(i2);
+            }
+        }
+    }
+
+    if (!isSecondCoat && m_doubleCoated)
+    {
+        buildCylinderDiscreteIndexedInternal(verts, norms, texCoords, indices, true);
+    }
+
+    return *this;
+}
+
+// ============================================================================
+// CYLINDER - DISCRETE (FLAT SHADING)
+// ============================================================================
+
+PolarBuilder& PolarBuilder::buildCylinderDiscrete(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<float>& texCoords)
+{
+    return buildCylinderDiscreteInternal(verts, norms, texCoords, false);
+}
+
+PolarBuilder& PolarBuilder::buildCylinderDiscreteInternal(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<float>& texCoords,
+    bool isSecondCoat)
+{
+    using expresie_tokenizer::expression_token_compiler;
+    using expresie_tokenizer::expression;
+    expression_token_compiler compiler;
+    long double theta = 0.0L;
+
+    std::unique_ptr<expression> expr_r = compiler.compile(m_formula);
+    expr_r->bind(L"theta", &theta);
+
+    float domainRange = m_domainEnd - m_domainStart;
+
+    // Precompute ring positions
+    std::vector<std::vector<float>> ringX(m_slices + 1, std::vector<float>(m_sectors + 1));
+    std::vector<std::vector<float>> ringY(m_slices + 1, std::vector<float>(m_sectors + 1));
+    std::vector<std::vector<float>> ringZ(m_slices + 1, std::vector<float>(m_sectors + 1));
+
+    for (int h = 0; h <= m_slices; h++)
+    {
+        float t = static_cast<float>(h) / m_slices;
+        float z = -t;  // Goes from 0 to -1
+
+        for (int i = 0; i <= m_sectors; i++)
+        {
+            theta = m_domainStart + domainRange * i / m_sectors;
+
+            float x = static_cast<float>(expr_r->cyl_x(theta));
+            float y = static_cast<float>(expr_r->cyl_y(theta));
+
+            ringX[h][i] = x;
+            ringY[h][i] = y;
+            ringZ[h][i] = z;
+        }
+    }
+
+    // Generate triangles with flat normals
+    for (int h = 0; h < m_slices; h++)
+    {
+        float v0 = static_cast<float>(h) / m_slices;
+        float v1 = static_cast<float>(h + 1) / m_slices;
+
+        for (int i = 0; i < m_sectors; i++)
+        {
+            float u0 = static_cast<float>(i) / m_sectors;
+            float u1 = static_cast<float>(i + 1) / m_sectors;
+
+            // Quad corners
+            float x00 = ringX[h][i], y00 = ringY[h][i], z00 = ringZ[h][i];
+            float x01 = ringX[h][i + 1], y01 = ringY[h][i + 1], z01 = ringZ[h][i + 1];
+            float x10 = ringX[h + 1][i], y10 = ringY[h + 1][i], z10 = ringZ[h + 1][i];
+            float x11 = ringX[h + 1][i + 1], y11 = ringY[h + 1][i + 1], z11 = ringZ[h + 1][i + 1];
+
+            // Triangle 1
+            float nx1, ny1, nz1;
+            if (!isSecondCoat)
+            {
+                crossProductNormalLefthanded(x00, y00, z00, x10, y10, z10, x01, y01, z01, nx1, ny1, nz1, false);
+                verts.insert(verts.end(), { x00, y00, z00 });
+                verts.insert(verts.end(), { x10, y10, z10 });
+                verts.insert(verts.end(), { x01, y01, z01 });
+            }
+            else
+            {
+                crossProductNormalLefthanded(x00, y00, z00, x01, y01, z01, x10, y10, z10, nx1, ny1, nz1, false);
+                verts.insert(verts.end(), { x00, y00, z00 });
+                verts.insert(verts.end(), { x01, y01, z01 });
+                verts.insert(verts.end(), { x10, y10, z10 });
+            }
+
+            norms.insert(norms.end(), { nx1, ny1, nz1 });
+            norms.insert(norms.end(), { nx1, ny1, nz1 });
+            norms.insert(norms.end(), { nx1, ny1, nz1 });
+
+            texCoords.insert(texCoords.end(), { u0, v0 });
+            texCoords.insert(texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v0 : v1 });
+            texCoords.insert(texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v1 : v0 });
+
+            // Triangle 2
+            float nx2, ny2, nz2;
+            if (!isSecondCoat)
+            {
+                crossProductNormalLefthanded(x01, y01, z01, x10, y10, z10, x11, y11, z11, nx2, ny2, nz2, false);
+                verts.insert(verts.end(), { x01, y01, z01 });
+                verts.insert(verts.end(), { x10, y10, z10 });
+                verts.insert(verts.end(), { x11, y11, z11 });
+            }
+            else
+            {
+                crossProductNormalLefthanded(x01, y01, z01, x11, y11, z11, x10, y10, z10, nx2, ny2, nz2, false);
+                verts.insert(verts.end(), { x01, y01, z01 });
+                verts.insert(verts.end(), { x11, y11, z11 });
+                verts.insert(verts.end(), { x10, y10, z10 });
+            }
+
+            norms.insert(norms.end(), { nx2, ny2, nz2 });
+            norms.insert(norms.end(), { nx2, ny2, nz2 });
+            norms.insert(norms.end(), { nx2, ny2, nz2 });
+
+            texCoords.insert(texCoords.end(), { u1, v0 });
+            texCoords.insert(texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v1 : v1 });
+            texCoords.insert(texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v0 : v1 });
+        }
+    }
+
+    if (!isSecondCoat && m_doubleCoated)
+    {
+        buildCylinderDiscreteInternal(verts, norms, texCoords, true);
+    }
+
+    return *this;
+}
 } // namespace dynamit::builders
 

@@ -35,7 +35,9 @@ int main()
 
     std::cout << "Heart cone vertices: " << verts.size() / 3 << " (triangles: " << verts.size() / 9 << ")" << std::endl;
 
-    bool buildHeart = true, buildCardoid = false, buildEllipse = false, build5PointerStar = false, build5PetalRose = false, buildLemniscate = true;
+    bool buildHeart = false, buildCardoid = false, buildEllipse = false, 
+        build5PointerStar = false, build5PetalRose = false, 
+        buildLemniscate = true;
     if (buildHeart)
     {
         Builder::polar() //.turbo(false)
