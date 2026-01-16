@@ -150,18 +150,243 @@ static void crossProductNormalLefthanded(
     }
 }
 
+// ============================================================================
+// CONE - PUBLIC METHODS (with post-build transformation)
+// ============================================================================
+
 PolarBuilder& PolarBuilder::buildConeIndexed(
     std::vector<float>& verts,
     std::vector<float>& norms,
     std::vector<float>& texCoords,
     std::vector<uint32_t>& indices)
 {
-    return buildConeIndexedInternal(
-        verts,
-        norms,
-        texCoords,
-        indices, false);
+    size_t startVertex = verts.size() / 3;
+    
+    buildConeIndexedInternal(verts, norms, texCoords, indices, false);
+
+    return *this;
 }
+
+PolarBuilder& PolarBuilder::buildCone(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
+{
+    size_t startVertex = verts.size() / 3;
+    
+    if (!m_smooth)
+    {
+        buildConeDiscrete(verts, norms, texCoords);
+    }
+    else
+    {
+        std::vector<float> indexedVerts, indexedNorms, indexedTexCoords;
+        std::vector<uint32_t> indices;
+
+        buildConeIndexedInternal(indexedVerts, indexedNorms, indexedTexCoords, indices, false);
+
+        size_t additionalSize = indices.size() * 3;
+        verts.reserve(verts.size() + additionalSize);
+        norms.reserve(norms.size() + additionalSize);
+        texCoords.reserve(texCoords.size() + (indices.size() * 2));
+
+        for (uint32_t idx : indices)
+        {
+            size_t offset3 = idx * 3;
+            size_t offset2 = idx * 2;
+            
+            verts.push_back(indexedVerts[offset3]);
+            verts.push_back(indexedVerts[offset3 + 1]);
+            verts.push_back(indexedVerts[offset3 + 2]);
+
+            norms.push_back(indexedNorms[offset3]);
+            norms.push_back(indexedNorms[offset3 + 1]);
+            norms.push_back(indexedNorms[offset3 + 2]);
+
+            texCoords.push_back(indexedTexCoords[offset2]);
+            texCoords.push_back(indexedTexCoords[offset2 + 1]);
+        }
+    }
+
+    return *this;
+}
+
+PolarBuilder& PolarBuilder::reBuildCone(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
+{
+    verts.clear();
+    norms.clear();
+    texCoords.clear();
+    return buildCone(verts, norms, texCoords);
+}
+
+PolarBuilder& PolarBuilder::reBuildConeIndexed(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<float>& texCoords,
+    std::vector<uint32_t>& indices)
+{
+    verts.clear();
+    norms.clear();
+    texCoords.clear();
+    indices.clear();
+    return buildConeIndexed(verts, norms, texCoords, indices);
+}
+
+// ============================================================================
+// CYLINDER - PUBLIC METHODS (with post-build transformation)
+// ============================================================================
+
+PolarBuilder& PolarBuilder::buildCylinderIndexed(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<float>& texCoords,
+    std::vector<uint32_t>& indices)
+{
+    size_t startVertex = verts.size() / 3;
+    
+    if (!m_smooth)
+    {
+        buildCylinderDiscreteIndexedInternal(verts, norms, texCoords, indices, false);
+    }
+    else
+    {
+        buildCylinderIndexedInternal(verts, norms, texCoords, indices, false);
+    }
+    
+    return *this;
+}
+
+PolarBuilder& PolarBuilder::buildCylinder(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
+{
+    size_t startVertex = verts.size() / 3;
+    
+    if (!m_smooth)
+    {
+        buildCylinderDiscrete(verts, norms, texCoords);
+    }
+    else
+    {
+        std::vector<float> indexedVerts, indexedNorms, indexedTexCoords;
+        std::vector<uint32_t> indices;
+
+        buildCylinderIndexedInternal(indexedVerts, indexedNorms, indexedTexCoords, indices, false);
+
+        size_t additionalSize = indices.size() * 3;
+        verts.reserve(verts.size() + additionalSize);
+        norms.reserve(norms.size() + additionalSize);
+        texCoords.reserve(texCoords.size() + (indices.size() * 2));
+
+        for (uint32_t idx : indices)
+        {
+            size_t offset3 = idx * 3;
+            size_t offset2 = idx * 2;
+            
+            verts.push_back(indexedVerts[offset3]);
+            verts.push_back(indexedVerts[offset3 + 1]);
+            verts.push_back(indexedVerts[offset3 + 2]);
+
+            norms.push_back(indexedNorms[offset3]);
+            norms.push_back(indexedNorms[offset3 + 1]);
+            norms.push_back(indexedNorms[offset3 + 2]);
+
+            texCoords.push_back(indexedTexCoords[offset2]);
+            texCoords.push_back(indexedTexCoords[offset2 + 1]);
+        }
+    }
+
+    return *this;
+}
+
+PolarBuilder& PolarBuilder::reBuildCylinder(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
+{
+    verts.clear();
+    norms.clear();
+    texCoords.clear();
+    return buildCylinder(verts, norms, texCoords);
+}
+
+PolarBuilder& PolarBuilder::reBuildCylinderIndexed(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<float>& texCoords,
+    std::vector<uint32_t>& indices)
+{
+    verts.clear();
+    norms.clear();
+    texCoords.clear();
+    indices.clear();
+    return buildCylinderIndexed(verts, norms, texCoords, indices);
+}
+
+// ============================================================================
+// LEGACY OVERLOADS (without texCoords)
+// ============================================================================
+
+PolarBuilder& PolarBuilder::buildCone(std::vector<float>& verts, std::vector<float>& norms)
+{
+    std::vector<float> texCoords;
+    return buildCone(verts, norms, texCoords);
+}
+
+PolarBuilder& PolarBuilder::buildConeIndexed(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords;
+    return buildConeIndexed(verts, norms, texCoords, indices);
+}
+
+PolarBuilder& PolarBuilder::reBuildCone(std::vector<float>& verts, std::vector<float>& norms)
+{
+    std::vector<float> texCoords;
+    return reBuildCone(verts, norms, texCoords);
+}
+
+PolarBuilder& PolarBuilder::reBuildConeIndexed(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords;
+    return reBuildConeIndexed(verts, norms, texCoords, indices);
+}
+
+PolarBuilder& PolarBuilder::buildCylinder(std::vector<float>& verts, std::vector<float>& norms)
+{
+    std::vector<float> texCoords;
+    return buildCylinder(verts, norms, texCoords);
+}
+
+PolarBuilder& PolarBuilder::buildCylinderIndexed(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords;
+    return buildCylinderIndexed(verts, norms, texCoords, indices);
+}
+
+PolarBuilder& PolarBuilder::reBuildCylinder(std::vector<float>& verts, std::vector<float>& norms)
+{
+    std::vector<float> texCoords;
+    return reBuildCylinder(verts, norms, texCoords);
+}
+
+PolarBuilder& PolarBuilder::reBuildCylinderIndexed(
+    std::vector<float>& verts,
+    std::vector<float>& norms,
+    std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords;
+    return reBuildCylinderIndexed(verts, norms, texCoords, indices);
+}
+
+PolarBuilder Builder::polar()
+{
+    return PolarBuilder();
+}
+
+// ============================================================================
+// CONE - INTERNAL (UNCHANGED COMPUTATION LOGIC)
+// ============================================================================
 
 PolarBuilder& PolarBuilder::buildConeIndexedInternal(
     std::vector<float>& verts,
@@ -390,196 +615,6 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
     return *this;
 }
 
-PolarBuilder& PolarBuilder::buildCone(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
-{
-    if (!m_smooth)
-    {
-        return buildConeDiscrete(verts, norms, texCoords);
-    }
-
-    std::vector<float> indexedVerts, indexedNorms, indexedTexCoords;
-    std::vector<uint32_t> indices;
-
-    buildConeIndexed(indexedVerts, indexedNorms, indexedTexCoords, indices);
-
-    size_t additionalSize = indices.size() * 3;
-    verts.reserve(verts.size() + additionalSize);
-    norms.reserve(norms.size() + additionalSize);
-    texCoords.reserve(texCoords.size() + (indices.size() * 2));
-
-    for (uint32_t idx : indices)
-    {
-        size_t offset3 = idx * 3;
-        size_t offset2 = idx * 2;
-        
-        verts.push_back(indexedVerts[offset3]);
-        verts.push_back(indexedVerts[offset3 + 1]);
-        verts.push_back(indexedVerts[offset3 + 2]);
-
-        norms.push_back(indexedNorms[offset3]);
-        norms.push_back(indexedNorms[offset3 + 1]);
-        norms.push_back(indexedNorms[offset3 + 2]);
-
-        texCoords.push_back(indexedTexCoords[offset2]);
-        texCoords.push_back(indexedTexCoords[offset2 + 1]);
-    }
-
-    return *this;
-}
-
-PolarBuilder& PolarBuilder::reBuildCone(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
-{
-    verts.clear();
-    norms.clear();
-    texCoords.clear();
-    return buildCone(verts, norms, texCoords);
-}
-
-PolarBuilder& PolarBuilder::reBuildConeIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords,
-    std::vector<uint32_t>& indices)
-{
-    verts.clear();
-    norms.clear();
-    texCoords.clear();
-    indices.clear();
-    return buildConeIndexed(verts, norms, texCoords, indices);
-}
-
-
-PolarBuilder& PolarBuilder::buildCylinder(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
-{
-    if (!m_smooth)
-    {
-        return buildCylinderDiscrete(verts, norms, texCoords);
-    }
-
-    std::vector<float> indexedVerts, indexedNorms, indexedTexCoords;
-    std::vector<uint32_t> indices;
-
-    buildCylinderIndexed(indexedVerts, indexedNorms, indexedTexCoords, indices);
-
-    size_t additionalSize = indices.size() * 3;
-    verts.reserve(verts.size() + additionalSize);
-    norms.reserve(norms.size() + additionalSize);
-    texCoords.reserve(texCoords.size() + (indices.size() * 2));
-
-    for (uint32_t idx : indices)
-    {
-        size_t offset3 = idx * 3;
-        size_t offset2 = idx * 2;
-        
-        verts.push_back(indexedVerts[offset3]);
-        verts.push_back(indexedVerts[offset3 + 1]);
-        verts.push_back(indexedVerts[offset3 + 2]);
-
-        norms.push_back(indexedNorms[offset3]);
-        norms.push_back(indexedNorms[offset3 + 1]);
-        norms.push_back(indexedNorms[offset3 + 2]);
-
-        texCoords.push_back(indexedTexCoords[offset2]);
-        texCoords.push_back(indexedTexCoords[offset2 + 1]);
-    }
-
-    return *this;
-}
-
-PolarBuilder& PolarBuilder::reBuildCylinder(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
-{
-    verts.clear();
-    norms.clear();
-    texCoords.clear();
-    return buildCylinder(verts, norms, texCoords);
-}
-
-PolarBuilder& PolarBuilder::reBuildCylinderIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords,
-    std::vector<uint32_t>& indices)
-{
-    verts.clear();
-    norms.clear();
-    texCoords.clear();
-    indices.clear();
-    return buildCylinderIndexed(verts, norms, texCoords, indices);
-}
-
-// Legacy overloads (without texCoords) - use dummy vector
-PolarBuilder& PolarBuilder::buildCone(std::vector<float>& verts, std::vector<float>& norms)
-{
-    std::vector<float> texCoords;
-    return buildCone(verts, norms, texCoords);
-}
-
-PolarBuilder& PolarBuilder::buildConeIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<uint32_t>& indices)
-{
-    std::vector<float> texCoords;
-    return buildConeIndexed(verts, norms, texCoords, indices);
-}
-
-PolarBuilder& PolarBuilder::reBuildCone(std::vector<float>& verts, std::vector<float>& norms)
-{
-    std::vector<float> texCoords;
-    return reBuildCone(verts, norms, texCoords);
-}
-
-PolarBuilder& PolarBuilder::reBuildConeIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<uint32_t>& indices)
-{
-    std::vector<float> texCoords;
-    return reBuildConeIndexed(verts, norms, texCoords, indices);
-}
-
-PolarBuilder& PolarBuilder::buildCylinder(std::vector<float>& verts, std::vector<float>& norms)
-{
-    std::vector<float> texCoords;
-    return buildCylinder(verts, norms, texCoords);
-}
-
-PolarBuilder& PolarBuilder::buildCylinderIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<uint32_t>& indices)
-{
-    std::vector<float> texCoords;
-    return buildCylinderIndexed(verts, norms, texCoords, indices);
-}
-
-PolarBuilder& PolarBuilder::reBuildCylinder(std::vector<float>& verts, std::vector<float>& norms)
-{
-    std::vector<float> texCoords;
-    return reBuildCylinder(verts, norms, texCoords);
-}
-
-PolarBuilder& PolarBuilder::reBuildCylinderIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<uint32_t>& indices)
-{
-    std::vector<float> texCoords;
-    return reBuildCylinderIndexed(verts, norms, texCoords, indices);
-}
-
-PolarBuilder Builder::polar()
-{
-    return PolarBuilder();
-}
-// ============================================================================
-// CYLINDER - DISCRETE (FLAT SHADING)
-// ============================================================================
-
-// ============================================================================
-// CONE - DISCRETE (FLAT SHADING)
-// ============================================================================
-
 PolarBuilder& PolarBuilder::buildConeDiscrete(
     std::vector<float>& verts,
     std::vector<float>& norms,
@@ -746,22 +781,10 @@ PolarBuilder& PolarBuilder::buildConeDiscreteInternal(
 
     return *this;
 }
-// ============================================================================
-// CYLINDER - INDEXED (SMOOTH SHADING)
-// ============================================================================
 
-PolarBuilder& PolarBuilder::buildCylinderIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords,
-    std::vector<uint32_t>& indices)
-{
-    if (!m_smooth)
-    {
-        return buildCylinderDiscreteIndexedInternal(verts, norms, texCoords, indices, false);
-    }
-    return buildCylinderIndexedInternal(verts, norms, texCoords, indices, false);
-}
+// ============================================================================
+// CYLINDER - INTERNAL (UNCHANGED COMPUTATION LOGIC)
+// ============================================================================
 
 PolarBuilder& PolarBuilder::buildCylinderIndexedInternal(
     std::vector<float>& verts,
@@ -1054,10 +1077,6 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteIndexedInternal(
     return *this;
 }
 
-// ============================================================================
-// CYLINDER - DISCRETE (FLAT SHADING)
-// ============================================================================
-
 PolarBuilder& PolarBuilder::buildCylinderDiscrete(
     std::vector<float>& verts,
     std::vector<float>& norms,
@@ -1098,6 +1117,9 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteInternal(
 
             float x = static_cast<float>(expr_r->cyl_x(theta));
             float y = static_cast<float>(expr_r->cyl_y(theta));
+
+            // Apply transformation to precomputed positions
+            //applyTransformPosition(x, y, z);
 
             ringX[h][i] = x;
             ringY[h][i] = y;
@@ -1181,5 +1203,6 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteInternal(
 
     return *this;
 }
+
 } // namespace dynamit::builders
 

@@ -180,6 +180,7 @@
     <ClCompile Include="dynamitDrawStrided.cpp" />
     <ClCompile Include="dynamit.cpp" />
     <ClCompile Include="dynamitNormalsAndColors2Progs.cpp" />
+    <ClCompile Include="dynamitPolarWithTransform.cpp" />
     <ClCompile Include="dynamitSphereDodecahedron.cpp" />
     <ClCompile Include="dynamitSphereDodecahedronTextured.cpp" />
     <ClCompile Include="dynamitTriangleFan.cpp" />

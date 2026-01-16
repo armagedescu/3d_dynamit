@@ -104,6 +104,12 @@
             margin: 1.5rem 0 1rem;
         }
 
+        h4 {
+            color: #60a5fa;
+            font-size: 1.1rem;
+            margin: 1rem 0 0.5rem;
+        }
+
         .feature-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -232,6 +238,10 @@
             background: #f59e0b;
         }
 
+        .badge-new {
+            background: #ef4444;
+        }
+
         .architecture-diagram {
             background: var(--bg-dark);
             border: 1px solid var(--border);
@@ -304,6 +314,22 @@
                 .toc a:hover {
                     color: var(--primary);
                 }
+
+        .note {
+            background: rgba(37, 99, 235, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
     </style>
 </head>
 <body>
@@ -324,6 +350,7 @@
             <li><a href="#overview">Overview</a></li>
             <li><a href="#components">Components</a></li>
             <li><a href="#dynamit">Dynamit API</a></li>
+            <li><a href="#builders">PolarBuilder API</a></li>
             <li><a href="#expressions">Expression Compiler</a></li>
             <li><a href="#examples">Examples</a></li>
             <li><a href="#api">API Reference</a></li>
@@ -369,6 +396,20 @@
                         and efficient expression tree traversal.
                     </p>
                 </div>
+                <div class="feature-card">
+                    <h4>🔷 Parametric Geometry <span class="badge badge-new">NEW</span></h4>
+                    <p>
+                        Generate cones and cylinders from polar coordinate mathematical formulas
+                        with automatic smooth normals via symbolic differentiation.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <h4>🎯 Fluent Builder API <span class="badge badge-new">NEW</span></h4>
+                    <p>
+                        Chain method calls to configure geometry generation: sectors, slices,
+                        domain ranges, smooth/flat shading, and double-sided rendering.
+                    </p>
+                </div>
             </div>
         </section>
 
@@ -388,7 +429,7 @@
                     <tr>
                         <td><strong>dynamit_gl</strong></td>
                         <td><span class="badge badge-lib">Library</span></td>
-                        <td>Core OpenGL graphics library with Dynamit class, shader generation, and shape primitives</td>
+                        <td>Core OpenGL graphics library with Dynamit class, shader generation, PolarBuilder, and shape primitives</td>
                     </tr>
                     <tr>
                         <td><strong>3DCalculator</strong></td>
@@ -398,7 +439,7 @@
                     <tr>
                         <td><strong>3Dapi</strong></td>
                         <td><span class="badge badge-demo">Demos</span></td>
-                        <td>Collection of OpenGL rendering examples: cones, spheres, terrain, shadows</td>
+                        <td>Collection of OpenGL rendering examples: cones, cylinders, terrain, shadows</td>
                     </tr>
                 </tbody>
             </table>
@@ -409,7 +450,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                        3Dapi (Demos)                        │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐   │
-│  │  Cones   │ │ Spheres  │ │ Terrain  │ │ Shadow Maps  │   │
+│  │  Cones   │ │Cylinders │ │ Terrain  │ │ Shadow Maps  │   │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -427,9 +468,10 @@
 │  │ (Auto GLSL Gen) │  │               │  └────────┬────────┘  │
 │  └─────────────────┘  │               │           ▼           │
 │                       │               │  ┌─────────────────┐  │
-│  ┌─────────────────┐  │               │  │  Differentiation│  │
-│  │ Shapes/Terrain  │  │               │  │  (Symbolic)     │  │
-│  └─────────────────┘  │               │  └─────────────────┘  │
+│  ┌─────────────────┐  │◄──────────────│  │  Differentiation│  │
+│  │  PolarBuilder   │  │               │  │  (Symbolic)     │  │
+│  │ (Geometry Gen)  │  │               │  └─────────────────┘  │
+│  └─────────────────┘  │               │                       │
 └───────────────────────┘               └───────────────────────┘
         │                                           │
         └─────────────────────┬─────────────────────┘
@@ -550,6 +592,209 @@ quad.<span class="function">drawTrianglesIndexed</span>();
 </code></pre>
         </section>
 
+        <!-- PolarBuilder API Section -->
+        <section id="builders">
+            <h2>🔷 PolarBuilder API <span class="badge badge-new">NEW</span></h2>
+            <p>
+                The <code>PolarBuilder</code> class generates 3D cone and cylinder geometry from polar coordinate
+                mathematical formulas. It uses the expression compiler for formula evaluation and symbolic
+                differentiation to compute analytically smooth normals.
+            </p>
+
+            <h3>Basic Usage</h3>
+            <pre><code><span class="code-label">C++</span>
+<span class="keyword">#include</span> <span class="string">&lt;builders.h&gt;</span>
+<span class="keyword">using namespace</span> dynamit::builders;
+
+<span class="comment">// Generate a simple cone</span>
+std::vector&lt;<span class="type">float</span>&gt; verts, norms;
+Builder::<span class="function">polar</span>()
+    .<span class="function">formula</span>(L<span class="string">"1"</span>)           <span class="comment">// r(θ) = 1 (circle)</span>
+    .<span class="function">sectors</span>(<span class="number">36</span>)             <span class="comment">// 36 divisions around</span>
+    .<span class="function">slices</span>(<span class="number">10</span>)              <span class="comment">// 10 divisions along height</span>
+    .<span class="function">buildCone</span>(verts, norms);
+</code></pre>
+
+            <h3>Heart-Shaped Cone</h3>
+            <pre><code><span class="code-label">C++</span>
+<span class="comment">// Heart shape requires two halves with different formulas</span>
+std::vector&lt;<span class="type">float</span>&gt; verts, norms;
+
+Builder::<span class="function">polar</span>()
+    .<span class="function">formula</span>(L<span class="string">"theta / PI"</span>)        <span class="comment">// First half: r increases</span>
+    .<span class="function">domain</span>(<span class="number">0</span>, M_PI)               <span class="comment">// θ from 0 to π</span>
+    .<span class="function">sectors_slices</span>(<span class="number">30</span>, <span class="number">10</span>)
+    .<span class="function">buildCone</span>(verts, norms)
+    .<span class="function">formula</span>(L<span class="string">"(2*PI - theta) / PI"</span>) <span class="comment">// Second half: r decreases</span>
+    .<span class="function">domain_shift</span>(<span class="number">2</span> * M_PI)        <span class="comment">// θ from π to 2π</span>
+    .<span class="function">buildCone</span>(verts, norms);       <span class="comment">// Appends to existing data</span>
+</code></pre>
+
+            <h3>Parametric Cylinder Shapes</h3>
+            <pre><code><span class="code-label">C++</span>
+<span class="comment">// Cardioid cylinder</span>
+Builder::<span class="function">polar</span>()
+    .<span class="function">formula</span>(L<span class="string">"(1 - cos(theta)) / (PI / 1.55)"</span>)
+    .<span class="function">sectors_slices</span>(<span class="number">60</span>, <span class="number">10</span>)
+    .<span class="function">buildCylinder</span>(verts, norms);
+
+<span class="comment">// 5-petal rose cylinder</span>
+Builder::<span class="function">polar</span>()
+    .<span class="function">formula</span>(L<span class="string">"cos(5 * theta)"</span>)
+    .<span class="function">sectors_slices</span>(<span class="number">160</span>, <span class="number">10</span>)
+    .<span class="function">buildCylinder</span>(verts, norms);
+
+<span class="comment">// Lemniscate (figure-8) cylinder</span>
+Builder::<span class="function">polar</span>()
+    .<span class="function">formula</span>(L<span class="string">"sqrt(abs(cos(2 * theta)))"</span>)
+    .<span class="function">sectors_slices</span>(<span class="number">60</span>, <span class="number">10</span>)
+    .<span class="function">buildCylinder</span>(verts, norms);
+</code></pre>
+
+            <h3>Indexed Geometry (Shared Vertices)</h3>
+            <pre><code><span class="code-label">C++</span>
+std::vector&lt;<span class="type">float</span>&gt; verts, norms, texCoords;
+std::vector&lt;<span class="type">uint32_t</span>&gt; indices;
+
+Builder::<span class="function">polar</span>()
+    .<span class="function">formula</span>(L<span class="string">"1 + 0.3 * sin(5 * theta)"</span>)  <span class="comment">// Star pattern</span>
+    .<span class="function">sectors</span>(<span class="number">60</span>)
+    .<span class="function">slices</span>(<span class="number">20</span>)
+    .<span class="function">buildConeIndexed</span>(verts, norms, texCoords, indices);
+
+<span class="comment">// Use with Dynamit</span>
+Dynamit shape;
+shape.<span class="function">withVertices3d</span>(verts)
+     .<span class="function">withNormals3d</span>(norms)
+     .<span class="function">withIndices</span>(indices)
+     .<span class="function">withConstColor</span>(<span class="number">0.0f</span>, <span class="number">1.0f</span>, <span class="number">0.5f</span>);
+
+shape.<span class="function">drawTrianglesIndexed</span>();
+</code></pre>
+
+            <h3>Render Mode Options</h3>
+            <pre><code><span class="code-label">C++</span>
+Builder::<span class="function">polar</span>()
+    .<span class="function">formula</span>(L<span class="string">"1"</span>)
+    .<span class="function">sectors_slices</span>(<span class="number">30</span>, <span class="number">10</span>)
+    
+            <span class="comment">// Shading mode</span>
+    .<span class="function">smooth</span>()           <span class="comment">// Smooth shading with shared vertex normals (default)</span>
+            <span class="comment">// OR</span>
+    .<span class="function">edged</span>()            <span class="comment">// Flat shading with per-face normals</span>
+    
+            <span class="comment">// Double-sided rendering</span>
+    .<span class="function">doubleCoated</span>()     <span class="comment">// Render both front and back faces</span>
+            <span class="comment">// OR</span>
+    .<span class="function">singleCoated</span>()     <span class="comment">// Render only front faces (default)</span>
+    
+            <span class="comment">// Geometry orientation</span>
+    .<span class="function">reversed</span>()         <span class="comment">// Flip tip/base positions</span>
+            <span class="comment">// OR</span>
+    .<span class="function">nonreversed</span>()      <span class="comment">// Normal orientation (default)</span>
+    
+            <span class="comment">// Performance optimization</span>
+    .<span class="function">turbo</span>()            <span class="comment">// Reuse base ring calculations (faster, default)</span>
+    .<span class="function">turbo</span>(<span class="keyword">false</span>)       <span class="comment">// Recalculate each ring (more accurate for complex formulas)</span>
+    
+    .<span class="function">buildCone</span>(verts, norms);
+</code></pre>
+
+            <h3>Rebuilding Geometry</h3>
+            <pre><code><span class="code-label">C++</span>
+<span class="comment">// Clear and rebuild with new parameters</span>
+PolarBuilder builder = Builder::<span class="function">polar</span>()
+    .<span class="function">formula</span>(L<span class="string">"1"</span>)
+    .<span class="function">sectors</span>(<span class="number">20</span>);
+
+<span class="comment">// Initial build</span>
+builder.<span class="function">buildCone</span>(verts, norms);
+
+<span class="comment">// Later: rebuild with different settings</span>
+builder.<span class="function">sectors</span>(<span class="number">60</span>)
+       .<span class="function">reBuildCone</span>(verts, norms);  <span class="comment">// Clears and rebuilds</span>
+
+<span class="comment">// For indexed geometry</span>
+builder.<span class="function">reBuildConeIndexed</span>(verts, norms, texCoords, indices);
+</code></pre>
+
+            <h3>PolarBuilder Method Reference</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>formula(wstring)</code></td><td>Set polar radius formula r(θ). Variable: <code>theta</code></td></tr>
+                    <tr><td><code>formula(string)</code></td><td>Set formula (auto-converts to wide string)</td></tr>
+                    <tr><td><code>domain(start, end)</code></td><td>Set θ range [start, end] in radians</td></tr>
+                    <tr><td><code>domain(end)</code></td><td>Set θ range [0, end]</td></tr>
+                    <tr><td><code>domain_shift(new_end)</code></td><td>Shift domain: start = old_end, end = new_end</td></tr>
+                    <tr><td><code>sectors(n)</code></td><td>Set circumferential divisions (around θ)</td></tr>
+                    <tr><td><code>slices(n)</code></td><td>Set height divisions (along Z axis)</td></tr>
+                    <tr><td><code>sectors_slices(s, l)</code></td><td>Set both at once</td></tr>
+                    <tr><td><code>slices_sectors(l, s)</code></td><td>Set both (alternative order)</td></tr>
+                    <tr><td><code>smooth(bool)</code></td><td>Enable smooth shading (shared vertex normals)</td></tr>
+                    <tr><td><code>edged(bool)</code></td><td>Enable flat shading (per-face normals)</td></tr>
+                    <tr><td><code>doubleCoated(bool)</code></td><td>Generate both front and back faces</td></tr>
+                    <tr><td><code>singleCoated(bool)</code></td><td>Generate only front faces</td></tr>
+                    <tr><td><code>reversed(bool)</code></td><td>Flip geometry orientation</td></tr>
+                    <tr><td><code>turbo(bool)</code></td><td>Optimize by reusing base ring data</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Build Methods</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>buildCone(verts, norms)</code></td><td>Build cone, append to vectors</td></tr>
+                    <tr><td><code>buildCone(verts, norms, texCoords)</code></td><td>Build cone with UV coordinates</td></tr>
+                    <tr><td><code>buildConeIndexed(..., indices)</code></td><td>Build indexed cone geometry</td></tr>
+                    <tr><td><code>reBuildCone(...)</code></td><td>Clear vectors and rebuild</td></tr>
+                    <tr><td><code>reBuildConeIndexed(...)</code></td><td>Clear and rebuild indexed</td></tr>
+                    <tr><td><code>buildCylinder(...)</code></td><td>Build cylinder (constant cross-section)</td></tr>
+                    <tr><td><code>buildCylinderIndexed(...)</code></td><td>Build indexed cylinder</td></tr>
+                    <tr><td><code>reBuildCylinder(...)</code></td><td>Clear and rebuild cylinder</td></tr>
+                    <tr><td><code>reBuildCylinderIndexed(...)</code></td><td>Clear and rebuild indexed cylinder</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Example Polar Formulas</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Shape</th>
+                        <th>Formula</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Circle</td><td><code>"1"</code></td><td>Constant radius</td></tr>
+                    <tr><td>Ellipse</td><td><code>"2 / sqrt(4*sin(theta)**2 + cos(theta)**2)"</code></td><td>a=2, b=1</td></tr>
+                    <tr><td>Cardioid</td><td><code>"1 - cos(theta)"</code></td><td>Heart-like curve</td></tr>
+                    <tr><td>3-petal Rose</td><td><code>"cos(3 * theta)"</code></td><td>Odd petals</td></tr>
+                    <tr><td>4-petal Rose</td><td><code>"cos(2 * theta)"</code></td><td>Even petals</td></tr>
+                    <tr><td>5-petal Rose</td><td><code>"cos(5 * theta)"</code></td><td>High sector count needed</td></tr>
+                    <tr><td>Star (5-point)</td><td><code>"1 + 0.5 * cos(5 * theta)"</code></td><td>Modulated circle</td></tr>
+                    <tr><td>Lemniscate</td><td><code>"sqrt(abs(cos(2 * theta)))"</code></td><td>Figure-8 shape</td></tr>
+                    <tr><td>Spiral</td><td><code>"0.1 * theta"</code></td><td>Expanding spiral</td></tr>
+                </tbody>
+            </table>
+
+            <div class="note">
+                <strong>Note:</strong> The formula uses <code>theta</code> as the variable name. All standard math
+                functions (<code>sin</code>, <code>cos</code>, <code>sqrt</code>, <code>abs</code>, <code>pow</code>, etc.)
+                and constants (<code>PI</code>, <code>E</code>, <code>TAU</code>) are available.
+            </div>
+        </section>
+
         <!-- Expression Compiler Section -->
         <section id="expressions">
             <h2>📐 Expression Compiler</h2>
@@ -632,17 +877,15 @@ std::wcout &lt;&lt; L<span class="string">"f(2) = "</span> &lt;&lt; f-&gt;<span 
 std::wcout &lt;&lt; L<span class="string">"f'(2) = "</span> &lt;&lt; df-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// 12 + 8 - 5 = 15</span>
 </code></pre>
 
-            <h3>Chain Rule with Functions</h3>
+            <h3>Simplification <span class="badge badge-new">NEW</span></h3>
             <pre><code><span class="code-label">C++</span>
-<span class="comment">// f(x) = sin(x²)</span>
-<span class="keyword">auto</span> f = compiler.<span class="function">compile</span>(L<span class="string">"sin(x**2)"</span>);
+<span class="comment">// Simplify derivative expressions</span>
+<span class="keyword">auto</span> f = compiler.<span class="function">compile</span>(L<span class="string">"sin(theta)"</span>);
+<span class="keyword">auto</span> df = f-&gt;<span class="function">derivative</span>(L<span class="string">"theta"</span>);
 
-<span class="comment">// f'(x) = cos(x²) · 2x  (chain rule)</span>
-<span class="keyword">auto</span> df = f-&gt;<span class="function">derivative</span>(L<span class="string">"x"</span>);
-
-<span class="type">long double</span> x = <span class="number">1.0</span>;
-df-&gt;<span class="function">bind</span>(L<span class="string">"x"</span>, &amp;x);
-std::wcout &lt;&lt; df-&gt;<span class="function">eval</span>() &lt;&lt; std::endl;  <span class="comment">// cos(1) · 2 ≈ 1.0806</span>
+<span class="comment">// Use simplify() to optimize the expression tree</span>
+<span class="keyword">auto</span> df_simplified = <span class="function">simplify</span>(std::move(df));
+df_simplified-&gt;<span class="function">bind</span>(L<span class="string">"theta"</span>, &amp;theta);
 </code></pre>
 
             <h3>Cylindrical Coordinates</h3>
@@ -711,8 +954,14 @@ r_expr-&gt;<span class="function">bind</span>(L<span class="string">"t"</span>, 
                     <tr><td><code>M_PI_2</code></td><td>1.57079632...</td><td>π/2</td></tr>
                     <tr><td><code>M_PI_4</code></td><td>0.78539816...</td><td>π/4</td></tr>
                     <tr><td><code>M_SQRT2</code></td><td>1.41421356...</td><td>√2</td></tr>
+                    <tr><td><code>M_SQRT1_2</code></td><td>0.70710678...</td><td>1/√2</td></tr>
                     <tr><td><code>M_LN2</code></td><td>0.69314718...</td><td>ln(2)</td></tr>
                     <tr><td><code>M_LN10</code></td><td>2.30258509...</td><td>ln(10)</td></tr>
+                    <tr><td><code>M_LOG2E</code></td><td>1.44269504...</td><td>log₂(e)</td></tr>
+                    <tr><td><code>M_LOG10E</code></td><td>0.43429448...</td><td>log₁₀(e)</td></tr>
+                    <tr><td><code>M_1_PI</code></td><td>0.31830988...</td><td>1/π</td></tr>
+                    <tr><td><code>M_2_PI</code></td><td>0.63661977...</td><td>2/π</td></tr>
+                    <tr><td><code>M_2_SQRTPI</code></td><td>1.12837916...</td><td>2/√π</td></tr>
                 </tbody>
             </table>
         </section>
@@ -721,31 +970,51 @@ r_expr-&gt;<span class="function">bind</span>(L<span class="string">"t"</span>, 
         <section id="examples">
             <h2>💡 Complete Examples</h2>
 
-            <h3>Dodecahedron Sphere Generator</h3>
-            <p>Generate a smooth sphere by subdividing a dodecahedron:</p>
+            <h3>Parametric Heart Cone with Animation</h3>
             <pre><code><span class="code-label">C++</span>
-<span class="comment">// Generate sphere mesh with subdivision level 3</span>
-Mesh mesh = <span class="function">generateSphereMesh</span>(<span class="number">3</span>, WindingOrder::CCW);
+<span class="keyword">#include</span> <span class="string">&lt;Dynamit.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;builders.h&gt;</span>
 
-<span class="comment">// Convert to flat arrays for Dynamit</span>
-std::vector&lt;<span class="type">float</span>&gt; verts, norms;
-<span class="function">meshToFlatArrays</span>(mesh, verts, norms);
+<span class="keyword">using namespace</span> dynamit;
+<span class="keyword">using namespace</span> dynamit::builders;
 
-<span class="comment">// Create and render</span>
-Dynamit sphere;
-sphere.<span class="function">withVertices3d</span>(verts)
-      .<span class="function">withNormals3d</span>(norms)
-      .<span class="function">withConstColor</span>(<span class="number">0.2f</span>, <span class="number">1.0f</span>, <span class="number">0.2f</span>)
-      .<span class="function">withConstLightDirection</span>(<span class="number">-1.0f</span>, <span class="number">-1.0f</span>, <span class="number">1.0f</span>);
-
-glEnable(GL_DEPTH_TEST);
-glEnable(GL_CULL_FACE);
-
-<span class="keyword">while</span> (!glfwWindowShouldClose(window)) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    sphere.<span class="function">drawTriangles</span>();
-    glfwSwapBuffers(window);
-    glfwPollEvents();
+<span class="type">int</span> main() {
+            <span class="comment">// Initialize GLFW window...</span>
+    
+    std::vector&lt;<span class="type">float</span>&gt; verts, norms;
+    
+            <span class="comment">// Build heart-shaped cone</span>
+    Builder::<span class="function">polar</span>()
+        .<span class="function">smooth</span>().<span class="function">doubleCoated</span>()
+        .<span class="function">formula</span>(L<span class="string">"theta / PI"</span>)
+        .<span class="function">domain</span>(<span class="number">0</span>, M_PI)
+        .<span class="function">sectors_slices</span>(<span class="number">30</span>, <span class="number">15</span>)
+        .<span class="function">buildCone</span>(verts, norms)
+        .<span class="function">formula</span>(L<span class="string">"(2*PI - theta) / PI"</span>)
+        .<span class="function">domain_shift</span>(<span class="number">2</span> * M_PI)
+        .<span class="function">buildCone</span>(verts, norms);
+    
+            <span class="comment">// Create Dynamit shape with animatable light</span>
+    Dynamit heart;
+    heart.<span class="function">withVertices3d</span>(verts)
+         .<span class="function">withNormals3d</span>(norms)
+         .<span class="function">withConstColor</span>(<span class="number">1.0f</span>, <span class="number">0.2f</span>, <span class="number">0.3f</span>)
+         .<span class="function">withLightDirection3f</span>(<span class="number">1.0f</span>, <span class="number">0.0f</span>, <span class="number">1.0f</span>);
+    
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    
+            <span class="keyword">while</span> (!glfwWindowShouldClose(window)) {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+            <span class="comment">// Animate light direction</span>
+            <span class="type">float</span> t = glfwGetTime();
+        heart.<span class="function">lightDirection3f</span>(cos(t), sin(t), <span class="number">1.0f</span>);
+        heart.<span class="function">drawTriangles</span>();
+        
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
 }
 </code></pre>
 
@@ -775,6 +1044,30 @@ Dynamit curve;
 curve.<span class="function">withVertices2d</span>(curveVerts)
      .<span class="function">withConstColor</span>(<span class="number">1.0f</span>, <span class="number">0.5f</span>, <span class="number">0.0f</span>)
      .<span class="function">withPrimitive</span>(GL_LINE_STRIP);
+</code></pre>
+
+            <h3>Multiple Shapes with Indexed Geometry</h3>
+            <pre><code><span class="code-label">C++</span>
+std::vector&lt;<span class="type">float</span>&gt; verts, norms, texCoords;
+std::vector&lt;<span class="type">uint32_t</span>&gt; indices;
+
+<span class="comment">// Build multiple shapes into the same buffers</span>
+PolarBuilder builder = Builder::<span class="function">polar</span>()
+    .<span class="function">smooth</span>().<span class="function">sectors_slices</span>(<span class="number">30</span>, <span class="number">10</span>);
+
+<span class="comment">// Star pattern</span>
+builder.<span class="function">formula</span>(L<span class="string">"1 + 0.3*cos(5*theta)"</span>)
+       .<span class="function">buildConeIndexed</span>(verts, norms, texCoords, indices);
+
+<span class="comment">// Use indexed drawing for efficiency</span>
+Dynamit shape;
+shape.<span class="function">withVertices3d</span>(verts)
+     .<span class="function">withNormals3d</span>(norms)
+     .<span class="function">withIndices</span>(indices)
+     .<span class="function">withConstColor</span>(<span class="number">0.0f</span>, <span class="number">1.0f</span>, <span class="number">0.5f</span>)
+     .<span class="function">withConstLightDirection</span>(<span class="number">-1.0f</span>, <span class="number">-1.0f</span>, <span class="number">1.0f</span>);
+
+shape.<span class="function">drawTrianglesIndexed</span>();
 </code></pre>
 
             <h3>Newton-Raphson Root Finding</h3>
@@ -821,12 +1114,23 @@ df-&gt;<span class="function">bind</span>(L<span class="string">"x"</span>, &amp
                     <tr><td><code>withConstColor(r,g,b,a)</code></td><td>Set constant color for all vertices</td></tr>
                     <tr><td><code>withConstLightDirection(x,y,z)</code></td><td>Set fixed light direction</td></tr>
                     <tr><td><code>withLightDirection3f(x,y,z)</code></td><td>Set animatable light direction uniform</td></tr>
+                    <tr><td><code>withConstTranslation(x,y,z,w)</code></td><td>Set fixed translation offset</td></tr>
+                    <tr><td><code>withTranslation4f()</code></td><td>Enable animatable translation uniform</td></tr>
                     <tr><td><code>withIndices(indices)</code></td><td>Set element indices for indexed drawing</td></tr>
                     <tr><td><code>withStride(data, bytes)</code></td><td>Set interleaved vertex data</td></tr>
+                    <tr><td><code>withStrideVertices(size)</code></td><td>Define vertex attribute in stride</td></tr>
+                    <tr><td><code>withStrideNormals(size)</code></td><td>Define normal attribute in stride</td></tr>
+                    <tr><td><code>withStrideColors(size)</code></td><td>Define color attribute in stride</td></tr>
+                    <tr><td><code>withStrideTexCoords(size)</code></td><td>Define texcoord attribute in stride</td></tr>
                     <tr><td><code>withPrimitive(type)</code></td><td>Set primitive type (GL_TRIANGLES, etc.)</td></tr>
+                    <tr><td><code>withShaderSources(vs, fs)</code></td><td>Override with custom shaders</td></tr>
                     <tr><td><code>drawTriangles()</code></td><td>Draw using glDrawArrays</td></tr>
                     <tr><td><code>drawTrianglesIndexed()</code></td><td>Draw using glDrawElements</td></tr>
+                    <tr><td><code>drawTriangleFan()</code></td><td>Draw as triangle fan</td></tr>
+                    <tr><td><code>translate4f(x,y,z,w)</code></td><td>Update translation uniform</td></tr>
+                    <tr><td><code>lightDirection3f(x,y,z)</code></td><td>Update light direction uniform</td></tr>
                     <tr><td><code>logGeneratedShaders()</code></td><td>Print auto-generated GLSL to console</td></tr>
+                    <tr><td><code>logShaders()</code></td><td>Print actual shaders used (generated or overridden)</td></tr>
                 </tbody>
             </table>
 
@@ -847,6 +1151,21 @@ df-&gt;<span class="function">bind</span>(L<span class="string">"x"</span>, &amp
                     <tr><td><code>is_constant()</code></td><td>Check if expression has no variables</td></tr>
                     <tr><td><code>cyl_x(theta)</code></td><td>Cylindrical X: eval() * cos(theta)</td></tr>
                     <tr><td><code>cyl_y(theta)</code></td><td>Cylindrical Y: eval() * sin(theta)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Helper Functions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>simplify(expr)</code></td><td>Optimize expression tree by simplifying constants</td></tr>
+                    <tr><td><code>make_constant(value)</code></td><td>Create constant expression node</td></tr>
+                    <tr><td><code>make_binary(op, left, right)</code></td><td>Create binary operation node</td></tr>
                 </tbody>
             </table>
         </section>
