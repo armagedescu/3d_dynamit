@@ -581,7 +581,7 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
                 uint32_t v10 = currRing[i];
                 uint32_t v11 = currRing[i + 1];
 
-                if (isSecondCoat)
+                if (!isSecondCoat)
                 {
                     indices.push_back(v00);
                     indices.push_back(v10);

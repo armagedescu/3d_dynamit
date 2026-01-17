@@ -1,5 +1,5 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_POLAR_WITH_TRANSFORM_CPP__
+#ifdef __DYNAMIT_POLAR_COMBINE_WITH_TRANSFORM_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -106,27 +106,23 @@ int main()
     Matrix4 leftTransform  = translationMatrix(-0.5f, 0.0f, 0.0f);
     Matrix4 rightTransform = translationMatrix(0.5f, 0.0f, 0.0f);
 
-    Matrix4 translate = translationMatrix(-0.5f, 0.0f, 0.0f);
-    Matrix4 rotate = rotationZMatrix(M_PI / 4);
-    Matrix4 scale = scaleMatrix(0.5f, 0.5f, 1.0f);
-    Builder::polar()
-        .edged(false).reversed(false).doubleCoated().turbo(true)
-        .formula(L"theta / PI")             // first half
-        .domain(M_PI)
+	float arrowHeadHeight = 0.1f, arrowHeadWidth = 0.05f, arrowShaftWidth = 0.025f;
+    Matrix4 arrowShaftTranslate = translationMatrix(0.0f, 0.0f, 1.0f);
+    Matrix4 arrowShaftScale = scaleMatrix(arrowShaftWidth, arrowShaftWidth, 2.0f - arrowHeadHeight);
+    Matrix4 arrowTipScale = scaleMatrix(arrowHeadWidth, arrowHeadWidth, arrowHeadHeight);
+    Matrix4 arrowTipTranslate = translationMatrix(0.0f, 0.0f, -1.0f + arrowHeadHeight);
+
+	Builder::polar().doubleCoated()//.reversed(true).edged()
+        .formula(L"1")             // first half
+        //.formula(L"theta / PI")             // first half
         .sectors_slices(6, 2)
-        .buildCylinder(verts, norms, translate, rotate, scale)
-        .formula(L"(2*PI - theta) / PI")    // second half
-        .domain_shift(2 * M_PI)
-        .buildCylinder(verts, norms, translate, rotate, scale)
+        .buildCone(verts, norms, arrowTipScale, arrowTipTranslate)
+        .buildCylinder(verts, norms, arrowShaftScale, arrowShaftTranslate)// , translate, scale)
         //////// indexed version
-        .formula(L"theta / PI")
-        .domain(static_cast<float>(M_PI))
         .sectors_slices(10, 5)
-        .buildCylinderIndexed(vertsIndexed, normsIndexed, indices)
-        .formula(L"(2*PI - theta) / PI")
-        .domain_shift(static_cast<float>(2 * M_PI))
-        .buildCylinderIndexed(vertsIndexed, normsIndexed, indices)
-        ;
+        .buildConeIndexed(vertsIndexed, normsIndexed, indices, arrowTipScale, arrowTipTranslate)
+        .buildCylinderIndexed(vertsIndexed, normsIndexed, indices, arrowShaftScale, arrowShaftTranslate)
+    ;
 
     std::cout << "Cylinder vertices: " << verts.size() / 3 << " (triangles: " << verts.size() / 9 << ")" << std::endl;
     std::cout << "Cylinder indexed vertices: " << vertsIndexed.size() / 3 << " (indices: " << indices.size() << ")" << std::endl;
