@@ -180,6 +180,8 @@
     <ClCompile Include="dynamitDrawStrided.cpp" />
     <ClCompile Include="dynamit.cpp" />
     <ClCompile Include="dynamitNormalsAndColors2Progs.cpp" />
+    <ClCompile Include="dynamitPolarArrowCombined.cpp" />
+    <ClCompile Include="dynamitPolarArrowParametric.cpp" />
     <ClCompile Include="dynamitPolarCombineWithTransform.cpp" />
     <ClCompile Include="dynamitPolarWithTransform.cpp" />
     <ClCompile Include="dynamitSphereDodecahedron.cpp" />

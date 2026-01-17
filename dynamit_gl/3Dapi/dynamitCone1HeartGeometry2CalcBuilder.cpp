@@ -18,8 +18,6 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-
-
 int main()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
