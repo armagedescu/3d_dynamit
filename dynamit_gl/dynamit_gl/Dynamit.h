@@ -148,6 +148,39 @@ namespace dynamit
         std::string toGLSL() const;
     };
 
+    struct TransformMatrix3
+    {
+        std::string name;
+        std::array<float, 9> data = {
+            1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f
+        };
+        GLint location = -1;
+
+        std::string toGLSLUniform() const
+        {
+            return "uniform mat3 " + name + ";";
+        }
+    };
+
+    struct TransformMatrix4
+    {
+        std::string name;
+        std::array<float, 16> data = {
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        };
+        GLint location = -1;
+
+        std::string toGLSLUniform() const
+        {
+            return "uniform mat4 " + name + ";";
+        }
+    };
+
     //========================================
     // GlSet - Holds all rendering state
     //========================================
@@ -162,6 +195,8 @@ namespace dynamit
         std::optional<LightDirection> lightDirection;
         std::optional<Translation> translation;
         std::optional<ConstTranslation> constTranslation;
+        std::optional<TransformMatrix3> transformMatrix3;
+        std::optional<TransformMatrix4> transformMatrix4;
 
     public:
         // Getters
@@ -173,6 +208,8 @@ namespace dynamit
         const std::optional<LightDirection>& getLightDirection() const;
         const std::optional<Translation>& getTranslation() const;
         const std::optional<ConstTranslation>& getConstTranslation() const;
+        const std::optional<TransformMatrix3>& getTransformMatrix3() const;
+        const std::optional<TransformMatrix4>& getTransformMatrix4() const;
 
         // Setters
         void setPrecision(const std::string& p);
@@ -183,6 +220,14 @@ namespace dynamit
         void setLightDirection(const LightDirection& light);
         void setTranslation(const Translation& trans);
         void setConstTranslation(const ConstTranslation& trans);
+        void setTransformMatrix3(const TransformMatrix3& matrix)
+        {
+            transformMatrix3 = matrix;
+        }
+        void setTransformMatrix4(const TransformMatrix4& matrix)
+        {
+            transformMatrix4 = matrix;
+        }
 
         void requireColor(const std::array<float, 4>& defaultValue = { 0.7f, 0.7f, 0.7f, 1.0f },
             const std::string& name = "constColor");
@@ -388,6 +433,74 @@ namespace dynamit
         void lightDirection3f(const std::array<float, 3>& dir);
         void updateVertices(const std::vector<float>& newData);
         void updateVertices(const float* data, size_t count);
+
+        GLint getUniformLocation(const char* name)
+        {
+            useProgram();
+            return glGetUniformLocation(program.id, name);
+        }
+
+        Dynamit& withTransformMatrix3f(const std::string& name = "transformMatrix")
+        {
+            currentVao().glSet.setTransformMatrix3({ name });
+            return *this;
+        }
+
+        void transformMatrix3f(const float* data)
+        {
+            if (!vaoList[0].glSet.getTransformMatrix3())
+                throw std::runtime_error("Transform matrix uniform not initialized. Call withTransformMatrix3f() first.");
+
+            useProgram();
+
+            TransformMatrix3& matrix = const_cast<TransformMatrix3&>(*vaoList[0].glSet.getTransformMatrix3());
+
+            if (matrix.location == -1)
+            {
+                matrix.location = glGetUniformLocation(program.id, matrix.name.c_str());
+                if (matrix.location == -1)
+                    throw std::runtime_error("Transform matrix uniform not found in shader");
+            }
+
+            glUniformMatrix3fv(matrix.location, 1, GL_FALSE, data);
+            std::copy(data, data + 9, matrix.data.begin());
+        }
+
+        void transformMatrix3f(const std::array<float, 9>& data)
+        {
+            transformMatrix3f(data.data());
+        }
+
+        Dynamit& withTransformMatrix4f(const std::string& name = "transformMatrix")
+        {
+            currentVao().glSet.setTransformMatrix4({ name });
+            return *this;
+        }
+
+        void transformMatrix4f(const float* data)
+        {
+            if (!vaoList[0].glSet.getTransformMatrix4())
+                throw std::runtime_error("Transform matrix 4x4 uniform not initialized. Call withTransformMatrix4f() first.");
+
+            useProgram();
+
+            TransformMatrix4& matrix = const_cast<TransformMatrix4&>(*vaoList[0].glSet.getTransformMatrix4());
+
+            if (matrix.location == -1)
+            {
+                matrix.location = glGetUniformLocation(program.id, matrix.name.c_str());
+                if (matrix.location == -1)
+                    throw std::runtime_error("Transform matrix 4x4 uniform not found in shader");
+            }
+
+            glUniformMatrix4fv(matrix.location, 1, GL_FALSE, data);
+            std::copy(data, data + 16, matrix.data.begin());
+        }
+
+        void transformMatrix4f(const std::array<float, 16>& data)
+        {
+            transformMatrix4f(data.data());
+        }
     };
 
 } // namespace dynamit

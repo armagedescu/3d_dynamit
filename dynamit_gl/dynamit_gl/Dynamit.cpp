@@ -257,6 +257,8 @@ namespace dynamit
     const std::optional<LightDirection>& GlSet::getLightDirection() const { return lightDirection; }
     const std::optional<Translation>& GlSet::getTranslation() const { return translation; }
     const std::optional<ConstTranslation>& GlSet::getConstTranslation() const { return constTranslation; }
+    const std::optional<TransformMatrix3>& GlSet::getTransformMatrix3() const { return transformMatrix3; }
+    const std::optional<TransformMatrix4>& GlSet::getTransformMatrix4() const { return transformMatrix4; }
 
     void GlSet::setPrecision(const std::string& p) { precision = p; }
 
@@ -299,6 +301,11 @@ namespace dynamit
     {
         constTranslation = trans;
     }
+
+    //void GlSet::setTransformMatrix3(std::unique_ptr<GlArrayBuffer> buffer)
+    //{
+    //    transformMatrix3 = std::move(buffer);
+    //}
 
     void GlSet::requireColor(const std::array<float, 4>& defaultValue, const std::string& name)
     {
@@ -462,6 +469,12 @@ namespace dynamit
 
         if (glSet.getConstTranslation())
             vsBuilder.addHead(glSet.getConstTranslation()->toGLSL());
+
+        if (glSet.getTransformMatrix3())
+            vsBuilder.addHead(glSet.getTransformMatrix3()->toGLSLUniform());
+
+        if (glSet.getTransformMatrix4())
+            vsBuilder.addHead(glSet.getTransformMatrix4()->toGLSLUniform());
     }
 
     void ShaderStrategy::addDeclarations()
@@ -506,29 +519,73 @@ namespace dynamit
 
         if (glSet.getConstTranslation())
             vsBuilder.addHead(glSet.getConstTranslation()->toGLSL());
+
+        if (glSet.getTransformMatrix3())
+            vsBuilder.addHead(glSet.getTransformMatrix3()->toGLSLUniform());
+
+        if (glSet.getTransformMatrix4())
+            vsBuilder.addHead(glSet.getTransformMatrix4()->toGLSLUniform());
     }
 
     std::string ShaderStrategy::buildPositionExpression()
     {
         std::string pos;
 
+        // Get the raw vertex expression
+        std::string vertexExpr;
+        int vertexDim = 3;
+        
         if (strideLayout && strideLayout->hasAttribute("vertex"))
         {
             const StrideAttribute* attr = strideLayout->getAttribute("vertex");
-            if (attr->size == 4)
-                pos = "vertex";
-            else if (attr->size == 3)
-                pos = "vec4(vertex, 1.0)";
-            else
-                pos = "vec4(vertex, 0.0, 1.0)";
+            vertexExpr = "vertex";
+            vertexDim = attr->size;
         }
         else if (glSet.getVertexBuffer())
         {
-            pos = glSet.getVertexBuffer()->vec4();
+            GlArrayBuffer* vb = glSet.getVertexBuffer();
+            vertexExpr = vb->name();
+            vertexDim = vb->getDimension();
         }
         else
         {
-            pos = "vec4(0.0, 0.0, 0.0, 1.0)";
+            vertexExpr = "vec3(0.0, 0.0, 0.0)";
+            vertexDim = 3;
+        }
+
+        // Apply transform matrix if present
+        if (glSet.getTransformMatrix4())
+        {
+            // mat4 * vec4 -> vec4
+            if (vertexDim == 4)
+                pos = glSet.getTransformMatrix4()->name + " * " + vertexExpr;
+            else if (vertexDim == 3)
+                pos = glSet.getTransformMatrix4()->name + " * vec4(" + vertexExpr + ", 1)";
+            else
+                pos = glSet.getTransformMatrix4()->name + " * vec4(" + vertexExpr + ", 0.0, 1)";
+        }
+        else if (glSet.getTransformMatrix3())
+        {
+            // mat3 * vec3 -> vec3, then wrap in vec4
+            std::string vec3Expr;
+            if (vertexDim == 3)
+                vec3Expr = vertexExpr;
+            else if (vertexDim == 2)
+                vec3Expr = "vec3(" + vertexExpr + ", 0.0)";
+            else
+                vec3Expr = vertexExpr + ".xyz";
+            
+            pos = "vec4(" + glSet.getTransformMatrix3()->name + " * " + vec3Expr + ", 1)";
+        }
+        else
+        {
+            // No transform, just convert to vec4
+            if (vertexDim == 4)
+                pos = vertexExpr;
+            else if (vertexDim == 3)
+                pos = "vec4(" + vertexExpr + ", 1)";
+            else
+                pos = "vec4(" + vertexExpr + ", 0.0, 1)";
         }
 
         if (glSet.getConstTranslation())
@@ -588,14 +645,28 @@ namespace dynamit
         if (strideLayout)
         {
             if (strideLayout->hasAttribute("normal"))
-                vsBuilder.addMain("normalVary = normal;");
+            {
+                if (glSet.getTransformMatrix4())
+                    vsBuilder.addMain("normalVary = mat3(" + glSet.getTransformMatrix4()->name + ") * normal;");
+                else if (glSet.getTransformMatrix3())
+                    vsBuilder.addMain("normalVary = " + glSet.getTransformMatrix3()->name + " * normal;");
+                else
+                    vsBuilder.addMain("normalVary = normal;");
+            }
             if (strideLayout->hasAttribute("color"))
                 vsBuilder.addMain("colorVary = color;");
         }
         else
         {
             if (GlArrayBuffer* nb = glSet.getNormalsBuffer())
-                vsBuilder.addMain(nb->defaultVaryAssign() + ";");
+            {
+                if (glSet.getTransformMatrix4())
+                    vsBuilder.addMain(nb->nameVary() + " = mat3(" + glSet.getTransformMatrix4()->name + ") * " + nb->name() + ";");
+                else if (glSet.getTransformMatrix3())
+                    vsBuilder.addMain(nb->nameVary() + " = " + glSet.getTransformMatrix3()->name + " * " + nb->name() + ";");
+                else
+                    vsBuilder.addMain(nb->defaultVaryAssign() + ";");
+            }
 
             if (GlArrayBuffer* cb = glSet.getColorsBuffer())
                 vsBuilder.addMain(cb->defaultVaryAssign() + ";");
