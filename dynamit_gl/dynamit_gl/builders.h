@@ -7,85 +7,14 @@
 #include <cmath>
 #include <array>
 
+#include "geometry.h"
 namespace dynamit::builders
 {
 
-// 4x4 transformation matrix (column-major, like GLM)
-using Matrix4 = std::array<float, 16>;
+//// 4x4 transformation matrix (column-major, like GLM)
+//using Matrix4 = std::array<float, 16>;
+//template<typename T = float> using mat4 = std::array<T, 16>;
 
-// Identity matrix
-inline Matrix4 identityMatrix()
-{
-    return {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-}
-
-// Transform a position (applies full 4x4 transform including translation)
-inline void transformPosition(const Matrix4& m, float& x, float& y, float& z)
-{
-    float w = 1.0f;
-    float nx = m[0] * x + m[4] * y + m[8] * z + m[12] * w;
-    float ny = m[1] * x + m[5] * y + m[9] * z + m[13] * w;
-    float nz = m[2] * x + m[6] * y + m[10] * z + m[14] * w;
-    x = nx;
-    y = ny;
-    z = nz;
-}
-
-// Transform a normal (applies only rotation/scale, no translation)
-inline void transformNormal(const Matrix4& m, float& nx, float& ny, float& nz)
-{
-    float tnx = m[0] * nx + m[4] * ny + m[8] * nz;
-    float tny = m[1] * nx + m[5] * ny + m[9] * nz;
-    float tnz = m[2] * nx + m[6] * ny + m[10] * nz;
-    
-    float len = std::sqrt(tnx * tnx + tny * tny + tnz * tnz);
-    if (len > 0.0001f)
-    {
-        tnx /= len;
-        tny /= len;
-        tnz /= len;
-    }
-    
-    nx = tnx;
-    ny = tny;
-    nz = tnz;
-}
-
-// Apply single transformation to a range of vertices and normals
-inline void applyTransformToRange(
-    const Matrix4& m,
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    size_t startVertex)
-{
-    size_t startIdx = startVertex * 3;
-    
-    for (size_t i = startIdx; i < verts.size(); i += 3)
-    {
-        transformPosition(m, verts[i], verts[i + 1], verts[i + 2]);
-    }
-    
-    for (size_t i = startIdx; i < norms.size(); i += 3)
-    {
-        transformNormal(m, norms[i], norms[i + 1], norms[i + 2]);
-    }
-}
-
-// Variadic: apply multiple transformations in sequence
-template<typename... Transforms>
-inline void applyTransformsToRange(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    size_t startVertex,
-    const Transforms&... transforms)
-{
-    (applyTransformToRange(transforms, verts, norms, startVertex), ...);
-}
 
 class PolarBuilder
 {

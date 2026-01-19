@@ -14,81 +14,6 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-// Helper to create a translation matrix (column-major)
-Matrix4 translationMatrix(float tx, float ty, float tz)
-{
-    return {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        tx,   ty,   tz,   1.0f
-    };
-}
-
-// Helper to create a scale matrix (column-major)
-Matrix4 scaleMatrix(float sx, float sy, float sz)
-{
-    return {
-        sx,   0.0f, 0.0f, 0.0f,
-        0.0f, sy,   0.0f, 0.0f,
-        0.0f, 0.0f, sz,   0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-}
-
-// Helper to create a rotation matrix around Z axis (column-major)
-Matrix4 rotationZMatrix(float angle)
-{
-    float c = std::cos(angle);
-    float s = std::sin(angle);
-    return {
-        c,    s,    0.0f, 0.0f,
-        -s,   c,    0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-}
-
-const char* vertexShaderRotateX = R"(
-#version 330 core
-layout (location = 0) in vec3 vertex;
-layout (location = 1) in vec3 normal;
-out vec3 normalVary;
-
-uniform float rotationAngle;
-
-void main()
-{
-    float c = cos(rotationAngle);
-    float s = sin(rotationAngle);
-    mat3 rotX = mat3(
-        1.0, 0.0, 0.0,
-        0.0,   c,  -s,
-        0.0,   s,   c
-    );
-    vec3 rotatedPos = rotX * vertex;
-    vec3 rotatedNorm = rotX * normal;
-    gl_Position = vec4(rotatedPos, 1.0);
-    normalVary = rotatedNorm;
-}
-)";
-
-const char* fragmentShaderLit = R"(
-#version 330 core
-precision mediump float;
-out vec4 fragColor;
-in vec3 normalVary;
-
-const vec4 constColor = vec4(0.0, 1.0, 0.5, 1.0);
-const vec3 lightDirection = vec3(-0.577, -0.577, 0.577);
-
-void main()
-{
-    float prod = -dot(normalize(lightDirection), normalize(normalVary));
-    fragColor = vec4(constColor.rgb * prod, 1.0);
-}
-)";
-
 int main()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -101,14 +26,14 @@ int main()
     std::vector<uint32_t> indices;
 
     // Create transformation matrices for positioning multiple shapes
-    Matrix4 leftTransform  = translationMatrix(-0.5f, 0.0f, 0.0f);
-    Matrix4 rightTransform = translationMatrix(0.5f, 0.0f, 0.0f);
+    Matrix4 leftTransform  = translation_mat4(-0.5f, 0.0f, 0.0f);
+    Matrix4 rightTransform = translation_mat4(0.5f, 0.0f, 0.0f);
 
 	float arrowHeadHeight = 0.1f, arrowHeadWidth = 0.05f, arrowShaftWidth = 0.025f;
-    Matrix4 arrowShaftTranslate = translationMatrix(0.0f, 0.0f, 1.0f);
+    Matrix4 arrowShaftTranslate = translation_mat4(0.0f, 0.0f, 1.0f);
     Matrix4 arrowShaftScale = scaleMatrix(arrowShaftWidth, arrowShaftWidth, 2.0f - arrowHeadHeight);
     Matrix4 arrowTipScale = scaleMatrix(arrowHeadWidth, arrowHeadWidth, arrowHeadHeight);
-    Matrix4 arrowTipTranslate = translationMatrix(0.0f, 0.0f, -1.0f + arrowHeadHeight);
+    Matrix4 arrowTipTranslate = translation_mat4(0.0f, 0.0f, -1.0f + arrowHeadHeight);
 
 	Builder::polar()
         .formula(L"1")
@@ -120,20 +45,19 @@ int main()
     // Create shape with custom shaders for X rotation
     Dynamit shape;
     shape
-        .withShaderSources(vertexShaderRotateX, fragmentShaderLit)
         .withVertices3d(verts)
         .withNormals3d(norms)
-        .withIndices(indices);
-
-    // Build programs and get uniform locations
-    GLint rotationLocShape = -1;
-    GLint rotationLocIndexed = -1;
-    shape.buildProgram();
-    rotationLocShape = glGetUniformLocation(shape.program.id, "rotationAngle");
+        .withIndices(indices)
+        .withConstColor({ 0.0, 1.0, 0.5, 1.0 })
+        .withConstLightDirection({ -0.577f, -0.577f, 0.577f })
+        .withTransformMatrix4f()
+        ;
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.0f, 1.f, 0.9f);
+
+    mat4<float> mat4Transform = {};
 
     // Render loop
     double time = glfwGetTime();
@@ -143,7 +67,9 @@ int main()
 		double currentTime = glfwGetTime();
 		double deltaTime = currentTime - time;
 		time = currentTime;
-        if (glfwGetKey(window, GLFW_KEY_F12) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ? -0.5 : 0.5f); // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * 0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * -0.5f; // slow rotation
+
         glPolygonMode(GL_FRONT_AND_BACK, glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS ? GL_LINE : GL_FILL);
 
         processInputs(window);
@@ -151,7 +77,12 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shape.useProgram();
-        glUniform1f(rotationLocShape, angle);
+
+        rotation_x_mat(angle, mat4Transform);
+
+        shape.transformMatrix4f(mat4Transform);
+        shape.drawTrianglesIndexed();
+
         shape.drawTrianglesIndexed();
 
         glfwPollEvents();

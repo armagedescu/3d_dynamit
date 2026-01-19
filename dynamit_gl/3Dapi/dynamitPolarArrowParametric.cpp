@@ -14,80 +14,6 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-// Helper to create a translation matrix (column-major)
-Matrix4 translationMatrix(float tx, float ty, float tz)
-{
-    return {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        tx,   ty,   tz,   1.0f
-    };
-}
-
-// Helper to create a scale matrix (column-major)
-Matrix4 scaleMatrix(float sx, float sy, float sz)
-{
-    return {
-        sx,   0.0f, 0.0f, 0.0f,
-        0.0f, sy,   0.0f, 0.0f,
-        0.0f, 0.0f, sz,   0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-}
-
-// Helper to create a rotation matrix around Z axis (column-major)
-Matrix4 rotationZMatrix(float angle)
-{
-    float c = std::cos(angle);
-    float s = std::sin(angle);
-    return {
-        c,    s,    0.0f, 0.0f,
-        -s,   c,    0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-}
-
-const char* vertexShaderRotateX = R"(
-#version 330 core
-layout (location = 0) in vec3 vertex;
-layout (location = 1) in vec3 normal;
-out vec3 normalVary;
-
-uniform float rotationAngle;
-
-void main()
-{
-    float c = cos(rotationAngle);
-    float s = sin(rotationAngle);
-    mat3 rotX = mat3(
-        1.0, 0.0, 0.0,
-        0.0,   c,  -s,
-        0.0,   s,   c
-    );
-    vec3 rotatedPos = rotX * vertex;
-    vec3 rotatedNorm = rotX * normal;
-    gl_Position = vec4(rotatedPos, 1.0);
-    normalVary = rotatedNorm;
-}
-)";
-
-const char* fragmentShaderLit = R"(
-#version 330 core
-precision mediump float;
-out vec4 fragColor;
-in vec3 normalVary;
-
-const vec4 constColor = vec4(0.0, 1.0, 0.5, 1.0);
-const vec3 lightDirection = vec3(-0.577, -0.577, 0.577);
-
-void main()
-{
-    float prod = -dot(normalize(lightDirection), normalize(normalVary));
-    fragColor = vec4(constColor.rgb * prod, 1.0);
-}
-)";
 
 int main()
 {
@@ -97,77 +23,106 @@ int main()
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    std::vector<float> verts, norms;
-    std::vector<uint32_t> indices;
+    std::vector<float> verts, norms, verts1, norms1, verts2, norms2;
+    std::vector<uint32_t> indices, indices1, indices2 ;
 
     // Create transformation matrices for positioning multiple shapes
-    Matrix4 leftTransform  = translationMatrix(-0.5f, 0.0f, 0.0f);
-    Matrix4 rightTransform = translationMatrix(0.5f, 0.0f, 0.0f);
 
-	float arrowHeadHeight = 0.1f, arrowHeadWidth = 0.2f, arrowShaftWidth = 0.125f;
-    Matrix4 arrowShaftTranslate = translationMatrix(0.0f, 0.0f, 1.0f);
-    Matrix4 arrowShaftScale = scaleMatrix(arrowShaftWidth, arrowShaftWidth, 2.0f - arrowHeadHeight);
-    Matrix4 arrowTipScale = scaleMatrix(arrowHeadWidth, arrowHeadWidth, arrowHeadHeight);
-    Matrix4 arrowTipTranslate = translationMatrix(0.0f, 0.0f, -1.0f + arrowHeadHeight);
-    bool buildCircle = true, buildHeart = true, build5PetalRose = false;
+	float arrowHeadHeight = 0.1f, arrowHeadWidth = 0.05f, arrowShaftWidth = 0.025f;
+	//float arrowHeadHeight = 0.2f, arrowHeadWidth = 0.1f, arrowShaftWidth = 0.025f;
+    mat4<float> arrowShaftTranslate = translation_mat4(0.0f, 0.0f, 1.0f);
+    mat4<float> arrowShaftScale = scaleMatrix(arrowShaftWidth, arrowShaftWidth, 2.0f - arrowHeadHeight);
+    mat4<float> arrowTipScale = scaleMatrix(arrowHeadWidth, arrowHeadWidth, arrowHeadHeight);
+    mat4<float> arrowTipTranslate = translation_mat4(0.0f, 0.0f, -1.0f + arrowHeadHeight);
+    bool buildCircle = false, buildHeart = false, build5PetalRose = true;
+
+    PolarBuilder builder = Builder::polar();
 
     if (buildCircle)
     {
-        Builder::polar().doubleCoated()
+        builder.doubleCoated()
             .sectors_slices(100, 100)
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
+			.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
+			.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4f(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4f(-M_PI / 2))
+			.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4f(M_PI))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4f(M_PI))
             ;
     }else  if (buildHeart)
     {
-        Builder::polar().doubleCoated()
+        builder.doubleCoated()
             .formula(L"theta / PI")
             .domain(M_PI)                       // first half
             .sectors_slices(100, 100)
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
+            //.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
+            //.buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat(-M_PI / 2))
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
+
             .formula(L"(2*PI - theta) / PI")    // second half
             .domain_shift(2 * M_PI)
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
+            //.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
+            //.buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat(-M_PI / 2))
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
+
             ;
     }else if (build5PetalRose)
     {
-        Builder::polar().doubleCoated()
+        builder.doubleCoated()
             .formula(L"cos(5 * theta)")
             .sectors_slices(100, 100)
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
+            //.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
+            //.buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat(-M_PI / 2))
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
+
             ;
     }
 
-    // Create shape with custom shaders for X rotation
+    // Setup:
     Dynamit shape;
     shape
-        .withShaderSources(vertexShaderRotateX, fragmentShaderLit)
         .withVertices3d(verts)
         .withNormals3d(norms)
-        .withIndices(indices);
-
-    // Build programs and get uniform locations
-    GLint rotationLocShape = -1;
-    GLint rotationLocIndexed = -1;
-    shape.buildProgram();
-    rotationLocShape = glGetUniformLocation(shape.program.id, "rotationAngle");
+        .withIndices(indices)
+        .withConstColor({ 0.0, 1.0, 0.5, 1.0 })
+		.withConstLightDirection({ -0.577f, -0.577f, 0.577f })
+        .withTransformMatrix4f()
+        //.withTransformMatrix3f()
+        ;
+	shape.logGeneratedShaders();
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.0f, 1.f, 0.9f);
 
+    mat4<float> mat4Transform = {};
     // Render loop
     double time = glfwGetTime();
-	float angle = 0.f;
+    float anglex = 0.f, angley = 0.f, anglez = 0.f;
     while (!glfwWindowShouldClose(window))
     {
 		double currentTime = glfwGetTime();
 		double deltaTime = currentTime - time;
 		time = currentTime;
-        if (glfwGetKey(window, GLFW_KEY_F12) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ? -0.5 : 0.5f); // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) anglex += static_cast<float>(deltaTime) * 0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) anglex += static_cast<float>(deltaTime) * -0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) angley += static_cast<float>(deltaTime) * 0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) angley += static_cast<float>(deltaTime) * -0.5f; // slow rotation
         glPolygonMode(GL_FRONT_AND_BACK, glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS ? GL_LINE : GL_FILL);
 
         processInputs(window);
@@ -175,7 +130,11 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shape.useProgram();
-        glUniform1f(rotationLocShape, angle);
+
+        rotation_x_mat(anglex, mat4Transform);
+		rotate_y_mat(angley, mat4Transform);
+
+        shape.transformMatrix4f(mat4Transform);
         shape.drawTrianglesIndexed();
 
         glfwPollEvents();
