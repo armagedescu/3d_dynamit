@@ -83,6 +83,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			keyPressed = true;
 			currentDraw = 10;
 			break;
+		case GLFW_KEY_F12:
+			glfwSetInputMode(window, GLFW_CURSOR, glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+			break;
 		default:
 			keyPressed = false;
 			break;
