@@ -58,7 +58,6 @@ int main()
     glClearColor(0.0f, 0.0f, 1.f, 0.9f);
 
     mat4<float> mat4Transform = {};
-
     // Render loop
     double time = glfwGetTime();
 	float angle = 0.f;

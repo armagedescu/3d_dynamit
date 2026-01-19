@@ -15,46 +15,6 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-const char* vertexShaderRotateX = R"(
-#version 330 core
-layout (location = 0) in vec3 vertex;
-layout (location = 1) in vec3 normal;
-out vec3 normalVary;
-
-uniform float rotationAngle;
-
-void main()
-{
-    float c = cos(rotationAngle);
-    float s = sin(rotationAngle);
-    mat3 rotX = mat3(
-        1.0, 0.0, 0.0,
-        0.0,   c,  -s,
-        0.0,   s,   c
-    );
-    vec3 rotatedPos = rotX * vertex;
-    vec3 rotatedNorm = rotX * normal;
-    gl_Position = vec4(rotatedPos, 1.0);
-    normalVary = rotatedNorm;
-}
-)";
-
-const char* fragmentShaderLit = R"(
-#version 330 core
-precision mediump float;
-out vec4 fragColor;
-in vec3 normalVary;
-
-const vec4 constColor = vec4(0.0, 1.0, 0.5, 1.0);
-const vec3 lightDirection = vec3(-0.577, -0.577, 0.577);
-
-void main()
-{
-    float prod = -dot(normalize(lightDirection), normalize(normalVary));
-    fragColor = vec4(constColor.rgb * prod, 1.0);
-}
-)";
-
 int main()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -145,38 +105,32 @@ int main()
     if (verts.size() > 0)
     {
         shape
-            .withShaderSources(vertexShaderRotateX, fragmentShaderLit)
             .withVertices3d(verts)
-            .withNormals3d(norms);
+            .withNormals3d(norms)
+            .withConstColor({ 0.0, 1.0, 0.5, 1.0 })
+            .withConstLightDirection({ -0.577f, -0.577f, 0.577f })
+            .withTransformMatrix4f()
+            ;
     }
 
     if (vertsIndexed.size() > 0)
     {
         shapeIndexed
-            .withShaderSources(vertexShaderRotateX, fragmentShaderLit)
             .withVertices3d(vertsIndexed)
             .withNormals3d(normsIndexed)
-            .withIndices(indices);
+            .withIndices(indices)
+            .withConstColor({ 0.0, 1.0, 0.5, 1.0 })
+            .withConstLightDirection({ -0.577f, -0.577f, 0.577f })
+            .withTransformMatrix4f()
+            ;
     }
 
     // Build programs and get uniform locations
-    GLint rotationLocShape = -1;
-    GLint rotationLocIndexed = -1;
-    if (!verts.empty()) 
-    {
-        shape.buildProgram();
-        rotationLocShape = glGetUniformLocation(shape.program.id, "rotationAngle");
-    }
-    if (!vertsIndexed.empty())
-    {
-        shapeIndexed.buildProgram();
-        rotationLocIndexed = glGetUniformLocation(shapeIndexed.program.id, "rotationAngle");
-    }
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.0f, 1.f, 0.9f);
 
+    mat4<float> mat4Transform = {};
     // Render loop
     double time = glfwGetTime();
 	float angle = 0.f;
@@ -185,31 +139,30 @@ int main()
 		double currentTime = glfwGetTime();
 		double deltaTime = currentTime - time;
 		time = currentTime;
-        if (glfwGetKey(window, GLFW_KEY_F12) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ? -0.5 : 0.5f); // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * 0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * -0.5f; // slow rotation
+
         glPolygonMode(GL_FRONT_AND_BACK, glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS ? GL_LINE : GL_FILL);
 
         processInputs(window);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //float angle = 0.f; //static_cast<float>(glfwGetTime()) * 0.5f; // slow rotation
-        //float angle = static_cast<float>(glfwGetTime()) * 0.5f; // slow rotation
+        rotation_x_mat(angle, mat4Transform);
 
         switch (currentShape)
         {
         case DRAW_1:
             if (verts.size() > 0)
             {
-                shape.useProgram();
-                glUniform1f(rotationLocShape, angle);
+                shape.transformMatrix4f(mat4Transform);
                 shape.drawTriangles();
             }
             break;
         case DRAW_2:
             if (vertsIndexed.size() > 0)
             {
-                shapeIndexed.useProgram();
-                glUniform1f(rotationLocIndexed, angle);
+                shapeIndexed.transformMatrix4f(mat4Transform);
                 shapeIndexed.drawTrianglesIndexed();
             }
             break;
