@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36811.4 d17.14
+VisualStudioVersion = 17.14.36811.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dynamit_gl", "dynamit_gl\dynamit_gl.vcxproj", "{28E50474-8EE8-48A8-9531-1782C7BDDCF4}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -11,6 +11,11 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "3DCalculator", "3DCalculator\3DCalculator.vcxproj", "{AC87EC40-AD9F-435D-8E4C-FC7F984D3568}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "3Dapi", "3Dapi\3Dapi.vcxproj", "{713BEFCA-FB52-4215-B23E-BF13140CE371}"
+	ProjectSection(ProjectDependencies) = postProject
+		{28E50474-8EE8-48A8-9531-1782C7BDDCF4} = {28E50474-8EE8-48A8-9531-1782C7BDDCF4}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dynamit_gl_sample", "dynamit_gl_sample\dynamit_gl_sample.vcxproj", "{97F0FF63-83B2-4BFF-A5A1-F5803AD31717}"
 	ProjectSection(ProjectDependencies) = postProject
 		{28E50474-8EE8-48A8-9531-1782C7BDDCF4} = {28E50474-8EE8-48A8-9531-1782C7BDDCF4}
 	EndProjectSection
@@ -47,6 +52,14 @@ Global
 		{713BEFCA-FB52-4215-B23E-BF13140CE371}.Release|x64.Build.0 = Release|x64
 		{713BEFCA-FB52-4215-B23E-BF13140CE371}.Release|x86.ActiveCfg = Release|Win32
 		{713BEFCA-FB52-4215-B23E-BF13140CE371}.Release|x86.Build.0 = Release|Win32
+		{97F0FF63-83B2-4BFF-A5A1-F5803AD31717}.Debug|x64.ActiveCfg = Debug|x64
+		{97F0FF63-83B2-4BFF-A5A1-F5803AD31717}.Debug|x64.Build.0 = Debug|x64
+		{97F0FF63-83B2-4BFF-A5A1-F5803AD31717}.Debug|x86.ActiveCfg = Debug|Win32
+		{97F0FF63-83B2-4BFF-A5A1-F5803AD31717}.Debug|x86.Build.0 = Debug|Win32
+		{97F0FF63-83B2-4BFF-A5A1-F5803AD31717}.Release|x64.ActiveCfg = Release|x64
+		{97F0FF63-83B2-4BFF-A5A1-F5803AD31717}.Release|x64.Build.0 = Release|x64
+		{97F0FF63-83B2-4BFF-A5A1-F5803AD31717}.Release|x86.ActiveCfg = Release|Win32
+		{97F0FF63-83B2-4BFF-A5A1-F5803AD31717}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
