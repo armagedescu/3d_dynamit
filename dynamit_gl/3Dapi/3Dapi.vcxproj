@@ -164,30 +164,6 @@
     <ClInclude Include="enabler.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dynamitAnimate.cpp" />
-    <ClCompile Include="dynamitCone1Animate1Calc.cpp" />
-    <ClCompile Include="dynamitCone1Animate1.cpp" />
-    <ClCompile Include="dynamitCone1Animate2.cpp" />
-    <ClCompile Include="dynamitCone1Geometry1.cpp" />
-    <ClCompile Include="dynamitCone1HeartGeometry1.cpp" />
-    <ClCompile Include="dynamitCone1HeartGeometry2Calc.cpp" />
-    <ClCompile Include="dynamitCone1HeartGeometry2.cpp" />
-    <ClCompile Include="dynamitCone1HeartGeometry2CalcBuilder.cpp" />
-    <ClCompile Include="dynamitConeBuilders.cpp" />
-    <ClCompile Include="dynamitConeGeometryCalc.cpp" />
-    <ClCompile Include="dynamitCylinderGeometryCalc.cpp" />
-    <ClCompile Include="dynamitDraw0.cpp" />
-    <ClCompile Include="dynamitDrawStrided.cpp" />
-    <ClCompile Include="dynamit.cpp" />
-    <ClCompile Include="dynamitNormalsAndColors2Progs.cpp" />
-    <ClCompile Include="dynamitPolarArrowCombined.cpp" />
-    <ClCompile Include="dynamitPolarArrowParametric.cpp" />
-    <ClCompile Include="dynamitPolarCombineWithTransform.cpp" />
-    <ClCompile Include="dynamitPolarWithTransform.cpp" />
-    <ClCompile Include="dynamitSphereDodecahedron.cpp" />
-    <ClCompile Include="dynamitSphereDodecahedronTextured.cpp" />
-    <ClCompile Include="dynamitTriangleFan.cpp" />
-    <ClCompile Include="dynamitTriangleFanPrimitives.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainCamera.cpp" />
     <ClCompile Include="mainParticles.cpp" />
