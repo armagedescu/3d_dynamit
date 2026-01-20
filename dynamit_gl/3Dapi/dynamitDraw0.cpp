@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_DRAW0_CPP__
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -15,7 +14,7 @@ layout (location = 0) in vec3 vertex;
 const vec4 constTranslation = vec4(0.5, 0.5, 0, 0);
 //hello override vs
 
-void main()
+void main() //vs
 {
     gl_Position = vec4(vertex, 1) + constTranslation;
 }
@@ -27,13 +26,13 @@ out vec4 fragColor;
 const vec4 constColor = vec4(0, 1, 0, 1);
 //hello override fs
 
-void main()
+void main() //fs
 {
     fragColor = constColor;
 }
 )glsl";
 
-int main()
+int main_dynamitDraw0()
 {
     srand(time(NULL));
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -88,5 +87,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_DRAW0_CPP__
+int main() { return main_dynamitDraw0(); }
 #endif

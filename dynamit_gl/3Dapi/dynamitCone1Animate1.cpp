@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_CONE1_ANIMATE1_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -42,7 +41,7 @@ void buildmConemPolar(std::vector<float>& verts, std::vector<float>& norms, int 
     }
 }
 
-int main()
+int main_dynamitCone1Animate1()
 {
     srand(time(NULL));
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -94,5 +93,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_CONE1_ANIMATE1_CPP__
+int main() { return main_dynamitCone1Animate1(); }
 #endif

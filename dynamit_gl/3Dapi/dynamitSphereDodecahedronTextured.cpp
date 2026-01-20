@@ -460,7 +460,7 @@ out vec2 texCoordVary;
 
 uniform vec4 constTranslation;
 
-void main() {
+void main() { //vs
     gl_Position = vec4(vertex, 1.0) + constTranslation;
     normalVary = normal;
     texCoordVary = texCoord;
@@ -479,7 +479,7 @@ out vec4 fragColor;
 uniform sampler2D sphereTexture;
 const vec3 lightDirection = vec3(-1.0, -1.0, 1.0);
 
-void main() {
+void main() { //fs
     float prod = -dot(normalize(lightDirection), normalize(normalVary));
     prod = max(prod, 0.2);
     vec4 texColor = texture(sphereTexture, texCoordVary);

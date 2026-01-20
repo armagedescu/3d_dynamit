@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -76,7 +75,7 @@ void buildConeGeometry(std::vector<float>& verts, std::vector<float>& norms,
     }
 }
 
-int main()
+int main_dynamit ()
 {
     srand(time(NULL));
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -117,5 +116,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_CPP__
+int main() { return main_dynamit(); }
 #endif

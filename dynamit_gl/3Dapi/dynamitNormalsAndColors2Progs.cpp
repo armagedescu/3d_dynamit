@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_NORMALS_AND_COLORS_2PROGS_CPP__
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -10,7 +9,7 @@
 
 using namespace dynamit;
 
-int main()
+int main_dynamitNormalsAndColors2Progs()
 {
     srand(time(NULL));
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -75,5 +74,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_NORMALS_AND_COLORS_2PROGS_CPP__
+int main() { return main_dynamitNormalsAndColors2Progs(); }
 #endif

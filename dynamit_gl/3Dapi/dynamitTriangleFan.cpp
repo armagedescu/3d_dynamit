@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_TRIANGLE_FAN_CPP__
 
 #define _USE_MATH_DEFINES  // Add this BEFORE including cmath
 #include <cmath>
@@ -13,7 +12,7 @@
 using namespace dynamit;
 
 // Generate triangle fan geometry (disc/circle)
-void buildTriangleFanGeometry(std::vector<float>& verts, std::vector<float>& norms, 
+static void buildTriangleFanGeometry(std::vector<float>& verts, std::vector<float>& norms, 
                               int ns = 16, float dr = 0.6f)
 {
     verts.clear();
@@ -36,7 +35,7 @@ void buildTriangleFanGeometry(std::vector<float>& verts, std::vector<float>& nor
     }
 }
 
-int main()
+int main_dynamitTriangleFan()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -82,5 +81,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_TRIANGLE_FAN_CPP__
+int main() { return main_dynamitTriangleFan(); }
 #endif

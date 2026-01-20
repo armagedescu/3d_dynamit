@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_DRAW_STRIDED_CPP__
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -10,7 +9,7 @@
 
 using namespace dynamit;
 
-int main()
+int main_dynamitDrawStrided()
 {
 
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -132,5 +131,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_DRAW_STRIDED_CPP__
+int main() { return main_dynamitDrawStrided(); }
 #endif

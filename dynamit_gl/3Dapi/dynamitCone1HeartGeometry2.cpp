@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_CONE1_HEART_GEOMETRY2_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -161,7 +160,7 @@ void buildConeHeart2(std::vector<float>& verts, std::vector<float>& norms, int n
     }
 }
 
-int main()
+int main_dynamitCone1HeartGeometry2()
 {
     srand(time(NULL));
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -206,5 +205,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_CONE1_HEART_GEOMETRY2_CPP__
+int main() { return main_dynamitCone1HeartGeometry2(); }
 #endif

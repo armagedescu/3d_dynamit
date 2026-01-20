@@ -32,7 +32,7 @@ enum class token_type : int
 	comment,
 	end
 };
-std::wostream& operator<<(std::wostream& os, token_type t)
+inline std::wostream& operator<<(std::wostream& os, token_type t)
 {
 	switch (t)
 	{
@@ -62,7 +62,7 @@ enum class token_result
 	eos     // end of string
 };
 
-std::wostream& operator<<(std::wostream& os, token_result r)
+inline std::wostream& operator<<(std::wostream& os, token_result r)
 {
 	switch (r)
 	{
@@ -94,7 +94,7 @@ class comma_token            : public token { public: virtual token_type type() 
 class unknown_token          : public token { public: virtual token_type type() { return token_type::unknown; } };
 class end_token              : public token { public: virtual token_type type() { return token_type::end; } };
 
-std::wostream& operator<< (std::wostream& os, token& tk)
+inline std::wostream& operator<< (std::wostream& os, token& tk)
 {
 	os << tk.type();
 	if (!tk.value.empty())
