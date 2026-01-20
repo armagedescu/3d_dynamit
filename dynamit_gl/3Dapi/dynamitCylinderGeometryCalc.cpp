@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_CYLINDER_GEOMETRY_CALC_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -15,7 +14,7 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-int main()
+int main_dynamitCylinderGeometryCalc()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -132,15 +131,13 @@ int main()
 
     mat4<float> mat4Transform = {};
     // Render loop
-    double time = glfwGetTime();
+    TimeController tc(glfwGetTime());
 	float angle = 0.f;
     while (!glfwWindowShouldClose(window))
     {
-		double currentTime = glfwGetTime();
-		double deltaTime = currentTime - time;
-		time = currentTime;
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * 0.5f; // slow rotation
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * -0.5f; // slow rotation
+		tc.update(glfwGetTime());
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) angle += static_cast<float>(tc.deltaTime) * 0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) angle += static_cast<float>(tc.deltaTime) * -0.5f; // slow rotation
 
         glPolygonMode(GL_FRONT_AND_BACK, glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS ? GL_LINE : GL_FILL);
 
@@ -148,7 +145,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        rotation_x_mat(angle, mat4Transform);
+        rotation_x_mat4(angle, mat4Transform);
 
         switch (currentShape)
         {
@@ -175,5 +172,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_CYLINDER_GEOMETRY_CALC_CPP__
+int main() { return main_dynamitCylinderGeometryCalc(); }
 #endif

@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_POLAR_COMBINE_WITH_TRANSFORM_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -14,8 +13,9 @@
 
 using namespace dynamit;
 using namespace dynamit::builders;
+using namespace dynamit::geo;
 
-int main()
+int main_dynamitPolarCombineWithTransform()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -27,15 +27,11 @@ int main()
     std::vector<float> vertsIndexed, normsIndexed;
     std::vector<uint32_t> indices;
 
-    // Create transformation matrices for positioning multiple shapes
-    Matrix4 leftTransform  = translation_mat4(-0.5f, 0.0f, 0.0f);
-    Matrix4 rightTransform = translation_mat4(0.5f, 0.0f, 0.0f);
-
-	float arrowHeadHeight = 0.1f, arrowHeadWidth = 0.05f, arrowShaftWidth = 0.025f;
-    Matrix4 arrowShaftTranslate = translation_mat4(0.0f, 0.0f, 1.0f);
-    Matrix4 arrowShaftScale = scaleMatrix(arrowShaftWidth, arrowShaftWidth, 2.0f - arrowHeadHeight);
-    Matrix4 arrowTipScale = scaleMatrix(arrowHeadWidth, arrowHeadWidth, arrowHeadHeight);
-    Matrix4 arrowTipTranslate = translation_mat4(0.0f, 0.0f, -1.0f + arrowHeadHeight);
+    float arrowHeadHeight = 0.1f, arrowHeadWidth = 0.05f, arrowShaftWidth = 0.025f;
+    mat4<float> arrowShaftTranslate = translation_mat4(0.0f, 0.0f, 1.0f);
+    mat4<float> arrowShaftScale = scaleMatrix(arrowShaftWidth, arrowShaftWidth, 2.0f - arrowHeadHeight);
+    mat4<float> arrowTipScale = scaleMatrix(arrowHeadWidth, arrowHeadWidth, arrowHeadHeight);
+    mat4<float> arrowTipTranslate = translation_mat4(0.0f, 0.0f, -1.0f + arrowHeadHeight);
 
 	Builder::polar().doubleCoated()//.reversed(true).edged()
         .formula(L"1")             // first half
@@ -80,16 +76,14 @@ int main()
 
     mat4<float> mat4Transform = {};
     // Render loop
-    double time = glfwGetTime();
 	float angle = 0.f;
+	TimeController tc(glfwGetTime());
     while (!glfwWindowShouldClose(window))
     {
-		double currentTime = glfwGetTime();
-		double deltaTime = currentTime - time;
-		time = currentTime;
+		tc.update(glfwGetTime());
 
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * 0.5f; // slow rotation
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * -0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) angle += static_cast<float>(tc.deltaTime) * 0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) angle += static_cast<float>(tc.deltaTime) * -0.5f; // slow rotation
 
         glPolygonMode(GL_FRONT_AND_BACK, glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS ? GL_LINE : GL_FILL);
 
@@ -97,7 +91,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        rotation_x_mat(angle, mat4Transform);
+        rotation_x_mat4(angle, mat4Transform);
 
         switch (currentShape)
         {
@@ -124,5 +118,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_POLAR_COMBINE_WITH_TRANSFORM_CPP__
+int main() { return main_dynamitPolarCombineWithTransform(); }
 #endif

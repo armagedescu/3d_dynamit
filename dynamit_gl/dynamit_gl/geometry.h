@@ -1,5 +1,7 @@
 #pragma once
 #include <array>
+#include <cmath>
+#include <vector>
 
 #if _MSVC_LANG  >= 201703L
 
@@ -82,28 +84,66 @@ template<int n, class T, class TO> TO& coutn(TO& os, T* t, const char* start = "
 }
 
 
-namespace dynamit::builders
+namespace dynamit::geo
 {
 
 template<typename T = float> using mat4 = std::array<T, 16>;
 template<typename T = float> using mat3 = std::array<T, 9>;
-using Matrix4 = std::array<float, 16>;
+template<typename T = float> using mat2 = std::array<T, 4>;
 
-template<typename T = float> mat4<T> identity_mat4()
+//TODO: scaleMatrix does not follow the naming convention
+
+// Convention
+// identity_* creates an identity matrix in the target/return value
+// rotate_* rotates the target matrix by the given angle
+// rotation_* creates a new rotation by the given angle matrix in the target/return value
+// multiply_* multiplies the target matrix by the given matrix
+template<typename T = float> constexpr mat4<T> identity_mat4()
 {
     return {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
+        T{1}, T{0}, T{0}, T{0},
+        T{0}, T{1}, T{0}, T{0},
+        T{0}, T{0}, T{1}, T{0},
+        T{0}, T{0}, T{0}, T{1}
     };
 }
-template<typename T = float> mat3<T> identity_mat3()
+template<typename T = float> constexpr mat4<T> null_mat4()
 {
     return {
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f
+        T{0}, T{0}, T{0}, T{0},
+        T{0}, T{0}, T{0}, T{0},
+        T{0}, T{0}, T{0}, T{0},
+        T{0}, T{0}, T{0}, T{0}
+    };
+}
+template<typename T = float> constexpr mat3<T> identity_mat3()
+{
+    return {
+        T{1}, T{0}, T{0},
+        T{0}, T{1}, T{0},
+        T{0}, T{0}, T{1}
+    };
+}
+template<typename T = float> constexpr mat3<T> null_mat3()
+{
+    return {
+        T{0}, T{0}, T{0},
+        T{0}, T{0}, T{0},
+        T{0}, T{0}, T{0}
+    };
+}
+template<typename T = float> constexpr mat2<T> identity_mat2()
+{
+    return {
+        T{1}, T{0},
+        T{0}, T{1}
+    };
+}
+template<typename T = float> constexpr mat2<T> null_mat2()
+{
+    return {
+        T{0}, T{0},
+        T{0}, T{0}
     };
 }
 
@@ -136,54 +176,13 @@ template<typename T = float> void multiply_mat4(const mat4<T>& a, mat4<T>& ioRes
     }
 }
 
-inline Matrix4 prod_mat4f(const Matrix4& a, const Matrix4& b)
-{
-    Matrix4 result = {};
-    for (int row = 0; row < 4; ++row)
-    {
-        for (int col = 0; col < 4; ++col)
-        {
-            result[row + col * 4] =
-                a[row + 0 * 4] * b[0 + col * 4] +
-                a[row + 1 * 4] * b[1 + col * 4] +
-                a[row + 2 * 4] * b[2 + col * 4] +
-                a[row + 3 * 4] * b[3 + col * 4];
-        }
-    }
-    return result;
-}
-inline void prod_mat4f(const Matrix4& a, const Matrix4& b, Matrix4& result)
-{
-    result = {};
-    for (int row = 0; row < 4; ++row)
-    {
-        for (int col = 0; col < 4; ++col)
-        {
-            result[row + col * 4] =
-                a[row + 0 * 4] * b[0 + col * 4] +
-                a[row + 1 * 4] * b[1 + col * 4] +
-                a[row + 2 * 4] * b[2 + col * 4] +
-                a[row + 3 * 4] * b[3 + col * 4];
-        }
-    }
-}
-// Helper to create a translation matrix (column-major)
-inline Matrix4 translation_mat4f(float tx, float ty, float tz)
-{
-    return {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        tx,   ty,   tz,   1.0f
-    };
-}
 template<typename T = float, typename T1> mat4<T> translation_mat4(T1 tx, T1 ty, T1 tz)
 {
     return {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        tx,   ty,   tz,   1.0f
+        T{1}, T{0}, T{0}, T{0},
+        T{0}, T{1}, T{0}, T{0},
+        T{0}, T{0}, T{1}, T{0},
+        T{tx}, T{ty}, T{tz}, T{1}
     };
 }
 
@@ -191,10 +190,10 @@ template<typename T = float, typename T1> mat4<T> translation_mat4(T1 tx, T1 ty,
 template<typename T = float, typename T1> mat4<T> scaleMatrix(T1 sx, T1 sy, T1 sz)
 {
     return {
-        sx,   0.0f, 0.0f, 0.0f,
-        0.0f, sy,   0.0f, 0.0f,
-        0.0f, 0.0f, sz,   0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
+        T{sx},   T{0}, T{0}, T{0},
+        T{0}, T{sy},   T{0}, T{0},
+        T{0}, T{0}, T{sz},   T{0},
+        T{0}, T{0}, T{0}, T{1}
     };
 }
 
@@ -202,122 +201,79 @@ template<typename T = float> mat4<T> rotation_x_mat4(float angle)
 {
     T c = std::cos(angle), s = std::sin(angle);
     return {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, c,   -s,    0.0f,
-        0.0f, s,   c,    0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
+        T{1}, T{0}, T{0}, T{0},
+        T{0}, c,   -s,    T{0},
+        T{0}, s,   c,    T{0},
+        T{0}, T{0}, T{0}, T{1}
     };
 }
-template<typename T = float> void rotation_x_mat(float angle, mat4<T>& matrix)
+template<typename T = float> void rotation_x_mat4(float angle, mat4<T>& matrix)
 {
     T c = std::cos(angle), s = std::sin(angle);
     matrix = {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, c,   -s,    0.0f,
-        0.0f, s,   c,    0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
+        T{1}, T{0}, T{0}, T{0},
+        T{0}, c,   -s,    T{0},
+        T{0}, s,   c,    T{0},
+        T{0}, T{0}, T{0}, T{1}
     };
 }
-template<typename T = float> void rotate_x_mat(T angle, mat4<T>& ioResult)
+template<typename T = float> void rotate_x_mat4(T angle, mat4<T>& ioResult)
 {
     multiply_mat4(rotation_x_mat4(angle), ioResult);
 }
-inline Matrix4 rotation_x_mat4f(float angle)
-{
-    float c = std::cos(angle), s = std::sin(angle);
-    return {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, c,   -s,    0.0f,
-        0.0f, s,   c,    0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-}
 
-template<typename T = float> mat4<T> rotation_y_mat(float angle)
+template<typename T = float> mat4<T> rotation_y_mat4(float angle)
 {
     T c = std::cos(angle), s = std::sin(angle);
     return {
-        c,    0.0f, s,   0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        -s,    0.0f, c,    0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
+        c,    T{0}, s,   T{0},
+        T{0}, T{1}, T{0}, T{0},
+        -s,    T{0}, c,    T{0},
+        T{0}, T{0}, T{0}, T{1}
     };
 }
-template<typename T = float> void rotation_y_mat(float angle, mat4<T>& matrix)
+template<typename T = float> void rotation_y_mat4(float angle, mat4<T>& matrix)
 {
     T c = std::cos(angle), s = std::sin(angle);
     matrix = {
-        c,    0.0f, -s,   0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        s,    0.0f, c,    0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
+        c,    T{0}, -s,   T{0},
+        T{0}, T{1}, T{0}, T{0},
+        s,    T{0}, c,    T{0},
+        T{0}, T{0}, T{0}, T{1}
     };
 }
-template<typename T = float> void rotate_y_mat(T angle, mat4<T>& ioResult)
+template<typename T = float> void rotate_y_mat4(T angle, mat4<T>& ioResult)
 {
-    multiply_mat4(rotation_y_mat(angle), ioResult);
+    multiply_mat4(rotation_y_mat4(angle), ioResult);
 }
 //TODO: clarify s/-s for Y
-inline Matrix4 rotation_y_mat4f(float angle)
-{
-    float c = std::cos(angle), s = std::sin(angle);
-    return {
-        c,    0.0f, -s,   0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        s,    0.0f, c,    0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-}
-
 // Helper to create a rotation matrix around Z axis (column-major)
 template<typename T = float> mat4<T> rotation_z_mat4(float angle)
 {
     T c = std::cos(angle), s = std::sin(angle);
     return {
-        c,   -s,    0.0f, 0.0f,
-        s,   c,    0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
+        c,   -s,    T{0}, T{0},
+        s,   c,    T{0}, T{0},
+        T{0}, T{0}, T{1}, T{0},
+        T{0}, T{0}, T{0}, T{1}
     };
 }
-template<typename T = float> void rotation_z_mat(float angle, mat4<T>& matrix)
+template<typename T = float> void rotation_z_mat4(float angle, mat4<T>& matrix)
 {
     T c = std::cos(angle), s = std::sin(angle);
     matrix = {
-        c,   -s,    0.0f, 0.0f,
-        s,   c,    0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
+        c,   -s,    T{0}, T{0},
+        s,   c,    T{0}, T{0},
+        T{0}, T{0}, T{1}, T{0},
+        T{0}, T{0}, T{0}, T{1}
     };
 }
-template<typename T = float> void rotate_z_mat(T angle, mat4<T>& ioResult)
+template<typename T = float> void rotate_z_mat4(T angle, mat4<T>& ioResult)
 {
     multiply_mat4(rotation_z_mat4(angle), ioResult);
 }
-inline Matrix4 rotation_z_mat4f(float angle)
-{
-    float c = std::cos(angle), s = std::sin(angle);
-    return {
-        c,   -s,    0.0f, 0.0f,
-        s,   c,    0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-}
 
-// Identity matrix
-inline Matrix4 identity_mat4f()
-{
-    return {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-}
-
-// Transform a position (applies full 4x4 transform including translation)
-inline void transformPosition(const Matrix4& m, float& x, float& y, float& z)
+inline void transformPosition(const mat4<float>& m, float& x, float& y, float& z)
 {
     float w = 1.0f;
     float nx = m[0] * x + m[4] * y + m[8] * z + m[12] * w;
@@ -328,8 +284,10 @@ inline void transformPosition(const Matrix4& m, float& x, float& y, float& z)
     z = nz;
 }
 
+//// Transform a normal (applies only rotation/scale, no translation)
+
 // Transform a normal (applies only rotation/scale, no translation)
-inline void transformNormal(const Matrix4& m, float& nx, float& ny, float& nz)
+inline void transformNormal(const mat4<float>& m, float& nx, float& ny, float& nz)
 {
     float tnx = m[0] * nx + m[4] * ny + m[8] * nz;
     float tny = m[1] * nx + m[5] * ny + m[9] * nz;
@@ -348,9 +306,10 @@ inline void transformNormal(const Matrix4& m, float& nx, float& ny, float& nz)
     nz = tnz;
 }
 
+//// Apply single transformation to a range of vertices and normals
 // Apply single transformation to a range of vertices and normals
 inline void applyTransformToRange(
-    const Matrix4& m,
+    const mat4<float>& m,
     std::vector<float>& verts,
     std::vector<float>& norms,
     size_t startVertex)

@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_POLAR_ARROW_PARAMETRIC_CPP__
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <GL/glew.h>
@@ -15,7 +14,7 @@ using namespace dynamit;
 using namespace dynamit::builders;
 
 
-int main()
+int main_dynamitPolarArrowParametric()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -44,10 +43,10 @@ int main()
             .sectors_slices(100, 100)
 			.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
             .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-			.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4f(-M_PI / 2))
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4f(-M_PI / 2))
-			.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4f(M_PI))
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4f(M_PI))
+			.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
+			.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
             ;
     }else  if (buildHeart)
     {
@@ -59,8 +58,8 @@ int main()
             //.buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
             .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
             .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat(-M_PI / 2))
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat(-M_PI / 2))
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
             .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
             .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
 
@@ -70,8 +69,8 @@ int main()
             //.buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
             .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
             .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat(-M_PI / 2))
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat(-M_PI / 2))
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
             .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
             .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
 
@@ -85,8 +84,8 @@ int main()
             //.buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
             .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
             .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat(-M_PI / 2))
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat(-M_PI / 2))
+            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
+            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
             .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
             .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
 
@@ -112,17 +111,15 @@ int main()
 
     mat4<float> mat4Transform = {};
     // Render loop
-    double time = glfwGetTime();
     float anglex = 0.f, angley = 0.f, anglez = 0.f;
+	TimeController tc(glfwGetTime());
     while (!glfwWindowShouldClose(window))
     {
-		double currentTime = glfwGetTime();
-		double deltaTime = currentTime - time;
-		time = currentTime;
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) anglex += static_cast<float>(deltaTime) * 0.5f; // slow rotation
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) anglex += static_cast<float>(deltaTime) * -0.5f; // slow rotation
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) angley += static_cast<float>(deltaTime) * 0.5f; // slow rotation
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) angley += static_cast<float>(deltaTime) * -0.5f; // slow rotation
+		tc.update(glfwGetTime());
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) anglex += static_cast<float>(tc.deltaTime) * 0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) anglex += static_cast<float>(tc.deltaTime) * -0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) angley += static_cast<float>(tc.deltaTime) * 0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) angley += static_cast<float>(tc.deltaTime) * -0.5f; // slow rotation
         glPolygonMode(GL_FRONT_AND_BACK, glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS ? GL_LINE : GL_FILL);
 
         processInputs(window);
@@ -131,8 +128,8 @@ int main()
 
         shape.useProgram();
 
-        rotation_x_mat(anglex, mat4Transform);
-		rotate_y_mat(angley, mat4Transform);
+        rotation_x_mat4(anglex, mat4Transform);
+		rotate_y_mat4(angley, mat4Transform);
 
         shape.transformMatrix4f(mat4Transform);
         shape.drawTrianglesIndexed();
@@ -144,5 +141,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_POLAR_ARROW_PARAMETRIC_CPP__
+int main() { return main_dynamitPolarArrowParametric(); }
 #endif

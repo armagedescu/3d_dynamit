@@ -15,6 +15,21 @@ namespace config
 	inline int openGlProfile = GLFW_OPENGL_CORE_PROFILE;
 }
 
+
+class TimeController {
+public:
+	double time;
+	double currentTime;
+	double deltaTime;
+	TimeController() :TimeController(0) {}
+	TimeController(float start) : time(start), currentTime(0), deltaTime(0) {}
+	void update(float newtime) {
+		currentTime = newtime;
+		deltaTime = currentTime - time;
+		time = currentTime;
+	}
+};
+
 inline float deltaTime = 0, lastFrame = 0;  //time since last frame //time of last frame
 const inline float& currentTime = lastFrame;  //time since last frame //time of last frame
 

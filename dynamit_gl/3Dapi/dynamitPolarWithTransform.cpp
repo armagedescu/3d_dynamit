@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_POLAR_WITH_TRANSFORM_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -15,7 +14,7 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-int main()
+int main_dynamitPolarWithTransform()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -27,13 +26,11 @@ int main()
     std::vector<float> vertsIndexed, normsIndexed;
     std::vector<uint32_t> indices;
 
-    // Create transformation matrices for positioning multiple shapes
-    Matrix4 leftTransform  = translation_mat4(-0.5f, 0.0f, 0.0f);
-    Matrix4 rightTransform = translation_mat4(0.5f, 0.0f, 0.0f);
+    //// Create transformation matrices for positioning multiple shapes
 
-    Matrix4 translate = translation_mat4(-0.5f, 0.0f, 0.0f);
-    Matrix4 rotate = rotation_z_mat4(M_PI / 4);
-    Matrix4 scale = scaleMatrix(0.5f, 0.5f, 1.0f);
+    mat4<float> translate = translation_mat4(-0.5f, 0.0f, 0.0f);
+    mat4<float> rotate = rotation_z_mat4(M_PI / 4);
+    mat4<float> scale = scaleMatrix(0.5f, 0.5f, 1.0f);
     Builder::polar()
         .edged(false).reversed(false).doubleCoated().turbo(true)
         .formula(L"theta / PI")             // first half
@@ -86,16 +83,14 @@ int main()
     mat4<float> mat4Transform = {};
 
     // Render loop
-    double time = glfwGetTime();
 	float angle = 0.f;
+	TimeController tc(glfwGetTime());
     while (!glfwWindowShouldClose(window))
     {
-		double currentTime = glfwGetTime();
-		double deltaTime = currentTime - time;
-		time = currentTime;
+        tc.update(glfwGetTime());
 
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * 0.5f; // slow rotation
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) angle += static_cast<float>(deltaTime) * -0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) angle += static_cast<float>(tc.deltaTime) * 0.5f; // slow rotation
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) angle += static_cast<float>(tc.deltaTime) * -0.5f; // slow rotation
 
         glPolygonMode(GL_FRONT_AND_BACK, glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS ? GL_LINE : GL_FILL);
 
@@ -103,7 +98,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        rotation_x_mat(angle, mat4Transform);
+        rotation_x_mat4(angle, mat4Transform);
 
         switch (currentShape)
         {
@@ -130,5 +125,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_POLAR_WITH_TRANSFORM_CPP__
+int main() { return main_dynamitPolarWithTransform(); }
 #endif

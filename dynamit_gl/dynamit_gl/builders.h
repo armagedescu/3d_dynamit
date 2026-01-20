@@ -10,6 +10,7 @@
 #include "geometry.h"
 namespace dynamit::builders
 {
+using namespace dynamit::geo;
 
 //// 4x4 transformation matrix (column-major, like GLM)
 //using Matrix4 = std::array<float, 16>;

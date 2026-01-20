@@ -1,5 +1,4 @@
 ﻿#include "enabler.h"
-#ifdef __DYNAMIT_CONE_GEOMETRY_CALC_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -15,7 +14,7 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-int main()
+int main_dynamitConeGeometryCalc()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -178,5 +177,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#ifdef __DYNAMIT_CONE_GEOMETRY_CALC_CPP__
+int main() { return main_dynamitConeGeometryCalc(); }
 #endif
