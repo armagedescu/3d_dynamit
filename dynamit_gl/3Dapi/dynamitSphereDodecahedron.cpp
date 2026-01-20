@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_SPHERE_DODECAHEDRON_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -122,7 +121,7 @@ inline void addTriangle(std::vector<uint32_t>& indices,
     }
 }
 
-std::vector<Vertex> generateDodecahedronVerticesBase() {
+static std::vector<Vertex> generateDodecahedronVerticesBase() {
     const float PHI = (1.0f + std::sqrt(5.0f)) / 2.0f;
     const float INV_PHI = 1.0f / PHI;
 
@@ -166,7 +165,7 @@ constexpr std::array<std::array<int, PENTAGON_SIDES>, 12> DODECAHEDRON_FACES_IND
     {6, 10, 11, 7, 15}
 }};
 
-std::vector<std::array<int, PENTAGON_SIDES>> findPentagonalFaces(
+static std::vector<std::array<int, PENTAGON_SIDES>> findPentagonalFaces(
     const std::vector<Vertex>& /*vertices*/,
     const std::vector<std::pair<int, int>>& /*edges*/) {
     return std::vector<std::array<int, PENTAGON_SIDES>>(
@@ -194,11 +193,11 @@ constexpr std::array<std::pair<int, int>, 30> DODECAHEDRON_EDGES = {{
     {16, 17}, {18, 19}           // PHI-z axis pairs
 }};
 
-std::vector<std::pair<int, int>> findEdges(const std::vector<Vertex>& /*vertices*/) {
+static std::vector<std::pair<int, int>> findEdges(const std::vector<Vertex>& /*vertices*/) {
     return std::vector<std::pair<int, int>>(DODECAHEDRON_EDGES.begin(), DODECAHEDRON_EDGES.end());
 }
 
-DodecahedronTopology generateDodecahedronTopology() {
+static DodecahedronTopology generateDodecahedronTopology() {
     DodecahedronTopology topology;
     topology.vertices = generateDodecahedronVerticesBase();
 
@@ -221,12 +220,12 @@ DodecahedronTopology generateDodecahedronTopology() {
     return topology;
 }
 
-const DodecahedronTopology& getDodecahedronTopology() {
+const static DodecahedronTopology& getDodecahedronTopology() {
     static DodecahedronTopology topology = generateDodecahedronTopology();
     return topology;
 }
 
-Mesh generateSubdividedMeshExternal(int subdivisionLevel, WindingOrder order) {
+static Mesh generateSubdividedMeshExternal(int subdivisionLevel, WindingOrder order) {
     assert(subdivisionLevel > 0);
 
     Mesh mesh;
@@ -405,7 +404,7 @@ Mesh generateSphereMesh(int subdivisionLevel = 3, WindingOrder order = WindingOr
 //========================================
 // Main Application
 //========================================
-int main() {
+int main_dynamitSphereDodecahedron() {
     //GLFWwindow* window = openglWindowInit(1280, 720);
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -507,4 +506,6 @@ int main() {
     return 0;
 }
 
+#ifdef __DYNAMIT_SPHERE_DODECAHEDRON_CPP__
+int main() { return main_dynamitSphereDodecahedron(); }
 #endif

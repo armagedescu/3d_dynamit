@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef __DYNAMIT_SPHERE_DODECAHEDRON_TEXTURED_CPP__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -492,7 +491,7 @@ void main() {
 //========================================
 // Main Application
 //========================================
-int main()
+int main_dynamitSphereDodecahedronTextured()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -580,4 +579,6 @@ int main()
     return 0;
 }
 
+#ifdef __DYNAMIT_SPHERE_DODECAHEDRON_TEXTURED_CPP__
+int main() { return main_dynamitSphereDodecahedronTextured(); }
 #endif

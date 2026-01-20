@@ -1,7 +1,7 @@
-#include "enabler.h"
-#ifdef __DYNAMIT_CONE1_HEART_GEOMETRY2_CALC_BUILDER_CPP__
-
 //TODO: Consider to remove current. This is identical to dynamitCone1HeartGeometry2Calc.cpp
+
+//// To enable see enabler.h on the bottom of the file.
+//// #include "enabler.h"
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -13,12 +13,11 @@
 #include <config.h>
 #include <callbacks.h>
 #include <builders.h>
-#include <iostream>
 
 using namespace dynamit;
 using namespace dynamit::builders;
 
-int main()
+int main_dynamitCone1HeartGeometry2CalcBuilder()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -94,4 +93,8 @@ int main()
     return 0;
 }
 
+
+#include "enabler.h"
+#ifdef __DYNAMIT_CONE1_HEART_GEOMETRY2_CALC_BUILDER_CPP__
+int main(){ return main_dynamitCone1HeartGeometry2CalcBuilder(); }
 #endif
