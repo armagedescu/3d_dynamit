@@ -1,10 +1,9 @@
 #include "enabler.h"
-#ifdef  __MAIN_TRIANGLE_LIB__
 
 #include <Triangle.h>
 #include <config.h>
 
-int main() 
+int main_triangle_lib() 
 {
 	using singleshape::Triangle;
 	GLFWwindow* window = openglWindowInit();
@@ -24,5 +23,7 @@ int main()
 	return 0;
 
 }
-
+#include "enabler.h"
+#ifdef  __MAIN_TRIANGLE_LIB__
+int main() { return main_triangle_lib(); }
 #endif

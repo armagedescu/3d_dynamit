@@ -1,5 +1,5 @@
 #include "enabler.h"
-#ifdef __MAIN_TERRAIN_BITMAP_DOUBLE_COATED_VINEET_CPP__
+
 #include <GL/glew.h>
 #include "config.h"
 #include <stdlib.h>
@@ -21,7 +21,7 @@
 using namespace std;
 
 //terrain
-int main()
+int main_terrain_bitmap_double_coated_vineet()
 {
 	using namespace std;
 	srand(time(NULL));
@@ -154,5 +154,7 @@ int main()
 	return 0;
 }
 
-
+#include "enabler.h"
+#ifdef __MAIN_TERRAIN_BITMAP_DOUBLE_COATED_VINEET_CPP__
+int main(){ return main_terrain_bitmap_double_coated_vineet(); }
 #endif

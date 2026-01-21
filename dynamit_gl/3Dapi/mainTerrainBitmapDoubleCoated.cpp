@@ -1,5 +1,5 @@
 #include "enabler.h"
-#ifdef __MAIN_TERRAIN_BITMAP_DOUBLECOATED_CPP__
+
 #include <GL/glew.h>
 #include <config.h>
 #include <cstdlib>
@@ -17,7 +17,7 @@
 
 using namespace std;
 
-int main()
+int main_terrain_bitmap_doublecoated()
 {
 	using namespace std;
 	srand(time(NULL));
@@ -89,5 +89,7 @@ int main()
 	return 0;
 }
 
-
+#include "enabler.h"
+#ifdef __MAIN_TERRAIN_BITMAP_DOUBLECOATED_CPP__
+int main() { return main_terrain_bitmap_doublecoated(); }
 #endif

@@ -1,5 +1,5 @@
 #include "enabler.h"
-#ifdef  __MAIN_TESSELLATION_CPP__
+
 #include <GL/glew.h>
 #include "config.h"
 #include <iostream>
@@ -12,7 +12,7 @@
 #include <Tess.h>
 #include <TriangleRainbow.h>
 
-int main()
+int main_tessellation()
 {
 	using singleshape::TriangleRainbow;
 	using std::cout;
@@ -80,5 +80,7 @@ int main()
 	return 0;
 }
 
-
+#include "enabler.h"
+#ifdef  __MAIN_TESSELLATION_CPP__
+int main() { return main_tessellation(); }
 #endif

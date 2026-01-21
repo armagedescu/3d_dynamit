@@ -1,5 +1,4 @@
 #include "enabler.h"
-#ifdef  __MAIN_TERRAIN_BITMAP_DOUBLE_COATED_FRAME_BUFFERS__
 
 #include <GL/glew.h>
 #include <stdlib.h>
@@ -19,7 +18,7 @@
 using namespace std;
 
 //terrain
-int main()
+int main_terrain_bitmap_double_coated_frame_buffers()
 {
 	using namespace std;
 	srand(time(NULL));
@@ -88,4 +87,7 @@ int main()
 	return 0;
 }
 
+#include "enabler.h"
+#ifdef  __MAIN_TERRAIN_BITMAP_DOUBLE_COATED_FRAME_BUFFERS__
+int main() { return main_terrain_bitmap_double_coated_frame_buffers(); }
 #endif

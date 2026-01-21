@@ -1,5 +1,5 @@
 #include "enabler.h"
-#ifdef  __MAIN_MAIN__
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -30,7 +30,7 @@
 using namespace std;
 using namespace config;
 
-int main()
+int main_main()
 {
 
 	using singleshape::RectangleBlink;
@@ -179,4 +179,8 @@ int main()
 	//cleanup
 	return 0;
 }
+
+#include "enabler.h"
+#ifdef  __MAIN_MAIN__
+int main() { return main_main(); }
 #endif

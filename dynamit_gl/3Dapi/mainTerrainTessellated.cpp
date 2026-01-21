@@ -1,5 +1,5 @@
 #include "enabler.h"
-#ifdef __MAIN_TERRAIN_TESSELLATED_CPP__
+
 #include <GL/glew.h>
 #include "config.h"
 #include <stdlib.h>
@@ -23,7 +23,7 @@
 using namespace std;
 
 //terrain
-int main()
+int main_terrain_tessellated()
 {
 	using namespace std;
 	srand(time(NULL));
@@ -158,5 +158,7 @@ int main()
 	return 0;
 }
 
-
+#include "enabler.h"
+#ifdef __MAIN_TERRAIN_TESSELLATED_CPP__
+int main() { return main_terrain_tessellated(); }
 #endif

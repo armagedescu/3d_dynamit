@@ -1,5 +1,5 @@
 #include "enabler.h"
-#ifdef __MAIN_CAMERA_CPP__
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -29,7 +29,7 @@
 using namespace std;
 using namespace config;
 
-int main()
+int main_camera ()
 {
 	using singleshape::TriangleRainbowWithCamera;
 	using singleshape::Square;
@@ -141,4 +141,7 @@ int main()
 	glfwTerminate();
 	return 0;
 }
+#include "enabler.h"
+#ifdef __MAIN_CAMERA_CPP__
+int main() { return main_camera(); }
 #endif

@@ -1,5 +1,5 @@
 #include "enabler.h"
-#ifdef __MAIN_SHADOW__
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <stb_image.h>
@@ -19,7 +19,7 @@
 
 using namespace std;
 
-int main()
+int main_shadow()
 {
     GLFWwindow* window = openglWindowInit();
     if (!window)
@@ -94,5 +94,7 @@ int main()
     glfwTerminate();
     return 0;
 }
-
+#include "enabler.h"
+#ifdef __MAIN_SHADOW__
+int main() { return main_shadow(); }
 #endif

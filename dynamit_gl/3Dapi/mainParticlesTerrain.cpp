@@ -1,6 +1,4 @@
 #include "enabler.h"
-//#define __MAIN_PARTICLES_TERRAIN_CPP__
-#ifdef __MAIN_PARTICLES_TERRAIN_CPP__
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -19,7 +17,7 @@
 
 using namespace glm;
 
-int main()
+int main_particles_terrain()
 {
 	GLFWwindow* window = openglWindowInit();
 	if (!window)
@@ -115,5 +113,7 @@ int main()
 
 	return 0;
 }
-
+#include "enabler.h"
+#ifdef __MAIN_PARTICLES_TERRAIN_CPP__
+int main() { return main_particles_terrain(); }
 #endif
