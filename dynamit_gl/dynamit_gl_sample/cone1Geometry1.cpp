@@ -89,6 +89,7 @@ int main_cone1Geometry1()
     glfwTerminate();
     return 0;
 }
+#include "enabler.h"
 #ifdef __CONE1_GEOMETRY1_CPP__
 int main() { return main_cone1Geometry1(); }
 #endif

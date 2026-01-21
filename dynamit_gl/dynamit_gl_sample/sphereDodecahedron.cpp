@@ -404,7 +404,7 @@ Mesh generateSphereMesh(int subdivisionLevel = 3, WindingOrder order = WindingOr
 //========================================
 // Main Application
 //========================================
-int main_dynamitSphereDodecahedron() {
+int main_sphereDodecahedron() {
     //GLFWwindow* window = openglWindowInit(1280, 720);
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -506,6 +506,7 @@ int main_dynamitSphereDodecahedron() {
     return 0;
 }
 
-#ifdef __DYNAMIT_SPHERE_DODECAHEDRON_CPP__
-int main() { return main_dynamitSphereDodecahedron(); }
+#include "enabler.h"
+#ifdef __SPHERE_DODECAHEDRON_CPP__
+int main() { return main_sphereDodecahedron(); }
 #endif

@@ -15,7 +15,7 @@ using namespace dynamit;
 using namespace dynamit::builders;
 using namespace dynamit::geo;
 
-int main_dynamitPolarCombineWithTransform()
+int main_polarCombineWithTransform()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -118,6 +118,7 @@ int main_dynamitPolarCombineWithTransform()
     glfwTerminate();
     return 0;
 }
-#ifdef __DYNAMIT_POLAR_COMBINE_WITH_TRANSFORM_CPP__
-int main() { return main_dynamitPolarCombineWithTransform(); }
+#include "enabler.h"
+#ifdef __POLAR_COMBINE_WITH_TRANSFORM_CPP__
+int main() { return main_polarCombineWithTransform(); }
 #endif

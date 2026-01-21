@@ -93,6 +93,7 @@ int main_cone1Animate1()
     glfwTerminate();
     return 0;
 }
+#include "enabler.h"
 #ifdef __CONE1_ANIMATE1_CPP__
 int main() { return main_cone1Animate1(); }
 #endif

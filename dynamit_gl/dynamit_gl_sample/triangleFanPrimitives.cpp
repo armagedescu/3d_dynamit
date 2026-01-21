@@ -65,7 +65,7 @@ void buildTrianglesGeometry(std::vector<float>& verts, std::vector<float>& norms
     }
 }
 
-int main_dynamitTriangleFanPrimitives()
+int main_triangleFanPrimitives()
 {
     srand(time(NULL));
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -119,6 +119,7 @@ int main_dynamitTriangleFanPrimitives()
     return 0;
 }
 
+#include "enabler.h"
 #ifdef __TRIANGLE_FAN_PRIMITIVES_CPP__
-int main() { return main_dynamitTriangleFanPrimitives(); }
+int main() { return main_triangleFanPrimitives(); }
 #endif

@@ -14,7 +14,7 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-int main_dynamitConeBuilders()
+int main_polarWithTransform()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -26,47 +26,46 @@ int main_dynamitConeBuilders()
     std::vector<float> vertsIndexed, normsIndexed;
     std::vector<uint32_t> indices;
 
-    bool buildHeart = true, buildCardoid = false, buildEllipse = false,
-        build5PointerStar = false, build5PetalRose = false, buildLemniscate = true;
-    if (buildHeart)
-    {
-        Builder::polar()
-            .edged(false).reversed(false).doubleCoated(true).turbo(false)
-            .formula(L"theta / PI")             // first half
-            .domain(M_PI)
-            .sectors_slices(6, 2)
-            .buildCone(verts, norms)
-            .formula(L"(2*PI - theta) / PI")    // second half
-            .domain_shift(2 * M_PI)
-            .buildCone(verts, norms)
-            .formula(L"theta / PI")
-            .domain(static_cast<float>(M_PI))
-            .sectors_slices(10, 5)
-            .buildConeIndexed(vertsIndexed, normsIndexed, indices)
-            .formula(L"(2*PI - theta) / PI")
-            .domain_shift(static_cast<float>(2 * M_PI))
-            .buildConeIndexed(vertsIndexed, normsIndexed, indices);
+    //// Create transformation matrices for positioning multiple shapes
+
+    mat4<float> translate = translation_mat4(-0.5f, 0.0f, 0.0f);
+    mat4<float> rotate = rotation_z_mat4(M_PI / 4);
+    mat4<float> scale = scaleMatrix(0.5f, 0.5f, 1.0f);
+    Builder::polar()
+        .edged(false).reversed(false).doubleCoated().turbo(true)
+        .formula(L"theta / PI")             // first half
+        .domain(M_PI)
+        .sectors_slices(6, 2)
+        .buildCylinder(verts, norms, translate, rotate, scale)
+        .formula(L"(2*PI - theta) / PI")    // second half
+        .domain_shift(2 * M_PI)
+        .buildCylinder(verts, norms, translate, rotate, scale)
+        //////// indexed version
+        .formula(L"theta / PI")
+        .domain(static_cast<float>(M_PI))
+        .sectors_slices(10, 5)
+        .buildCylinderIndexed(vertsIndexed, normsIndexed, indices)
+        .formula(L"(2*PI - theta) / PI")
+        .domain_shift(static_cast<float>(2 * M_PI))
+        .buildCylinderIndexed(vertsIndexed, normsIndexed, indices)
         ;
-    }
-    std::cout << "Cone vertices: " << verts.size() / 3 << " (triangles: " << verts.size() / 9 << ")" << std::endl;
-    std::cout << "Cone indexed vertices: " << vertsIndexed.size() / 3 << " (indices: " << indices.size() << ")" << std::endl;
+
+    std::cout << "Cylinder vertices: " << verts.size() / 3 << " (triangles: " << verts.size() / 9 << ")" << std::endl;
+    std::cout << "Cylinder indexed vertices: " << vertsIndexed.size() / 3 << " (indices: " << indices.size() << ")" << std::endl;
 
     // Create shape with custom shaders for X rotation
     Dynamit shape, shapeIndexed;
 
     if (verts.size() > 0)
-    {
         shape
             .withVertices3d(verts)
             .withNormals3d(norms)
             .withConstColor({ 0.0, 1.0, 0.5, 1.0 })
             .withConstLightDirection({ -0.577f, -0.577f, 0.577f })
             .withTransformMatrix4f()
-            ;
-    }
+        ;
 
     if (vertsIndexed.size() > 0)
-    {
         shapeIndexed
             .withVertices3d(vertsIndexed)
             .withNormals3d(normsIndexed)
@@ -74,27 +73,21 @@ int main_dynamitConeBuilders()
             .withConstColor({ 0.0, 1.0, 0.5, 1.0 })
             .withConstLightDirection({ -0.577f, -0.577f, 0.577f })
             .withTransformMatrix4f()
-            ;
-    }
+        ;
 
-    // Build programs and get uniform locations
-    if (!verts.empty())
-        shape.buildProgram();
-    if (!vertsIndexed.empty())
-        shapeIndexed.buildProgram();
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.0f, 1.f, 0.9f);
 
-    // Render loop
     mat4<float> mat4Transform = {};
 
+    // Render loop
 	float angle = 0.f;
 	TimeController tc(glfwGetTime());
     while (!glfwWindowShouldClose(window))
     {
-		tc.update(glfwGetTime());
+        tc.update(glfwGetTime());
 
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) angle += static_cast<float>(tc.deltaTime) * 0.5f; // slow rotation
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) angle += static_cast<float>(tc.deltaTime) * -0.5f; // slow rotation
@@ -132,6 +125,8 @@ int main_dynamitConeBuilders()
     glfwTerminate();
     return 0;
 }
-#ifdef __DYNAMIT_CONE_BUILDERS_CPP__
-int main() { return main_dynamitConeBuilders(); }
+
+#include "enabler.h"
+#ifdef __POLAR_WITH_TRANSFORM_CPP__
+int main() { return main_polarWithTransform(); }
 #endif

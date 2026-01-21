@@ -14,7 +14,7 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-int main_dynamitConeGeometryCalc()
+int main_coneGeometryCalc()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -177,6 +177,7 @@ int main_dynamitConeGeometryCalc()
     glfwTerminate();
     return 0;
 }
-#ifdef __DYNAMIT_CONE_GEOMETRY_CALC_CPP__
-int main() { return main_dynamitConeGeometryCalc(); }
+#include "enabler.h"
+#ifdef __CONE_GEOMETRY_CALC_CPP__
+int main() { return main_coneGeometryCalc(); }
 #endif

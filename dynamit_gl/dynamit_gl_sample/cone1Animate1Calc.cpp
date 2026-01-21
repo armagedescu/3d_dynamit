@@ -156,6 +156,7 @@ int main_cone1Animate1Calc()
     glfwTerminate();
     return 0;
 }
+#include "enabler.h"
 #ifdef __CONE1_ANIMATE1_CALC_CPP__
 int main() { return main_cone1Animate1Calc(); }
 #endif

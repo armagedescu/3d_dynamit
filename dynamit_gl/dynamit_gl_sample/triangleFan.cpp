@@ -35,7 +35,7 @@ static void buildTriangleFanGeometry(std::vector<float>& verts, std::vector<floa
     }
 }
 
-int main_dynamitTriangleFan()
+int main_triangleFan()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -81,6 +81,7 @@ int main_dynamitTriangleFan()
     glfwTerminate();
     return 0;
 }
-#ifdef __DYNAMIT_TRIANGLE_FAN_CPP__
-int main() { return main_dynamitTriangleFan(); }
+#include "enabler.h"
+#ifdef __TRIANGLE_FAN_CPP__
+int main() { return main_triangleFan(); }
 #endif

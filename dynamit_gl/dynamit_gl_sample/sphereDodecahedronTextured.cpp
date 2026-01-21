@@ -491,7 +491,7 @@ void main() { //fs
 //========================================
 // Main Application
 //========================================
-int main_dynamitSphereDodecahedronTextured()
+int main_sphereDodecahedronTextured()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -578,7 +578,7 @@ int main_dynamitSphereDodecahedronTextured()
     std::cout << "Application closed successfully\n";
     return 0;
 }
-
-#ifdef __DYNAMIT_SPHERE_DODECAHEDRON_TEXTURED_CPP__
-int main() { return main_dynamitSphereDodecahedronTextured(); }
+#include "enabler.h"
+#ifdef __SPHERE_DODECAHEDRON_TEXTURED_CPP__
+int main() { return main_sphereDodecahedronTextured(); }
 #endif

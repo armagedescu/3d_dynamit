@@ -9,7 +9,7 @@
 
 using namespace dynamit;
 
-int main_dynamitDrawStrided()
+int main_drawStrided()
 {
 
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -131,6 +131,7 @@ int main_dynamitDrawStrided()
     glfwTerminate();
     return 0;
 }
-#ifdef __DYNAMIT_DRAW_STRIDED_CPP__
-int main() { return main_dynamitDrawStrided(); }
+#include "enabler.h"
+#ifdef __DRAW_STRIDED_CPP__
+int main() { return main_drawStrided(); }
 #endif

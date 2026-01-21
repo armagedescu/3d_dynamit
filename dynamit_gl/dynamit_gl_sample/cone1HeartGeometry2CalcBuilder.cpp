@@ -17,7 +17,7 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-int main_dynamitCone1HeartGeometry2CalcBuilder()
+int main_cone1HeartGeometry2CalcBuilder()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -95,6 +95,6 @@ int main_dynamitCone1HeartGeometry2CalcBuilder()
 
 
 #include "enabler.h"
-#ifdef __DYNAMIT_CONE1_HEART_GEOMETRY2_CALC_BUILDER_CPP__
-int main(){ return main_dynamitCone1HeartGeometry2CalcBuilder(); }
+#ifdef __CONE1_HEART_GEOMETRY2_CALC_BUILDER_CPP__
+int main(){ return main_cone1HeartGeometry2CalcBuilder(); }
 #endif

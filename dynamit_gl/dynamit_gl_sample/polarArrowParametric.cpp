@@ -14,7 +14,7 @@ using namespace dynamit;
 using namespace dynamit::builders;
 
 
-int main_dynamitPolarArrowParametric()
+int main_polarArrowParametric()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -141,6 +141,7 @@ int main_dynamitPolarArrowParametric()
     glfwTerminate();
     return 0;
 }
-#ifdef __DYNAMIT_POLAR_ARROW_PARAMETRIC_CPP__
-int main() { return main_dynamitPolarArrowParametric(); }
+#include "enabler.h"
+#ifdef __POLAR_ARROW_PARAMETRIC_CPP__
+int main() { return main_polarArrowParametric(); }
 #endif

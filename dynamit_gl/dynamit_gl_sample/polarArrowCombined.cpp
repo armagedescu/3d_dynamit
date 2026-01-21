@@ -14,7 +14,7 @@ using namespace dynamit;
 using namespace dynamit::builders;
 using namespace dynamit::geo;
 
-int main_dynamitPolarArrowCombined()
+int main_polarArrowCombined()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window)
@@ -89,6 +89,7 @@ int main_dynamitPolarArrowCombined()
     glfwTerminate();
     return 0;
 }
-#ifdef __DYNAMIT_POLAR_ARROW_COMBINED_CPP__
-int main() { return main_dynamitPolarArrowCombined(); }
+#include "enabler.h"
+#ifdef __POLAR_ARROW_COMBINED_CPP__
+int main() { return main_polarArrowCombined(); }
 #endif

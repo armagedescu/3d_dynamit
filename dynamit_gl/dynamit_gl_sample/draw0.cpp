@@ -32,7 +32,7 @@ void main() //fs
 }
 )glsl";
 
-int main_dynamitDraw0()
+int main_draw0()
 {
     srand(time(NULL));
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -87,6 +87,7 @@ int main_dynamitDraw0()
     glfwTerminate();
     return 0;
 }
-#ifdef __DYNAMIT_DRAW0_CPP__
-int main() { return main_dynamitDraw0(); }
+#include "enabler.h"
+#ifdef __DRAW0_CPP__
+int main() { return main_draw0(); }
 #endif

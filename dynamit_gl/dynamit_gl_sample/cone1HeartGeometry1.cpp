@@ -145,6 +145,7 @@ int main_cone1HeartGeometry1()
     glfwTerminate();
     return 0;
 }
+#include "enabler.h"
 #ifdef __CONE1_HEART_GEOMETRY1_CPP__
 int main() { return main_cone1HeartGeometry1(); }
 #endif

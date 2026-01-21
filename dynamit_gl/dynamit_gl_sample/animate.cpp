@@ -100,6 +100,8 @@ int main_animate()
     glfwTerminate();
     return 0;
 }
+
+#include "enabler.h"
 #ifdef __ANIMATE_CPP__
 int main() { return main_animate(); }
 #endif

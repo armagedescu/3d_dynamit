@@ -116,6 +116,8 @@ int main_hello ()
     glfwTerminate();
     return 0;
 }
+
+#include "enabler.h"
 #ifdef __HELLO_CPP__
 int main() { return main_hello(); }
 #endif
