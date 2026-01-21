@@ -15,9 +15,6 @@ using namespace dynamit;
 static void buildTriangleFanGeometry(std::vector<float>& verts, std::vector<float>& norms, 
                               int ns = 16, float dr = 0.6f)
 {
-    verts.clear();
-    norms.clear();
-    
     // Center point
     verts.insert(verts.end(), {0.8f, 0.8f, 0.0f});
     norms.insert(norms.end(), {0.0f, 0.0f, 1.0f});

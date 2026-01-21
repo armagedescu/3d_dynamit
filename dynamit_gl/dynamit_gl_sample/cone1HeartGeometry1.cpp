@@ -17,10 +17,7 @@ void buildConeHeart(std::vector<float>& verts, std::vector<float>& norms, int nh
 {
     // Ensure even number of sectors for symmetry
     if (ns & 1) ns++;
-    
-    verts.clear();
-    norms.clear();
-    
+
     // First ring - tip to base
     for (int i = 0; i < ns; i++)
     {

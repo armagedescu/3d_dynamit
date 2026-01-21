@@ -14,10 +14,7 @@ using namespace dynamit;
 // Generate triangle fan geometry (disc/circle)
 static void buildTriangleFanGeometry(std::vector<float>& verts, std::vector<float>& norms, 
                               int ns = 16, float dr = 0.6f)
-{
-    verts.clear();
-    norms.clear();
-    
+{ 
     // Center point
     verts.insert(verts.end(), {0.0f, 0.0f, 0.0f});
     norms.insert(norms.end(), {0.0f, 0.0f, 1.0f});
@@ -39,8 +36,6 @@ static void buildTriangleFanGeometry(std::vector<float>& verts, std::vector<floa
 void buildTrianglesGeometry(std::vector<float>& verts, std::vector<float>& norms,
     int ns = 16, float dr = 0.6f)
 {
-    verts.clear();
-    norms.clear();
 
 
     // Circle points

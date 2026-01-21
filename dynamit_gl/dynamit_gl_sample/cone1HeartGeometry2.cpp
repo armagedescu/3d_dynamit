@@ -16,10 +16,7 @@ using namespace dynamit;
 void buildConeHeart2(std::vector<float>& verts, std::vector<float>& norms, int nh = 2, int ns = 20)
 {
     if (ns & 1) ns++;
-    
-    verts.clear();
-    norms.clear();
-    
+
     const float PI_2 = 2.0f * static_cast<float>(M_PI);
     const float FI_S = PI_2 / ns;  // Angular size of one sector
     const float R_S = 2.0f / ns;   // Radius step (normalized)

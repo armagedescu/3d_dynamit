@@ -14,9 +14,6 @@ using namespace dynamit;
 // Build cone geometry - same as cone1Animate2 but with configurable sectors
 void buildCone1(std::vector<float>& verts, std::vector<float>& norms, int ns = 20)
 {
-    verts.clear();
-    norms.clear();
-    
     float dr = 0.6f;
     
     for (int i = 0; i < ns; i++)

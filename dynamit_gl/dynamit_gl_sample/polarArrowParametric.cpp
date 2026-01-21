@@ -1,4 +1,5 @@
 #include "enabler.h"
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <GL/glew.h>
@@ -141,6 +142,7 @@ int main_polarArrowParametric()
     glfwTerminate();
     return 0;
 }
+
 #include "enabler.h"
 #ifdef __POLAR_ARROW_PARAMETRIC_CPP__
 int main() { return main_polarArrowParametric(); }

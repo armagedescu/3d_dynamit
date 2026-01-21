@@ -19,9 +19,6 @@ void buildmcConemcPolar(std::vector<float>& verts, std::vector<float>& norms, co
 {
     expression_token_compiler compiler;
 
-    verts.clear();
-    norms.clear();
-
     long double theta = 0.0L;
 
     // Compile r(theta) expression

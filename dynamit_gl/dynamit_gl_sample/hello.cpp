@@ -16,10 +16,7 @@ using namespace dynamit;
 // Cone geometry - direct translation from JavaScript cone1Geometry2.js
 void buildConeGeometry(std::vector<float>& verts, std::vector<float>& norms, 
                        int ns = 20, int nh = 2)
-{
-    verts.clear();
-    norms.clear();
-    
+{ 
     float dr = 1.0f;
     
     for (int i = 0; i < ns; i++)
