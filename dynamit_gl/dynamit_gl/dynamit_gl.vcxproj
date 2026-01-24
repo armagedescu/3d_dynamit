@@ -119,6 +119,11 @@
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy *.h $(SolutionDir)..\export\dynamitd_cpp\include
+copy $(TargetPath)  $(SolutionDir)..\export\dynamitd_cpp\lib\$(Configuration)\$(LibrariesArchitecture)
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -212,6 +217,9 @@
     <ClCompile Include="TriangleRainbow.cpp" />
     <ClCompile Include="TriangleRainbowWithCamera.cpp" />
     <ClCompile Include="TrianglesPoli.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="pack.cmd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

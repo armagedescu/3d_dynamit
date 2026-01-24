@@ -154,59 +154,59 @@ static void crossProductNormalLefthanded(
 // CONE - PUBLIC METHODS (with post-build transformation)
 // ============================================================================
 
-PolarBuilder& PolarBuilder::buildConeIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords,
-    std::vector<uint32_t>& indices)
-{
-    size_t startVertex = verts.size() / 3;
-    
-    buildConeIndexedInternal(verts, norms, texCoords, indices, false);
+//PolarBuilder& PolarBuilder::buildConeIndexed(
+//    std::vector<float>& verts,
+//    std::vector<float>& norms,
+//    std::vector<float>& texCoords,
+//    std::vector<uint32_t>& indices)
+//{
+//    size_t startVertex = verts.size() / 3;
+//    
+//    buildConeIndexedInternal(verts, norms, texCoords, indices, false);
+//
+//    return *this;
+//}
 
-    return *this;
-}
-
-PolarBuilder& PolarBuilder::buildCone(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
-{
-    size_t startVertex = verts.size() / 3;
-    
-    if (!m_smooth)
-    {
-        buildConeDiscrete(verts, norms, texCoords);
-    }
-    else
-    {
-        std::vector<float> indexedVerts, indexedNorms, indexedTexCoords;
-        std::vector<uint32_t> indices;
-
-        buildConeIndexedInternal(indexedVerts, indexedNorms, indexedTexCoords, indices, false);
-
-        size_t additionalSize = indices.size() * 3;
-        verts.reserve(verts.size() + additionalSize);
-        norms.reserve(norms.size() + additionalSize);
-        texCoords.reserve(texCoords.size() + (indices.size() * 2));
-
-        for (uint32_t idx : indices)
-        {
-            size_t offset3 = idx * 3;
-            size_t offset2 = idx * 2;
-            
-            verts.push_back(indexedVerts[offset3]);
-            verts.push_back(indexedVerts[offset3 + 1]);
-            verts.push_back(indexedVerts[offset3 + 2]);
-
-            norms.push_back(indexedNorms[offset3]);
-            norms.push_back(indexedNorms[offset3 + 1]);
-            norms.push_back(indexedNorms[offset3 + 2]);
-
-            texCoords.push_back(indexedTexCoords[offset2]);
-            texCoords.push_back(indexedTexCoords[offset2 + 1]);
-        }
-    }
-
-    return *this;
-}
+//PolarBuilder& PolarBuilder::buildCone(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
+//{
+//    size_t startVertex = verts.size() / 3;
+//    
+//    if (!m_smooth)
+//    {
+//        buildConeDiscrete(verts, norms, texCoords);
+//    }
+//    else
+//    {
+//        std::vector<float> indexedVerts, indexedNorms, indexedTexCoords;
+//        std::vector<uint32_t> indices;
+//
+//        buildConeIndexedInternal(indexedVerts, indexedNorms, indexedTexCoords, indices, false);
+//
+//        size_t additionalSize = indices.size() * 3;
+//        verts.reserve(verts.size() + additionalSize);
+//        norms.reserve(norms.size() + additionalSize);
+//        texCoords.reserve(texCoords.size() + (indices.size() * 2));
+//
+//        for (uint32_t idx : indices)
+//        {
+//            size_t offset3 = idx * 3;
+//            size_t offset2 = idx * 2;
+//            
+//            verts.push_back(indexedVerts[offset3]);
+//            verts.push_back(indexedVerts[offset3 + 1]);
+//            verts.push_back(indexedVerts[offset3 + 2]);
+//
+//            norms.push_back(indexedNorms[offset3]);
+//            norms.push_back(indexedNorms[offset3 + 1]);
+//            norms.push_back(indexedNorms[offset3 + 2]);
+//
+//            texCoords.push_back(indexedTexCoords[offset2]);
+//            texCoords.push_back(indexedTexCoords[offset2 + 1]);
+//        }
+//    }
+//
+//    return *this;
+//}
 
 PolarBuilder& PolarBuilder::reBuildCone(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
 {
@@ -233,66 +233,66 @@ PolarBuilder& PolarBuilder::reBuildConeIndexed(
 // CYLINDER - PUBLIC METHODS (with post-build transformation)
 // ============================================================================
 
-PolarBuilder& PolarBuilder::buildCylinderIndexed(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords,
-    std::vector<uint32_t>& indices)
-{
-    size_t startVertex = verts.size() / 3;
-    
-    if (!m_smooth)
-    {
-        buildCylinderDiscreteIndexedInternal(verts, norms, texCoords, indices, false);
-    }
-    else
-    {
-        buildCylinderIndexedInternal(verts, norms, texCoords, indices, false);
-    }
-    
-    return *this;
-}
+//PolarBuilder& PolarBuilder::buildCylinderIndexed(
+//    std::vector<float>& verts,
+//    std::vector<float>& norms,
+//    std::vector<float>& texCoords,
+//    std::vector<uint32_t>& indices)
+//{
+//    size_t startVertex = verts.size() / 3;
+//    
+//    if (!m_smooth)
+//    {
+//        buildCylinderDiscreteIndexedInternal(verts, norms, texCoords, indices, false);
+//    }
+//    else
+//    {
+//        buildCylinderIndexedInternal(verts, norms, texCoords, indices, false);
+//    }
+//    
+//    return *this;
+//}
 
-PolarBuilder& PolarBuilder::buildCylinder(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
-{
-    size_t startVertex = verts.size() / 3;
-    
-    if (!m_smooth)
-    {
-        buildCylinderDiscrete(verts, norms, texCoords);
-    }
-    else
-    {
-        std::vector<float> indexedVerts, indexedNorms, indexedTexCoords;
-        std::vector<uint32_t> indices;
-
-        buildCylinderIndexedInternal(indexedVerts, indexedNorms, indexedTexCoords, indices, false);
-
-        size_t additionalSize = indices.size() * 3;
-        verts.reserve(verts.size() + additionalSize);
-        norms.reserve(norms.size() + additionalSize);
-        texCoords.reserve(texCoords.size() + (indices.size() * 2));
-
-        for (uint32_t idx : indices)
-        {
-            size_t offset3 = idx * 3;
-            size_t offset2 = idx * 2;
-            
-            verts.push_back(indexedVerts[offset3]);
-            verts.push_back(indexedVerts[offset3 + 1]);
-            verts.push_back(indexedVerts[offset3 + 2]);
-
-            norms.push_back(indexedNorms[offset3]);
-            norms.push_back(indexedNorms[offset3 + 1]);
-            norms.push_back(indexedNorms[offset3 + 2]);
-
-            texCoords.push_back(indexedTexCoords[offset2]);
-            texCoords.push_back(indexedTexCoords[offset2 + 1]);
-        }
-    }
-
-    return *this;
-}
+//PolarBuilder& PolarBuilder::buildCylinder(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
+//{
+//    size_t startVertex = verts.size() / 3;
+//    
+//    if (!m_smooth)
+//    {
+//        buildCylinderDiscrete(verts, norms, texCoords);
+//    }
+//    else
+//    {
+//        std::vector<float> indexedVerts, indexedNorms, indexedTexCoords;
+//        std::vector<uint32_t> indices;
+//
+//        buildCylinderIndexedInternal(indexedVerts, indexedNorms, indexedTexCoords, indices, false);
+//
+//        size_t additionalSize = indices.size() * 3;
+//        verts.reserve(verts.size() + additionalSize);
+//        norms.reserve(norms.size() + additionalSize);
+//        texCoords.reserve(texCoords.size() + (indices.size() * 2));
+//
+//        for (uint32_t idx : indices)
+//        {
+//            size_t offset3 = idx * 3;
+//            size_t offset2 = idx * 2;
+//            
+//            verts.push_back(indexedVerts[offset3]);
+//            verts.push_back(indexedVerts[offset3 + 1]);
+//            verts.push_back(indexedVerts[offset3 + 2]);
+//
+//            norms.push_back(indexedNorms[offset3]);
+//            norms.push_back(indexedNorms[offset3 + 1]);
+//            norms.push_back(indexedNorms[offset3 + 2]);
+//
+//            texCoords.push_back(indexedTexCoords[offset2]);
+//            texCoords.push_back(indexedTexCoords[offset2 + 1]);
+//        }
+//    }
+//
+//    return *this;
+//}
 
 PolarBuilder& PolarBuilder::reBuildCylinder(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
 {
@@ -388,11 +388,7 @@ PolarBuilder Builder::polar()
 // CONE - INTERNAL (UNCHANGED COMPUTATION LOGIC)
 // ============================================================================
 
-PolarBuilder& PolarBuilder::buildConeIndexedInternal(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords,
-    std::vector<uint32_t>& indices, bool isSecondCoat)
+PolarBuilder& PolarBuilder::buildConeIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat)
 {
     using expresie_tokenizer::expression_token_compiler;
     using expresie_tokenizer::expression;
@@ -412,12 +408,17 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
 
     // Winding: second coat flips the winding
     const bool flipWinding = isSecondCoat;
+    //std::array<float, 4> c = isSecondCoat ? m_color_outer : m_color_inner;
 
+
+    //std::array<float, 4> c = isSecondCoat ? m_color_inner : m_color_outer;
+    const std::array<float, 4>& c = isSecondCoat ? m_color_inner : m_color_outer;
     auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
-        uint32_t idx = static_cast<uint32_t>(verts.size() / 3);
-        verts.insert(verts.end(), { x, y, z });
-        norms.insert(norms.end(), { nx, ny, nz });
-        texCoords.insert(texCoords.end(), { u, v });
+        uint32_t idx = static_cast<uint32_t>(buffers.verts.size() / 3);
+        buffers.verts.insert(buffers.verts.end(), { x, y, z });
+        buffers.norms.insert(buffers.norms.end(), { nx, ny, nz });
+        buffers.texCoords.insert(buffers.texCoords.end(), { u, v });
+        buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
         return idx;
     };
 
@@ -492,15 +493,15 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
     {
         if (!isSecondCoat)
         {
-            indices.push_back(tipIndex);
-            indices.push_back(baseRing[i]);
-            indices.push_back(baseRing[i + 1]);
+            buffers.indices.push_back(tipIndex);
+            buffers.indices.push_back(baseRing[i]);
+            buffers.indices.push_back(baseRing[i + 1]);
         }
         else
         {
-            indices.push_back(tipIndex);
-            indices.push_back(baseRing[i + 1]);
-            indices.push_back(baseRing[i]);
+            buffers.indices.push_back(tipIndex);
+            buffers.indices.push_back(baseRing[i + 1]);
+            buffers.indices.push_back(baseRing[i]);
         }
     }
 
@@ -583,51 +584,48 @@ PolarBuilder& PolarBuilder::buildConeIndexedInternal(
 
                 if (!isSecondCoat)
                 {
-                    indices.push_back(v00);
-                    indices.push_back(v10);
-                    indices.push_back(v01);
+                    buffers.indices.push_back(v00);
+                    buffers.indices.push_back(v10);
+                    buffers.indices.push_back(v01);
 
-                    indices.push_back(v01);
-                    indices.push_back(v10);
-                    indices.push_back(v11);
+                    buffers.indices.push_back(v01);
+                    buffers.indices.push_back(v10);
+                    buffers.indices.push_back(v11);
                 }
                 else
                 {
-                    indices.push_back(v00);
-                    indices.push_back(v01);
-                    indices.push_back(v10);
+                    buffers.indices.push_back(v00);
+                    buffers.indices.push_back(v01);
+                    buffers.indices.push_back(v10);
 
-                    indices.push_back(v01);
-                    indices.push_back(v11);
-                    indices.push_back(v10);
+                    buffers.indices.push_back(v01);
+                    buffers.indices.push_back(v11);
+                    buffers.indices.push_back(v10);
                 }
             }
 
             prevRing = currRing;
+            //buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+            //buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+            //buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+
         }
     }
 
     if (!isSecondCoat && m_doubleCoated)
     {
-        buildConeIndexedInternal(verts, norms, texCoords, indices, true);
+        buildConeIndexedInternal(buffers, true);
     }
 
     return *this;
 }
 
-PolarBuilder& PolarBuilder::buildConeDiscrete(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords)
+PolarBuilder& PolarBuilder::buildConeDiscrete(GeometryBuffers& buffers)
 {
-    return buildConeDiscreteInternal(verts, norms, texCoords, false);
+    return buildConeDiscreteInternal(buffers, false);
 }
 
-PolarBuilder& PolarBuilder::buildConeDiscreteInternal(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords,
-    bool isSecondCoat)
+PolarBuilder& PolarBuilder::buildConeDiscreteInternal(GeometryBuffers& buffers, bool isSecondCoat)
 {
     using expresie_tokenizer::expression_token_compiler;
     using expresie_tokenizer::expression;
@@ -643,6 +641,7 @@ PolarBuilder& PolarBuilder::buildConeDiscreteInternal(
     const float z_base = m_reversed ? -1.0f : 0.0f;
 
     float domainRange = m_domainEnd - m_domainStart;
+    std::array<float, 4> c = isSecondCoat ?  m_color_outer : m_color_inner;
 
     // Precompute ring positions (ring 0 is closest to tip)
     std::vector<std::vector<float>> ringX(m_slices + 1, std::vector<float>(m_sectors + 1));
@@ -684,25 +683,25 @@ PolarBuilder& PolarBuilder::buildConeDiscreteInternal(
         if (!isSecondCoat)
         {
             crossProductNormalLefthanded(tipX, tipY, tipZ, x0, y0, z0, x1, y1, z1, nx, ny, nz, false);
-            verts.insert(verts.end(), { tipX, tipY, tipZ });
-            verts.insert(verts.end(), { x0, y0, z0 });
-            verts.insert(verts.end(), { x1, y1, z1 });
+            buffers.verts.insert(buffers.verts.end(), { tipX, tipY, tipZ });
+            buffers.verts.insert(buffers.verts.end(), { x0, y0, z0 });
+            buffers.verts.insert(buffers.verts.end(), { x1, y1, z1 });
         }
         else
         {
             crossProductNormalLefthanded(tipX, tipY, tipZ, x1, y1, z1, x0, y0, z0, nx, ny, nz, false);
-            verts.insert(verts.end(), { tipX, tipY, tipZ });
-            verts.insert(verts.end(), { x1, y1, z1 });
-            verts.insert(verts.end(), { x0, y0, z0 });
+            buffers.verts.insert(buffers.verts.end(), { tipX, tipY, tipZ });
+            buffers.verts.insert(buffers.verts.end(), { x1, y1, z1 });
+            buffers.verts.insert(buffers.verts.end(), { x0, y0, z0 });
         }
 
-        norms.insert(norms.end(), { nx, ny, nz });
-        norms.insert(norms.end(), { nx, ny, nz });
-        norms.insert(norms.end(), { nx, ny, nz });
+        buffers.norms.insert(buffers.norms.end(), { nx, ny, nz });
+        buffers.norms.insert(buffers.norms.end(), { nx, ny, nz });
+        buffers.norms.insert(buffers.norms.end(), { nx, ny, nz });
 
-        texCoords.insert(texCoords.end(), { 0.5f, 0.0f });
-        texCoords.insert(texCoords.end(), { u0, 1.0f / m_slices });
-        texCoords.insert(texCoords.end(), { u1, 1.0f / m_slices });
+        buffers.texCoords.insert(buffers.texCoords.end(), { 0.5f, 0.0f });
+        buffers.texCoords.insert(buffers.texCoords.end(), { u0, 1.0f / m_slices });
+        buffers.texCoords.insert(buffers.texCoords.end(), { u1, 1.0f / m_slices });
     }
 
     // Remaining quads
@@ -727,56 +726,59 @@ PolarBuilder& PolarBuilder::buildConeDiscreteInternal(
             if (!isSecondCoat)
             {
                 crossProductNormalLefthanded(x00, y00, z00, x10, y10, z10, x01, y01, z01, nx1, ny1, nz1, false);
-                verts.insert(verts.end(), { x00, y00, z00 });
-                verts.insert(verts.end(), { x10, y10, z10 });
-                verts.insert(verts.end(), { x01, y01, z01 });
+                buffers.verts.insert(buffers.verts.end(), { x00, y00, z00 });
+                buffers.verts.insert(buffers.verts.end(), { x10, y10, z10 });
+                buffers.verts.insert(buffers.verts.end(), { x01, y01, z01 });
             }
             else
             {
                 crossProductNormalLefthanded(x00, y00, z00, x01, y01, z01, x10, y10, z10, nx1, ny1, nz1, false);
-                verts.insert(verts.end(), { x00, y00, z00 });
-                verts.insert(verts.end(), { x01, y01, z01 });
-                verts.insert(verts.end(), { x10, y10, z10 });
+                buffers.verts.insert(buffers.verts.end(), { x00, y00, z00 });
+                buffers.verts.insert(buffers.verts.end(), { x01, y01, z01 });
+                buffers.verts.insert(buffers.verts.end(), { x10, y10, z10 });
             }
 
-            norms.insert(norms.end(), { nx1, ny1, nz1 });
-            norms.insert(norms.end(), { nx1, ny1, nz1 });
-            norms.insert(norms.end(), { nx1, ny1, nz1 });
+            buffers.norms.insert(buffers.norms.end(), { nx1, ny1, nz1 });
+            buffers.norms.insert(buffers.norms.end(), { nx1, ny1, nz1 });
+            buffers.norms.insert(buffers.norms.end(), { nx1, ny1, nz1 });
 
-            texCoords.insert(texCoords.end(), { u0, v0 });
-            texCoords.insert(texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v0 : v1 });
-            texCoords.insert(texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v1 : v0 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { u0, v0 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v0 : v1 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v1 : v0 });
 
             // Triangle 2
             float nx2, ny2, nz2;
             if (!isSecondCoat)
             {
                 crossProductNormalLefthanded(x01, y01, z01, x10, y10, z10, x11, y11, z11, nx2, ny2, nz2, false);
-                verts.insert(verts.end(), { x01, y01, z01 });
-                verts.insert(verts.end(), { x10, y10, z10 });
-                verts.insert(verts.end(), { x11, y11, z11 });
+                buffers.verts.insert(buffers.verts.end(), { x01, y01, z01 });
+                buffers.verts.insert(buffers.verts.end(), { x10, y10, z10 });
+                buffers.verts.insert(buffers.verts.end(), { x11, y11, z11 });
             }
             else
             {
                 crossProductNormalLefthanded(x01, y01, z01, x11, y11, z11, x10, y10, z10, nx2, ny2, nz2, false);
-                verts.insert(verts.end(), { x01, y01, z01 });
-                verts.insert(verts.end(), { x11, y11, z11 });
-                verts.insert(verts.end(), { x10, y10, z10 });
+                buffers.verts.insert(buffers.verts.end(), { x01, y01, z01 });
+                buffers.verts.insert(buffers.verts.end(), { x11, y11, z11 });
+                buffers.verts.insert(buffers.verts.end(), { x10, y10, z10 });
             }
 
-            norms.insert(norms.end(), { nx2, ny2, nz2 });
-            norms.insert(norms.end(), { nx2, ny2, nz2 });
-            norms.insert(norms.end(), { nx2, ny2, nz2 });
+            buffers.norms.insert(buffers.norms.end(), { nx2, ny2, nz2 });
+            buffers.norms.insert(buffers.norms.end(), { nx2, ny2, nz2 });
+            buffers.norms.insert(buffers.norms.end(), { nx2, ny2, nz2 });
 
-            texCoords.insert(texCoords.end(), { u1, v0 });
-            texCoords.insert(texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v1 : v1 });
-            texCoords.insert(texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v0 : v1 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { u1, v0 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v1 : v1 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v0 : v1 });
+            buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+            buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+            buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
         }
     }
 
     if (!isSecondCoat && m_doubleCoated)
     {
-        buildConeDiscreteInternal(verts, norms, texCoords, true);
+        buildConeDiscreteInternal(buffers, true);
     }
 
     return *this;
@@ -786,12 +788,7 @@ PolarBuilder& PolarBuilder::buildConeDiscreteInternal(
 // CYLINDER - INTERNAL (UNCHANGED COMPUTATION LOGIC)
 // ============================================================================
 
-PolarBuilder& PolarBuilder::buildCylinderIndexedInternal(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords,
-    std::vector<uint32_t>& indices,
-    bool isSecondCoat)
+PolarBuilder& PolarBuilder::buildCylinderIndexedInternal( GeometryBuffers& buffers, bool isSecondCoat)
 {
     using expresie_tokenizer::expression_token_compiler;
     using expresie_tokenizer::expression;
@@ -805,11 +802,13 @@ PolarBuilder& PolarBuilder::buildCylinderIndexedInternal(
     std::unique_ptr<expression> expr_dr = simplify(expr_r->derivative(L"theta"));
     expr_dr->bind(L"theta", &theta);
 
+    const std::array<float, 4>& c = isSecondCoat ? m_color_inner : m_color_outer;
     auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
-        uint32_t idx = static_cast<uint32_t>(verts.size() / 3);
-        verts.insert(verts.end(), { x, y, z });
-        norms.insert(norms.end(), { nx, ny, nz });
-        texCoords.insert(texCoords.end(), { u, v });
+        uint32_t idx = static_cast<uint32_t>(buffers.verts.size() / 3);
+        buffers.verts.insert(buffers.verts.end(), { x, y, z });
+        buffers.norms.insert(buffers.norms.end(), { nx, ny, nz });
+        buffers.texCoords.insert(buffers.texCoords.end(), { u, v });
+        buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
         return idx;
     };
 
@@ -821,6 +820,7 @@ PolarBuilder& PolarBuilder::buildCylinderIndexedInternal(
 
     float domainRange = m_domainEnd - m_domainStart;
 
+	//std::cout << "Building cylinder indexed: sectors=" << m_sectors << ", slices=" << m_slices << ", turbo=" << m_turbo << "\n";
     // Build first ring at z = 0
     std::vector<uint32_t> prevRing(m_sectors + 1);
     for (int i = 0; i <= m_sectors; i++)
@@ -836,7 +836,7 @@ PolarBuilder& PolarBuilder::buildCylinderIndexedInternal(
 
         float cos_t = std::cos(static_cast<float>(theta));
         float sin_t = std::sin(static_cast<float>(theta));
-        float nx = dr * sin_t + r * cos_t;
+        float nx = (dr * sin_t + r * cos_t);
         float ny = -(dr * cos_t - r * sin_t);
 
         float len = std::sqrt(nx * nx + ny * ny);
@@ -846,7 +846,6 @@ PolarBuilder& PolarBuilder::buildCylinderIndexedInternal(
             ny /= len;
         }
 
-        // Flip normals for second coat
         if (isSecondCoat)
         {
             nx = -nx;
@@ -904,7 +903,6 @@ PolarBuilder& PolarBuilder::buildCylinderIndexedInternal(
                     ny /= len;
                 }
 
-                // Flip normals for second coat
                 if (isSecondCoat)
                 {
                     nx = -nx;
@@ -924,23 +922,23 @@ PolarBuilder& PolarBuilder::buildCylinderIndexedInternal(
 
             if (isSecondCoat)
             {
-                indices.push_back(v00);
-                indices.push_back(v10);
-                indices.push_back(v01);
+                buffers.indices.push_back(v00);
+                buffers.indices.push_back(v10);
+                buffers.indices.push_back(v01);
 
-                indices.push_back(v01);
-                indices.push_back(v10);
-                indices.push_back(v11);
+                buffers.indices.push_back(v01);
+                buffers.indices.push_back(v10);
+                buffers.indices.push_back(v11);
             }
             else
             {
-                indices.push_back(v00);
-                indices.push_back(v01);
-                indices.push_back(v10);
+                buffers.indices.push_back(v00);
+                buffers.indices.push_back(v01);
+                buffers.indices.push_back(v10);
 
-                indices.push_back(v01);
-                indices.push_back(v11);
-                indices.push_back(v10);
+                buffers.indices.push_back(v01);
+                buffers.indices.push_back(v11);
+                buffers.indices.push_back(v10);
             }
         }
 
@@ -949,18 +947,13 @@ PolarBuilder& PolarBuilder::buildCylinderIndexedInternal(
 
     if (!isSecondCoat && m_doubleCoated)
     {
-        buildCylinderIndexedInternal(verts, norms, texCoords, indices, true);
+        buildCylinderIndexedInternal(buffers, true);
     }
 
     return *this;
 }
 
-PolarBuilder& PolarBuilder::buildCylinderDiscreteIndexedInternal(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords,
-    std::vector<uint32_t>& indices,
-    bool isSecondCoat)
+PolarBuilder& PolarBuilder::buildCylinderDiscreteIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat)
 {
     using expresie_tokenizer::expression_token_compiler;
     using expresie_tokenizer::expression;
@@ -973,7 +966,6 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteIndexedInternal(
 
     float domainRange = m_domainEnd - m_domainStart;
 
-    // Precompute ring positions
     std::vector<std::vector<float>> ringX(m_slices + 1, std::vector<float>(m_sectors + 1));
     std::vector<std::vector<float>> ringY(m_slices + 1, std::vector<float>(m_sectors + 1));
     std::vector<std::vector<float>> ringZ(m_slices + 1, std::vector<float>(m_sectors + 1));
@@ -995,12 +987,13 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteIndexedInternal(
             ringZ[h][i] = z;
         }
     }
-
+    const std::array<float, 4>& c = isSecondCoat ? m_color_inner : m_color_outer;
     auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
-        uint32_t idx = static_cast<uint32_t>(verts.size() / 3);
-        verts.insert(verts.end(), { x, y, z });
-        norms.insert(norms.end(), { nx, ny, nz });
-        texCoords.insert(texCoords.end(), { u, v });
+        uint32_t idx = static_cast<uint32_t>(buffers.verts.size() / 3);
+        buffers.verts.insert(buffers.verts.end(), { x, y, z });
+        buffers.norms.insert(buffers.norms.end(), { nx, ny, nz });
+        buffers.texCoords.insert(buffers.   texCoords.end(), { u, v });
+        buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
         return idx;
     };
 
@@ -1029,9 +1022,9 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteIndexedInternal(
                 uint32_t i0 = addVertex(x00, y00, z00, nx1, ny1, nz1, u0, v0);
                 uint32_t i1 = addVertex(x10, y10, z10, nx1, ny1, nz1, u0, v1);
                 uint32_t i2 = addVertex(x01, y01, z01, nx1, ny1, nz1, u1, v0);
-                indices.push_back(i0);
-                indices.push_back(i1);
-                indices.push_back(i2);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
             }
             else
             {
@@ -1039,9 +1032,9 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteIndexedInternal(
                 uint32_t i0 = addVertex(x00, y00, z00, nx1, ny1, nz1, u0, v0);
                 uint32_t i1 = addVertex(x01, y01, z01, nx1, ny1, nz1, u1, v0);
                 uint32_t i2 = addVertex(x10, y10, z10, nx1, ny1, nz1, u0, v1);
-                indices.push_back(i0);
-                indices.push_back(i1);
-                indices.push_back(i2);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
             }
 
             // Triangle 2
@@ -1052,9 +1045,9 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteIndexedInternal(
                 uint32_t i0 = addVertex(x01, y01, z01, nx2, ny2, nz2, u1, v0);
                 uint32_t i1 = addVertex(x10, y10, z10, nx2, ny2, nz2, u0, v1);
                 uint32_t i2 = addVertex(x11, y11, z11, nx2, ny2, nz2, u1, v1);
-                indices.push_back(i0);
-                indices.push_back(i1);
-                indices.push_back(i2);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
             }
             else
             {
@@ -1062,34 +1055,27 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteIndexedInternal(
                 uint32_t i0 = addVertex(x01, y01, z01, nx2, ny2, nz2, u1, v0);
                 uint32_t i1 = addVertex(x11, y11, z11, nx2, ny2, nz2, u1, v1);
                 uint32_t i2 = addVertex(x10, y10, z10, nx2, ny2, nz2, u0, v1);
-                indices.push_back(i0);
-                indices.push_back(i1);
-                indices.push_back(i2);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
             }
         }
     }
 
     if (!isSecondCoat && m_doubleCoated)
     {
-        buildCylinderDiscreteIndexedInternal(verts, norms, texCoords, indices, true);
+        buildCylinderDiscreteIndexedInternal(buffers, true);
     }
 
     return *this;
 }
 
-PolarBuilder& PolarBuilder::buildCylinderDiscrete(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords)
+PolarBuilder& PolarBuilder::buildCylinderDiscrete(GeometryBuffers& buffers)
 {
-    return buildCylinderDiscreteInternal(verts, norms, texCoords, false);
+    return buildCylinderDiscreteInternal(buffers, false);
 }
 
-PolarBuilder& PolarBuilder::buildCylinderDiscreteInternal(
-    std::vector<float>& verts,
-    std::vector<float>& norms,
-    std::vector<float>& texCoords,
-    bool isSecondCoat)
+PolarBuilder& PolarBuilder::buildCylinderDiscreteInternal(GeometryBuffers& buffers, bool isSecondCoat)
 {
     using expresie_tokenizer::expression_token_compiler;
     using expresie_tokenizer::expression;
@@ -1118,16 +1104,14 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteInternal(
             float x = static_cast<float>(expr_r->cyl_x(theta));
             float y = static_cast<float>(expr_r->cyl_y(theta));
 
-            // Apply transformation to precomputed positions
-            //applyTransformPosition(x, y, z);
-
             ringX[h][i] = x;
             ringY[h][i] = y;
             ringZ[h][i] = z;
         }
     }
 
-    // Generate triangles with flat normals
+    const std::array<float, 4>& c = isSecondCoat ? m_color_inner : m_color_outer;
+
     for (int h = 0; h < m_slices; h++)
     {
         float v0 = static_cast<float>(h) / m_slices;
@@ -1138,71 +1122,191 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteInternal(
             float u0 = static_cast<float>(i) / m_sectors;
             float u1 = static_cast<float>(i + 1) / m_sectors;
 
-            // Quad corners
             float x00 = ringX[h][i], y00 = ringY[h][i], z00 = ringZ[h][i];
             float x01 = ringX[h][i + 1], y01 = ringY[h][i + 1], z01 = ringZ[h][i + 1];
             float x10 = ringX[h + 1][i], y10 = ringY[h + 1][i], z10 = ringZ[h + 1][i];
             float x11 = ringX[h + 1][i + 1], y11 = ringY[h + 1][i + 1], z11 = ringZ[h + 1][i + 1];
 
-            // Triangle 1
             float nx1, ny1, nz1;
             if (!isSecondCoat)
             {
                 crossProductNormalLefthanded(x00, y00, z00, x10, y10, z10, x01, y01, z01, nx1, ny1, nz1, false);
-                verts.insert(verts.end(), { x00, y00, z00 });
-                verts.insert(verts.end(), { x10, y10, z10 });
-                verts.insert(verts.end(), { x01, y01, z01 });
+                buffers.verts.insert(buffers.verts.end(), { x00, y00, z00 });
+                buffers.verts.insert(buffers.verts.end(), { x10, y10, z10 });
+                buffers.verts.insert(buffers.verts.end(), { x01, y01, z01 });
             }
             else
             {
                 crossProductNormalLefthanded(x00, y00, z00, x01, y01, z01, x10, y10, z10, nx1, ny1, nz1, false);
-                verts.insert(verts.end(), { x00, y00, z00 });
-                verts.insert(verts.end(), { x01, y01, z01 });
-                verts.insert(verts.end(), { x10, y10, z10 });
+                buffers.verts.insert(buffers.verts.end(), { x00, y00, z00 });
+                buffers.verts.insert(buffers.verts.end(), { x01, y01, z01 });
+                buffers.verts.insert(buffers.verts.end(), { x10, y10, z10 });
             }
 
-            norms.insert(norms.end(), { nx1, ny1, nz1 });
-            norms.insert(norms.end(), { nx1, ny1, nz1 });
-            norms.insert(norms.end(), { nx1, ny1, nz1 });
+            buffers.norms.insert(buffers.norms.end(), { nx1, ny1, nz1 });
+            buffers.norms.insert(buffers.norms.end(), { nx1, ny1, nz1 });
+            buffers.norms.insert(buffers.norms.end(), { nx1, ny1, nz1 });
 
-            texCoords.insert(texCoords.end(), { u0, v0 });
-            texCoords.insert(texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v0 : v1 });
-            texCoords.insert(texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v1 : v0 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { u0, v0 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v0 : v1 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v1 : v0 });
 
-            // Triangle 2
+            buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+            buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+            buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+
             float nx2, ny2, nz2;
             if (!isSecondCoat)
             {
                 crossProductNormalLefthanded(x01, y01, z01, x10, y10, z10, x11, y11, z11, nx2, ny2, nz2, false);
-                verts.insert(verts.end(), { x01, y01, z01 });
-                verts.insert(verts.end(), { x10, y10, z10 });
-                verts.insert(verts.end(), { x11, y11, z11 });
+                buffers.verts.insert(buffers.verts.end(), { x01, y01, z01 });
+                buffers.verts.insert(buffers.verts.end(), { x10, y10, z10 });
+                buffers.verts.insert(buffers.verts.end(), { x11, y11, z11 });
             }
             else
             {
                 crossProductNormalLefthanded(x01, y01, z01, x11, y11, z11, x10, y10, z10, nx2, ny2, nz2, false);
-                verts.insert(verts.end(), { x01, y01, z01 });
-                verts.insert(verts.end(), { x11, y11, z11 });
-                verts.insert(verts.end(), { x10, y10, z10 });
+                buffers.verts.insert(buffers.verts.end(), { x01, y01, z01 });
+                buffers.verts.insert(buffers.verts.end(), { x11, y11, z11 });
+                buffers.verts.insert(buffers.verts.end(), { x10, y10, z10 });
             }
 
-            norms.insert(norms.end(), { nx2, ny2, nz2 });
-            norms.insert(norms.end(), { nx2, ny2, nz2 });
-            norms.insert(norms.end(), { nx2, ny2, nz2 });
+            buffers.norms.insert(buffers.norms.end(), { nx2, ny2, nz2 });
+            buffers.norms.insert(buffers.norms.end(), { nx2, ny2, nz2 });
+            buffers.norms.insert(buffers.norms.end(), { nx2, ny2, nz2 });
 
-            texCoords.insert(texCoords.end(), { u1, v0 });
-            texCoords.insert(texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v1 : v1 });
-            texCoords.insert(texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v0 : v1 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { u1, v0 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { isSecondCoat ? u1 : u0, isSecondCoat ? v1 : v1 });
+            buffers.texCoords.insert(buffers.texCoords.end(), { isSecondCoat ? u0 : u1, isSecondCoat ? v0 : v1 });
+
+            buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+            buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+            buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
         }
     }
 
     if (!isSecondCoat && m_doubleCoated)
     {
-        buildCylinderDiscreteInternal(verts, norms, texCoords, true);
+        buildCylinderDiscreteInternal(buffers, true);
     }
 
     return *this;
 }
 
-} // namespace dynamit::builders
+PolarBuilder& PolarBuilder::buildConeIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, std::vector<uint32_t>& indices)
+{
+    std::vector<float> colors;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+    return buildConeIndexedInternal(buffers, false);
+}
 
+PolarBuilder& PolarBuilder::buildConeIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+    return buildConeIndexedInternal(buffers, false);
+}
+
+PolarBuilder& PolarBuilder::buildCylinderIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, std::vector<uint32_t>& indices)
+{
+    std::vector<float> colors;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+    if (!m_smooth)
+        return buildCylinderDiscreteIndexedInternal(buffers, false);
+    return buildCylinderIndexedInternal(buffers, false);
+}
+
+PolarBuilder& PolarBuilder::buildCylinderIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+    if (!m_smooth)
+        return buildCylinderDiscreteIndexedInternal(buffers, false);
+    return buildCylinderIndexedInternal(buffers, false);
+}
+
+PolarBuilder& PolarBuilder::buildCone(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
+{
+    std::vector<float> colors;
+    std::vector<uint32_t> indices;
+    
+    if (!m_smooth)
+    {
+        GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+        buildConeDiscrete(buffers);
+    }
+    else
+    {
+        std::vector<float> indexedVerts, indexedNorms, indexedTexCoords, indexedColors;
+        GeometryBuffers buffers(indexedVerts, indexedNorms, indexedTexCoords, indexedColors, indices);
+        buildConeIndexedInternal(buffers, false);
+
+        size_t additionalSize = indices.size() * 3;
+        verts.reserve(verts.size() + additionalSize);
+        norms.reserve(norms.size() + additionalSize);
+        texCoords.reserve(texCoords.size() + (indices.size() * 2));
+
+        for (uint32_t idx : indices)
+        {
+            size_t offset3 = idx * 3;
+            size_t offset2 = idx * 2;
+            
+            verts.push_back(indexedVerts[offset3]);
+            verts.push_back(indexedVerts[offset3 + 1]);
+            verts.push_back(indexedVerts[offset3 + 2]);
+
+            norms.push_back(indexedNorms[offset3]);
+            norms.push_back(indexedNorms[offset3 + 1]);
+            norms.push_back(indexedNorms[offset3 + 2]);
+
+            texCoords.push_back(indexedTexCoords[offset2]);
+            texCoords.push_back(indexedTexCoords[offset2 + 1]);
+        }
+    }
+
+    return *this;
+}
+
+PolarBuilder& PolarBuilder::buildCylinder(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
+{
+    std::vector<float> colors;
+    std::vector<uint32_t> indices;
+    
+    if (!m_smooth)
+    {
+        GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+        buildCylinderDiscrete(buffers);
+    }
+    else
+    {
+        std::vector<float> indexedVerts, indexedNorms, indexedTexCoords, indexedColors;
+        GeometryBuffers buffers(indexedVerts, indexedNorms, indexedTexCoords, indexedColors, indices);
+        buildCylinderIndexedInternal(buffers, false);
+
+        size_t additionalSize = indices.size() * 3;
+        verts.reserve(verts.size() + additionalSize);
+        norms.reserve(norms.size() + additionalSize);
+        texCoords.reserve(texCoords.size() + (indices.size() * 2));
+
+        for (uint32_t idx : indices)
+        {
+            size_t offset3 = idx * 3;
+            size_t offset2 = idx * 2;
+            
+            verts.push_back(indexedVerts[offset3]);
+            verts.push_back(indexedVerts[offset3 + 1]);
+            verts.push_back(indexedVerts[offset3 + 2]);
+
+            norms.push_back(indexedNorms[offset3]);
+            norms.push_back(indexedNorms[offset3 + 1]);
+            norms.push_back(indexedNorms[offset3 + 2]);
+
+            texCoords.push_back(indexedTexCoords[offset2]);
+            texCoords.push_back(indexedTexCoords[offset2 + 1]);
+        }
+    }
+
+    return *this;
+}
+
+}

@@ -28,13 +28,13 @@ int main_polarArrowParametric()
 
     // Create transformation matrices for positioning multiple shapes
 
-	float arrowHeadHeight = 0.1f, arrowHeadWidth = 0.05f, arrowShaftWidth = 0.025f;
+	float arrowHeadHeight = 0.2f, arrowHeadWidth = 0.1f, arrowShaftWidth = 0.05f;
 	//float arrowHeadHeight = 0.2f, arrowHeadWidth = 0.1f, arrowShaftWidth = 0.025f;
     mat4<float> arrowShaftTranslate = translation_mat4(0.0f, 0.0f, 1.0f);
     mat4<float> arrowShaftScale = scaleMatrix(arrowShaftWidth, arrowShaftWidth, 2.0f - arrowHeadHeight);
     mat4<float> arrowTipScale = scaleMatrix(arrowHeadWidth, arrowHeadWidth, arrowHeadHeight);
     mat4<float> arrowTipTranslate = translation_mat4(0.0f, 0.0f, -1.0f + arrowHeadHeight);
-    bool buildCircle = false, buildHeart = false, build5PetalRose = true;
+    bool buildCircle = false, buildHeart = true, build5PetalRose = true;
 
     PolarBuilder builder = Builder::polar();
 
@@ -57,23 +57,23 @@ int main_polarArrowParametric()
             .sectors_slices(100, 100)
             //.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
             //.buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
+            .reversed(true).buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
+            .reversed(false).buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
+            .reversed(true).buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
+            .reversed(false).buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
+            .reversed(true).buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
+            .reversed(false).buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
 
             .formula(L"(2*PI - theta) / PI")    // second half
             .domain_shift(2 * M_PI)
             //.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
             //.buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
-            .buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
-            .buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
+            .reversed(true).buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
+            .reversed(false).buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
+            .reversed(true).buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
+            .reversed(false).buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
+            .reversed(true).buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
+            .reversed(false).buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
 
             ;
     }else if (build5PetalRose)

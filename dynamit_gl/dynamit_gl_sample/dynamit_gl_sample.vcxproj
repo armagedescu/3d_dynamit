@@ -495,6 +495,7 @@
     <ClCompile Include="normalsAndColors2Progs.cpp" />
     <ClCompile Include="polarArrowCombined.cpp" />
     <ClCompile Include="polarArrowParametric.cpp" />
+    <ClCompile Include="polarArrowWithColorParametric.cpp" />
     <ClCompile Include="polarCombineWithTransform.cpp" />
     <ClCompile Include="polarWithTransform.cpp" />
     <ClCompile Include="sphereDodecahedron.cpp" />

@@ -92,5 +92,8 @@
     <ClCompile Include="triangleFanPrimitives.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="polarArrowWithColorParametric.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
