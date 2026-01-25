@@ -226,9 +226,9 @@ template<typename T = float> mat4<T> rotation_y_mat4(float angle)
 {
     T c = std::cos(angle), s = std::sin(angle);
     return {
-        c,    T{0}, s,   T{0},
+        c,    T{0}, s,    T{0},
         T{0}, T{1}, T{0}, T{0},
-        -s,    T{0}, c,    T{0},
+        -s,   T{0}, c,    T{0},
         T{0}, T{0}, T{0}, T{1}
     };
 }
@@ -236,9 +236,9 @@ template<typename T = float> void rotation_y_mat4(float angle, mat4<T>& matrix)
 {
     T c = std::cos(angle), s = std::sin(angle);
     matrix = {
-        c,    T{0}, -s,   T{0},
+        c,    T{0}, s,    T{0},
         T{0}, T{1}, T{0}, T{0},
-        s,    T{0}, c,    T{0},
+        -s,   T{0}, c,    T{0},
         T{0}, T{0}, T{0}, T{1}
     };
 }
@@ -286,26 +286,62 @@ inline void transformPosition(const mat4<float>& m, float& x, float& y, float& z
 
 //// Transform a normal (applies only rotation/scale, no translation)
 
-// Transform a normal (applies only rotation/scale, no translation)
+//// Transform a normal (applies only rotation/scale, no translation)
+//inline void transformNormal(const mat4<float>& m, float& nx, float& ny, float& nz)
+//{
+//    float tnx = m[0] * nx + m[4] * ny + m[8] * nz;
+//    float tny = m[1] * nx + m[5] * ny + m[9] * nz;
+//    float tnz = m[2] * nx + m[6] * ny + m[10] * nz;
+//
+//    float len = std::sqrt(tnx * tnx + tny * tny + tnz * tnz);
+//    if (len > 0.0001f)
+//    {
+//        nx = tnx / len;
+//        ny = tny / len;
+//        nz = tnz / len;
+//    }
+//    else
+//    {
+//        nx = tnx;
+//        ny = tny;
+//        nz = tnz;
+//    }
+//}
+//// Transform a normal correctly for non-uniform scaling
 inline void transformNormal(const mat4<float>& m, float& nx, float& ny, float& nz)
 {
-    float tnx = m[0] * nx + m[4] * ny + m[8] * nz;
-    float tny = m[1] * nx + m[5] * ny + m[9] * nz;
-    float tnz = m[2] * nx + m[6] * ny + m[10] * nz;
+    // For correct normal transformation under non-uniform scale,
+    // we need to apply the inverse transpose of the 3x3 upper-left.
+    // For scale matrix S and rotation R where M = R*S or S*R,
+    // the inverse transpose scales by 1/s^2 per axis then applies rotation.
+
+    float col0_sq = m[0] * m[0] + m[1] * m[1] + m[2] * m[2];
+    float col1_sq = m[4] * m[4] + m[5] * m[5] + m[6] * m[6];
+    float col2_sq = m[8] * m[8] + m[9] * m[9] + m[10] * m[10];
+
+    // Normalize the matrix columns to get pure rotation, then apply
+    float r00 = m[0] / col0_sq, r10 = m[1] / col0_sq, r20 = m[2] / col0_sq;
+    float r01 = m[4] / col1_sq, r11 = m[5] / col1_sq, r21 = m[6] / col1_sq;
+    float r02 = m[8] / col2_sq, r12 = m[9] / col2_sq, r22 = m[10] / col2_sq;
+
+    float tnx = r00 * nx + r01 * ny + r02 * nz;
+    float tny = r10 * nx + r11 * ny + r12 * nz;
+    float tnz = r20 * nx + r21 * ny + r22 * nz;
 
     float len = std::sqrt(tnx * tnx + tny * tny + tnz * tnz);
     if (len > 0.0001f)
     {
-        tnx /= len;
-        tny /= len;
-        tnz /= len;
+        nx = tnx / len;
+        ny = tny / len;
+        nz = tnz / len;
     }
-
-    nx = tnx;
-    ny = tny;
-    nz = tnz;
+    else
+    {
+        nx = tnx;
+        ny = tny;
+        nz = tnz;
+    }
 }
-
 //// Apply single transformation to a range of vertices and normals
 // Apply single transformation to a range of vertices and normals
 inline void applyTransformToRange(
@@ -320,7 +356,7 @@ inline void applyTransformToRange(
     {
         transformPosition(m, verts[i], verts[i + 1], verts[i + 2]);
     }
-
+    
     for (size_t i = startIdx; i < norms.size(); i += 3)
     {
         transformNormal(m, norms[i], norms[i + 1], norms[i + 2]);
