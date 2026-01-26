@@ -255,11 +255,12 @@ public:
     
     void drawHeartConeInstance(const mat4<float>& viewProj,
                                float translateZ, float scaleXY, float scaleZ,
-                               float rotX = 0.0f, float rotZ = 0.0f)
+                               float rotX = 0.0f, float rotY = 0.0f, float rotZ = 0.0f)
     {
         mat4<float> t = identity_mat4<float>();
         //multiply_mat4(scaleMatrix(scaleXY, scaleXY, scaleZ), t);
         if (rotX != 0.0f) rotate_x_mat4(rotX, t);
+        if (rotY != 0.0f) rotate_y_mat4(rotY, t);
         if (rotZ != 0.0f) rotate_z_mat4(rotZ, t);
         multiply_mat4(translation_mat4(0.0f, 0.0f, translateZ), t);
         multiply_mat4(viewProj, t);
@@ -276,17 +277,13 @@ public:
         // Draw heart cone instances (from lab1GlDisplay)
         // directDisplay: translate(0,0,0), scale(2,2,3)
         drawHeartConeInstance(viewProj, 0.0f, 2.0f, 3.0f);
+        // mirrorDisplay: rotate(180,1,0,0), rotate(180,0,0,1)
+        drawHeartConeInstance(viewProj, 0.0f, 2.0f, 3.0f, static_cast<float>(M_PI), 0.f, static_cast<float>(M_PI));
         
-        //// mirrorDisplay: rotate(180,1,0,0), rotate(180,0,0,1)
-        drawHeartConeInstance(viewProj, 0.0f, 2.0f, 3.0f, static_cast<float>(M_PI), static_cast<float>(M_PI));
-        
-        //// mirrorDisplay2: rotate(90,1,0,0)
-        //drawHeartConeInstance(viewProj, 0.0f, 2.0f, 3.0f,
-        //                      static_cast<float>(M_PI / 2), 0.0f);
-        //
-        //// mirrorDisplay3: rotate(270,1,0,0), rotate(180,0,0,1)
-        //drawHeartConeInstance(viewProj, 0.0f, 2.0f, 3.0f,
-        //                      static_cast<float>(3 * M_PI / 2), static_cast<float>(M_PI));
+        // mirrorDisplay2: rotate(90,1,0,0)
+        drawHeartConeInstance(viewProj, 0.0f, 2.0f, 3.0f,  static_cast<float>(M_PI / 2), 0.0f);
+        // mirrorDisplay2.a: rotate(270,1,0,0), rotate(180,0,0,1)
+        drawHeartConeInstance(viewProj, 0.0f, 2.0f, 3.0f, static_cast<float>(3 * M_PI / 2),  static_cast<float>(M_PI), 0.f );
     }
 };
 } // namespace dynamit_port
@@ -298,18 +295,15 @@ public:
 int main_dynamit_port()
 {
     GLFWwindow* window = openglWindowInit(800, 600);
-    if (!window)
-        return -1;
+    if (!window)   return -1;
     scope_guard deleter = scope_guard(glfwTerminate);
-
-    
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
 
     // Build scene
     dynamit_port::Lab1Scene scene;
     scene.build();
-    //return 0;
-    
+
+
     // OpenGL state
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -333,22 +327,23 @@ int main_dynamit_port()
         
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        // Build view-projection (replaces spacePrepare + glOrtho)
-        // Original: glOrtho(-6.2, 6.2, -6.2, 6.2, 2, 12), translate(0,0,-6), rotate(35+dFi, 1,0,0), rotate(-35+dFi, 0,1,0)
-        //mat4<float> viewProj = identity_mat4<float>();
         float orthoScale = 1.0f / 2.f;// 6.2f;
-        mat4<float> viewProj = scaleMatrix(orthoScale, orthoScale, orthoScale);// / 2.0f);
-        
-        // Orthographic scale (maps -6.2..6.2 to -1..1)
-        //multiply_mat4(scaleMatrix(orthoScale, orthoScale, orthoScale / 2.0f), viewProj);
-        
-        // View rotation (like spacePrepare)
-        rotate_x_mat4(angley, viewProj);
-        //rotate_x_mat4((1.0f + rotationAngle) * static_cast<float>(M_PI) / 180.0f, viewProj);
-        //rotate_y_mat4((-1.0f + rotationAngle) * static_cast<float>(M_PI) / 180.0f, viewProj);
+ 
+        // // Build view-projection (replaces spacePrepare + glOrtho)
+        // // Original: glOrtho(-6.2, 6.2, -6.2, 6.2, 2, 12), translate(0,0,-6), rotate(35+dFi, 1,0,0), rotate(-35+dFi, 0,1,0)
+        // //mat4<float> viewProj = identity_mat4<float>();
+        // mat4<float> viewProj = scaleMatrix(orthoScale, orthoScale, orthoScale);// / 2.0f);
+        // // Orthographic scale (maps -6.2..6.2 to -1..1)
+        // //multiply_mat4(scaleMatrix(orthoScale, orthoScale, orthoScale / 2.0f), viewProj);
+        // //rotate_x_mat4((1.0f + rotationAngle) * static_cast<float>(M_PI) / 180.0f, viewProj);
+        // //rotate_y_mat4((-1.0f + rotationAngle) * static_cast<float>(M_PI) / 180.0f, viewProj);
+        // //View rotation (like spacePrepare)
+        // rotate_x_mat4(angley, viewProj);
+     
 		mat4<float> accum = identity_mat4<float>();
 		multiply_mat4(scaleMatrix(orthoScale, orthoScale, orthoScale / 2.0f), accum);
 		rotate_x_mat4(anglex, accum);
+		rotate_y_mat4(angley, accum);
         // Draw everything
         scene.draw(accum);
         
