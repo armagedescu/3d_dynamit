@@ -475,6 +475,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="enabler.h" />
+    <ClInclude Include="OptionsDialog.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="hello.cpp" />

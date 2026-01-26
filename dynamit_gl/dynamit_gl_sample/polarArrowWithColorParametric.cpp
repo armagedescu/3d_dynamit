@@ -10,6 +10,10 @@
 #include <config.h>
 #include <callbacks.h>
 #include <builders.h>
+// Add at the top:
+#include "OptionsDialog.h"
+#define     GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 
 using namespace dynamit;
 using namespace dynamit::builders;
@@ -52,17 +56,18 @@ auto generateNormalDebugLinesFromIndices = [](
 void buildnCylinder(std::vector<float>& verts, std::vector<float>& norms,
     std::vector<uint32_t>& indices, int sectors, int slices)
 {
-	float radius = 1.0f;
+    float radius = 1.0f;
     uint32_t baseIdx = static_cast<uint32_t>(verts.size() / 3);
 
+	float dtheta = 2.0f * static_cast<float>(M_PI) / sectors;
+    //sectors -= 3;
     for (int h = 0; h <= slices; h++)
     {
-        float z = -static_cast<float>(h) / slices;
-        float v = static_cast<float>(h) / slices;
+        float z = -static_cast<float>(h) / slices;  // Reverted: negative Z direction
 
         for (int i = 0; i <= sectors; i++)
         {
-            float theta = 2.0f * static_cast<float>(M_PI) * i / sectors;
+            float theta = dtheta * i;
             float x = radius * std::cos(theta);
             float y = radius * std::sin(theta);
 
@@ -81,14 +86,14 @@ void buildnCylinder(std::vector<float>& verts, std::vector<float>& norms,
         }
     }
 
-    // Generate indices
+    // Generate indices - CCW winding for left-handed system
     for (int h = 0; h < slices; h++)
     {
+        uint32_t row0 = baseIdx + h * (sectors + 1);
+        uint32_t row1 = baseIdx + (h + 1) * (sectors + 1);
+
         for (int i = 0; i < sectors; i++)
         {
-            uint32_t row0 = baseIdx + h * (sectors + 1);
-            uint32_t row1 = baseIdx + (h + 1) * (sectors + 1);
-
             uint32_t v00 = row0 + i;
             uint32_t v01 = row0 + i + 1;
             uint32_t v10 = row1 + i;
@@ -126,34 +131,64 @@ void transformnGeometry(std::vector<float>& verts, std::vector<float>& norms,
     }
 }
 
-int main_polarArrowWithColorParametric2()
+const char* normalsShowerVertexShader = R"(
+#version 330 core
+layout(location = 0) in vec3 aPos;
+uniform mat4 uTransform;
+void main() {
+    gl_Position = uTransform * vec4(aPos, 1.0);
+}
+)";
+const char* normalsShowerFragmentShader = R"(
+#version 330 core
+out vec4 FragColor;
+void main() {
+    FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+}
+)";
+
+class NormalsHighlighter : public Shape
 {
-    GLFWwindow* window = openglWindowInit(720, 720);
-    if (!window) return -1;
+    GLint transformLoc = 0;
+    GLuint vao = 0, vbo = 0;
 
-    std::cout << glGetString(GL_VERSION) << std::endl;
+public:
 
-    std::vector<float> verts, norms;
-    std::vector<uint32_t> indices;
+    NormalsHighlighter() : NormalsHighlighter(normalsShowerVertexShader, normalsShowerFragmentShader)
+    {
+    }
+    NormalsHighlighter(const char* vertexPath, const char* fragmentPath) : Shape(vertexPath, fragmentPath)
+    {
+    }
+    std::vector<float> normalLines;
 
-    // Build cylinder along Z, then rotate to point along Y
-    buildnCylinder(verts, norms, indices, 8, 2);
+    void build(std::vector<float>& verts, std::vector<float>& norms,  std::vector<uint32_t>& indices) {
+        generateNormalDebugLinesFromIndices(verts, norms, indices, normalLines);
 
-    // Scale Z to make it longer, then rotate -90° around X to point up
-    mat4<float> scale = scaleMatrix(0.05f, 0.05f, 0.9f);
-    mat4<float> rotX = rotation_x_mat4(static_cast<float>(-M_PI / 2));
+        //glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform.data());
+        transformLoc = glGetUniformLocation(*this, "uTransform");
 
-    transformnGeometry(verts, norms, scale);
-    transformnGeometry(verts, norms, rotX);
+        // Create VAO/VBO for lines
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, normalLines.size() * sizeof(float), normalLines.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+        glEnableVertexAttribArray(0);
+        glBindVertexArray(0);
 
-    //// Print normals to verify
-    //std::cout << "First 10 normals after transform:\n";
-    //for (size_t i = 0; i < std::min(size_t(30), norms.size()); i += 3) {
-    //    std::cout << "  n[" << i / 3 << "] = (" << norms[i] << ", " << norms[i + 1] << ", " << norms[i + 2] << ")\n";
-    //}
+    }
+    void draw(mat4<float>& transform)
+    {
+        glUseProgram(*this);
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform.data());
+        glBindVertexArray(vao);
+        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalLines.size() / 3));
+    }
+};
 
-    // Shaders
-    const char* vertSrc = R"(
+const char* cyliderVertexShader = R"(
 #version 330 core
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aNormal;
@@ -161,92 +196,113 @@ out vec3 vNormal;
 uniform mat4 uTransform;
 void main() {
     gl_Position = uTransform * vec4(aPos, 1.0);
-    vNormal = mat3(uTransform) * aNormal;
+    vNormal = vec3 (uTransform * vec4(aNormal, 0.0));
 }
 )";
-    const char* fragSrc = R"(
+const char* cylinderFragmentShader = R"(
 #version 330 core
-in vec3 vNormal;
+in  vec3 vNormal;
 out vec4 fragColor;
-const vec3 lightDir = vec3(-0.577, -0.577, 0.577);
+const vec3 lightDir  = vec3(-0.577, -0.577, 0.577);
 const vec3 baseColor = vec3(0.0, 1.0, 0.5);
 void main() {
-    vec3 n = normalize(vNormal);
-    float diff = -dot(lightDir, n);
-    fragColor = vec4(baseColor * diff, 1.0) + vec4(0.2, 0.2, 0.2, 0.0);
+    float diff = dot(normalize(-lightDir),  normalize(vNormal));
+    fragColor  = vec4(baseColor * diff, 1.0) + vec4(0.2, 0.2, 0.2, 0.0);
 }
 )";
+class Cylinder : public Shape
+{
+    GLuint vao, vbo, nbo, ebo;
+    GLint transformLoc = 0;
 
-    Program program(vertSrc, fragSrc);
-    GLint transformLoc = glGetUniformLocation(program, "uTransform");
-
-    // Setup VAO/VBO/EBO
-    GLuint VAO, VBO, NBO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &NBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(float), verts.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, NBO);
-    glBufferData(GL_ARRAY_BUFFER, norms.size() * sizeof(float), norms.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), indices.data(), GL_STATIC_DRAW);
-
-    glBindVertexArray(0);
-    // Simple shader for lines
-    // Generate normal debug lines
-    std::vector<float> normalLines;
-    generateNormalDebugLinesFromIndices(verts, norms, indices, normalLines);
-
-    const char* lineVertSrc = R"(
-#version 330 core
-layout(location = 0) in vec3 aPos;
-uniform mat4 uTransform;
-void main() {
-    gl_Position = uTransform * vec4(aPos, 1.0);
-}
-)";
-    const char* lineFragSrc = R"(
-#version 330 core
-out vec4 FragColor;
-void main() {
-    FragColor = vec4(1.0, 1.0, 0.0, 1.0);
-}
-)";
-    Program lineProgram(lineVertSrc, lineFragSrc);
-
-    GLint lineTransformLoc = glGetUniformLocation(lineProgram, "uTransform");
-
-    // Create VAO/VBO for lines
-    GLuint lineVAO, lineVBO;
-    glGenVertexArrays(1, &lineVAO);
-    glGenBuffers(1, &lineVBO);
-    glBindVertexArray(lineVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
-    glBufferData(GL_ARRAY_BUFFER, normalLines.size() * sizeof(float), normalLines.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-    glBindVertexArray(0);
+public:
+    std::vector<float> verts, norms;
+    std::vector<uint32_t> indices;
 
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
+    Cylinder() : Cylinder(cyliderVertexShader, cylinderFragmentShader)
+    {
+    }
+    Cylinder(const char* vertexPath, const char* fragmentPath) : Shape(vertexPath, fragmentPath)
+    {
+        build();
+    }
+
+    void build() {
+        //GLuint VAO, VBO, NBO, EBO;
+        buildnCylinder(verts, norms, indices, 8, 8);
+
+        // Scale Z to make it shorter, then rotate -90° around X to point up
+        mat4<float> scale = scaleMatrix(0.05f, 0.05f, 1.0f);
+        mat4<float> rotX = rotation_x_mat4(static_cast<float>(-M_PI / 2));
+
+        transformnGeometry(verts, norms, scale);
+
+        glGenVertexArrays(1, &vao);
+        glUseProgram(*this);
+        glBindVertexArray(vao);
+        
+        glGenBuffers(1, &vbo);
+        glGenBuffers(1, &nbo);
+        glGenBuffers(1, &ebo);
+
+        glBindVertexArray(vao);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(float), verts.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, nbo);
+        glBufferData(GL_ARRAY_BUFFER, norms.size() * sizeof(float), norms.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glEnableVertexAttribArray(1);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), indices.data(), GL_STATIC_DRAW);
+
+        glBindVertexArray(0);
+        transformLoc = glGetUniformLocation(program, "uTransform");
+
+
+    }
+    void draw(mat4<float>& transform)
+    {
+        glUseProgram(*this);
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform.data());
+        glBindVertexArray(vao);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
+
+    }
+};
+
+int main_polarArrowWithColorParametric2()
+{
+    GLFWwindow* window = openglWindowInit(720, 720);
+    if (!window) return -1;
+
+    std::cout << glGetString(GL_VERSION) << std::endl;
+
+
+    TimeController tc(glfwGetTime());
+    // In main_polarArrowWithColorParametric2(), before the render loop:
+    RenderOptions options;
+    OptionsDialog* optsDlg = new OptionsDialog(options);
+    assert(optsDlg && "Failed to create OptionsDialog");
+    HWND hWndGlfw = glfwGetWin32Window(window);
+    optsDlg->CreateModeless(hWndGlfw);
+
+    Cylinder cylinder;
+	NormalsHighlighter normalsHighlighter;
+	normalsHighlighter.build(cylinder.verts, cylinder.norms, cylinder.indices);
 
     mat4<float> transform = identity_mat4();
     float anglex = 0.f, angley = 0.f;
-    TimeController tc(glfwGetTime());
-
+    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_CLAMP);
+    //glDisable(GL_DEPTH_CLAMP);
+    glEnable(GL_CULL_FACE);
+    glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
     while (!glfwWindowShouldClose(window))
     {
         tc.update(glfwGetTime());
@@ -256,7 +312,13 @@ void main() {
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) angley += static_cast<float>(tc.deltaTime) * 0.5f;
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) angley -= static_cast<float>(tc.deltaTime) * 0.5f;
         glPolygonMode(GL_FRONT_AND_BACK, glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS ? GL_LINE : GL_FILL);
-        if(glfwGetKey(window, GLFW_KEY_F10) == GLFW_PRESS) glFrontFace(GL_CW); else glFrontFace(GL_CCW);
+        //if(glfwGetKey(window, GLFW_KEY_F10) == GLFW_PRESS) glFrontFace(GL_CW); else glFrontFace(GL_CCW);
+
+
+        // Apply options:
+        if (options.cullFace) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
+        //glFrontFace(options.cwWinding ? GL_CW : GL_CCW);
+        glPolygonMode(GL_FRONT_AND_BACK, options.wireframe ? GL_LINE : GL_FILL);
 
         processInputs(window);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -264,17 +326,28 @@ void main() {
         rotation_x_mat4(anglex, transform);
         rotate_y_mat4(angley, transform);
 
-
-        glUseProgram(lineProgram);
-        glUniformMatrix4fv(lineTransformLoc, 1, GL_FALSE, transform.data());
-        glBindVertexArray(lineVAO);
-        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalLines.size() / 3));
-        glUseProgram(program);
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform.data());
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
+        //std::wcout << L"draw shapes" << std::endl;
+        cylinder.draw(transform);
+        if (options.showNormals) normalsHighlighter.draw(transform);
 
 
+        // In the render loop, add key handler to open dialog:
+        if (glfwGetKey(window, GLFW_KEY_F9) == GLFW_PRESS)
+            optsDlg->ShowWindow(SW_SHOW);
+
+        // Process Windows messages for the dialog
+        MSG msg;
+        while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+        {
+            if (!optsDlg || !IsDialogMessage(optsDlg->m_hWnd, &msg))
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+
+
+        // Draw normals conditionally:
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -303,19 +376,7 @@ int main_polarArrowWithColorParametric()
     mat4<float> arrowTipTranslate = translation_mat4(0.0f, 0.0f, -1.0f + arrowHeadHeight);
     bool buildCircle = true, buildHeart = false, build5PetalRose = false;
 
-    PolarBuilder builder = Builder::polar();
-    if(false)
-    {
-
-        builder.doubleCoated().turbo(false)
-            .sectors_slices(100, 100)
-            .buildConeIndexed(verts, norms, indices, rotation_x_mat4(-M_PI / 2))
-            //.buildCylinderIndexed(verts, norms, indices, rotation_x_mat4(-M_PI / 2))
-            ;
-    } else   
-        if (buildCircle)
-    {
-        builder//.doubleCoated().turbo(true)//.smooth(false)
+    PolarBuilder builder = Builder::polar()
             .sectors_slices(4, 4)
             .color(std::array<float, 3>{ 1.0f, 0.0f, 1.0f }, std::array<float, 3>{ 0.0f, 1.0f, 0.0f })  // Red
             .buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
@@ -332,58 +393,10 @@ int main_polarArrowWithColorParametric()
             //////.color(std::array<float, 3>{0.0f, 1.0f, 0.0f}, std::array<float, 3>{ 1.0f, 0.0f, 1.0f })  // Red
             //.buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
             ;
-    }else  if (buildHeart)
-    {
-        builder//.//doubleCoated()
-            .formula(L"theta / PI")
-            .domain(M_PI)                       // first half
-            .sectors_slices(100, 100)
-            //.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
-            //.buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
-            //.color(1.0f, 0.0f, 0.0f)  // Red
-            .reversed(true).buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
-            //.color(0.0f, 1.0f, 0.0f)  // Green
-            .reversed(false).buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-            //.color(0.0f, 0.0f, 1.0f)  // Red
-            //.reversed(true).buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
-            //.reversed(false).buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
-            //.reversed(true).buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
-            //.reversed(false).buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
-            .formula(L"(2*PI - theta) / PI")    // second half
-            .domain_shift(2 * M_PI)
-            //.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
-            //.buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
-            //.color(1.0f, 0.0f, 0.0f)  // Red
-            .reversed(true).buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
-            //.color(0.0f, 1.0f, 0.0f)  // Green
-            .reversed(false).buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-            //.color(0.0f, 0.0f, 1.0f)  // Red
-            //.reversed(true).buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
-            //.reversed(false).buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
-            //.reversed(true).buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
-            //.reversed(false).buildCylinderIndexedWithColor  (verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
-
-            ;
-    }else if (build5PetalRose)
-    {
-        builder.doubleCoated()
-            .formula(L"cos(5 * theta)")
-            .sectors_slices(100, 100)
-            //.buildConeIndexed(verts, norms, indices, arrowTipScale, arrowTipTranslate)
-            //.buildCylinderIndexed(verts, norms, indices, arrowShaftScale, arrowShaftTranslate)
-            .buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
-            .buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-            .buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
-            .buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
-            .buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
-            .buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
-
-            ;
-    }
-    std::cout << "First 10 normals:\n";
-    for (size_t i = 0; i < std::min(size_t(30), norms1.size()); i += 3) {
-        std::cout << "  n[" << i / 3 << "] = (" << norms1[i] << ", " << norms1[i + 1] << ", " << norms1[i + 2] << ")\n";
-    }
+    //std::cout << "First 10 normals:\n";
+    //for (size_t i = 0; i < std::min(size_t(30), norms1.size()); i += 3) {
+    //    std::cout << "  n[" << i / 3 << "] = (" << norms1[i] << ", " << norms1[i + 1] << ", " << norms1[i + 2] << ")\n";
+    //}
     // Setup:
     Dynamit shape;
     shape
@@ -491,5 +504,6 @@ void main() {
 
 #include "enabler.h"
 #ifdef __POLAR_ARROW_WITH_COLOR_PARAMETRIC_CPP__
+//int main() { return main_polarArrowWithColorParametric(); }
 int main() { return main_polarArrowWithColorParametric2(); }
 #endif

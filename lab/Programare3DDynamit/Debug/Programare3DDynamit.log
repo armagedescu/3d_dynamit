@@ -1,0 +1,459 @@
+﻿  auxDisplayDynamit.cpp
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(194,14): error C2039: 'optional': is not a member of 'std'
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\optional(11): warning STL4038: The contents of <optional> are available only with C++17 or later.
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(194,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(194,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(194,45): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(195,14): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(195,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(195,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(195,53): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(196,14): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(196,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(196,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(196,47): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(197,14): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(197,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(197,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(197,57): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(198,14): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(198,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(198,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(198,57): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(199,14): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(199,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(199,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(199,57): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(207,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(207,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(207,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(207,63): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(208,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(208,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(208,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(208,20): error C2086: 'const int dynamit::GlSet::optional': redefinition
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(208,71): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(209,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(209,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(209,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(209,20): error C2086: 'const int dynamit::GlSet::optional': redefinition
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(209,65): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(210,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(210,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(210,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(210,20): error C2086: 'const int dynamit::GlSet::optional': redefinition
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(210,75): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(211,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(211,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(211,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(211,20): error C2086: 'const int dynamit::GlSet::optional': redefinition
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(211,75): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(212,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\array(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(212,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(212,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(212,20): error C2086: 'const int dynamit::GlSet::optional': redefinition
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(212,75): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(225,13): error C2065: 'transformMatrix3': undeclared identifier
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(229,13): error C2065: 'transformMatrix4': undeclared identifier
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(451,35): error C2039: 'getTransformMatrix3': is not a member of 'dynamit::GlSet'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(187,11):
+      see declaration of 'dynamit::GlSet'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(456,88): error C2039: 'getTransformMatrix3': is not a member of 'dynamit::GlSet'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(187,11):
+      see declaration of 'dynamit::GlSet'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(456,38): error C2530: 'matrix': references must be initialized
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(482,35): error C2039: 'getTransformMatrix4': is not a member of 'dynamit::GlSet'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(187,11):
+      see declaration of 'dynamit::GlSet'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(487,88): error C2039: 'getTransformMatrix4': is not a member of 'dynamit::GlSet'
+  (compiling source file 'auxDisplayDynamit.cpp')
+      C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(187,11):
+      see declaration of 'dynamit::GlSet'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(487,38): error C2530: 'matrix': references must be initialized
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\geometry.h(87,11): error C2429: language feature 'nested-namespace-definition' requires compiler flag '/std:c++17'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\geometry.h(337,68): error C7518: fold expressions require at least '/std:c++17'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\builders.h(11,11): error C2429: language feature 'nested-namespace-definition' requires compiler flag '/std:c++17'
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Camera.h(5,10): error C1083: Cannot open include file: 'glm/glm.hpp': No such file or directory
+  (compiling source file 'auxDisplayDynamit.cpp')
+  
+  dynamit_port.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\optional(11): warning STL4038: The contents of <optional> are available only with C++17 or later.
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(194,14): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(194,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(194,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(194,45): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(195,14): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(195,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(195,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(195,53): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(196,14): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(196,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(196,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(196,47): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(197,14): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(197,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(197,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(197,57): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(198,14): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(198,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(198,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(198,57): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(199,14): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(199,22): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(199,14): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(199,57): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(207,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(207,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(207,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(207,63): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(208,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(208,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(208,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(208,20): error C2086: 'const int dynamit::GlSet::optional': redefinition
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(208,71): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(209,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(209,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(209,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(209,20): error C2086: 'const int dynamit::GlSet::optional': redefinition
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(209,65): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(210,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(210,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(210,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(210,20): error C2086: 'const int dynamit::GlSet::optional': redefinition
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(210,75): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(211,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(211,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(211,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(211,20): error C2086: 'const int dynamit::GlSet::optional': redefinition
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(211,75): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(212,20): error C2039: 'optional': is not a member of 'std'
+  (compiling source file 'dynamit_port.cpp')
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\sstream(19,1):
+      see declaration of 'std'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(212,9): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(212,28): error C2143: syntax error: missing ';' before '<'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(212,20): error C2086: 'const int dynamit::GlSet::optional': redefinition
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(212,75): error C2238: unexpected token(s) preceding ';'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(225,13): error C2065: 'transformMatrix3': undeclared identifier
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(229,13): error C2065: 'transformMatrix4': undeclared identifier
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(451,35): error C2039: 'getTransformMatrix3': is not a member of 'dynamit::GlSet'
+  (compiling source file 'dynamit_port.cpp')
+      C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(187,11):
+      see declaration of 'dynamit::GlSet'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(456,88): error C2039: 'getTransformMatrix3': is not a member of 'dynamit::GlSet'
+  (compiling source file 'dynamit_port.cpp')
+      C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(187,11):
+      see declaration of 'dynamit::GlSet'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(456,38): error C2530: 'matrix': references must be initialized
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(482,35): error C2039: 'getTransformMatrix4': is not a member of 'dynamit::GlSet'
+  (compiling source file 'dynamit_port.cpp')
+      C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(187,11):
+      see declaration of 'dynamit::GlSet'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(487,88): error C2039: 'getTransformMatrix4': is not a member of 'dynamit::GlSet'
+  (compiling source file 'dynamit_port.cpp')
+      C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(187,11):
+      see declaration of 'dynamit::GlSet'
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Dynamit.h(487,38): error C2530: 'matrix': references must be initialized
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\geometry.h(87,11): error C2429: language feature 'nested-namespace-definition' requires compiler flag '/std:c++17'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\geometry.h(337,68): error C7518: fold expressions require at least '/std:c++17'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\builders.h(11,11): error C2429: language feature 'nested-namespace-definition' requires compiler flag '/std:c++17'
+  (compiling source file 'dynamit_port.cpp')
+  
+C:\DiskD\repository\armagedescu\3d_dynamit\export\dynamitd_cpp\include\Camera.h(5,10): error C1083: Cannot open include file: 'glm/glm.hpp': No such file or directory
+  (compiling source file 'dynamit_port.cpp')
+  
+  Generating Code...
