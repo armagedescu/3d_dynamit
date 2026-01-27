@@ -278,8 +278,6 @@ public:
         glGenBuffers(1, &nbo);
         glGenBuffers(1, &ebo);
 
-        glBindVertexArray(vao);
-
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(float), verts.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
