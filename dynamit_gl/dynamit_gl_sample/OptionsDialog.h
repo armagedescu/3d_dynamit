@@ -22,40 +22,39 @@ public:
     RenderOptions& m_options;
 
     OptionsDialog(RenderOptions& opts) : m_options(opts) {}
+    enum {
+        ID_CULL_FACE = 101,
+        ID_WIREFRAME = 102,
+        ID_SHOW_NORMALS = 103,
+        ID_CW_WINDING = 104
+    };
 
     BEGIN_MSG_MAP(OptionsDialog)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
         MESSAGE_HANDLER(WM_CLOSE, OnClose)
+        MESSAGE_HANDLER(WM_COMMAND, OnCommand)
+        MESSAGE_HANDLER(WM_SHOWWINDOW, OnShowWindow)
         COMMAND_ID_HANDLER(IDOK, OnOK)
         COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
-        COMMAND_ID_HANDLER(101, OnCullFace)
-        COMMAND_ID_HANDLER(102, OnWireframe)
-        COMMAND_ID_HANDLER(103, OnShowNormals)
-        COMMAND_ID_HANDLER(104, OnCWWinding)
         MESSAGE_HANDLER(WM_KEYDOWN, OnKeyDown)
     END_MSG_MAP()
 
     LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&)
     {
         // Create checkboxes
-        CreateWindowW(L"BUTTON", L"Cull Face", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            20, 20, 150, 25, m_hWnd, (HMENU)101, nullptr, nullptr);
-        CreateWindowW(L"BUTTON", L"Wireframe", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            20, 50, 150, 25, m_hWnd, (HMENU)102, nullptr, nullptr);
-        CreateWindowW(L"BUTTON", L"Show Normals", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            20, 80, 150, 25, m_hWnd, (HMENU)103, nullptr, nullptr);
-        CreateWindowW(L"BUTTON", L"CW Winding", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            20, 110, 150, 25, m_hWnd, (HMENU)104, nullptr, nullptr);
+        CreateWindowW(L"BUTTON", L"Cull Face", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX, 20, 20, 150, 25, m_hWnd, (HMENU)ID_CULL_FACE, nullptr, nullptr);
+        CreateWindowW(L"BUTTON", L"Wireframe", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,  20, 50, 150, 25, m_hWnd, (HMENU)ID_WIREFRAME, nullptr, nullptr);
+        CreateWindowW(L"BUTTON", L"Show Normals", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX, 20, 80, 150, 25, m_hWnd, (HMENU)ID_SHOW_NORMALS, nullptr, nullptr);
+        CreateWindowW(L"BUTTON", L"CW Winding", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,  20, 110, 150, 25, m_hWnd, (HMENU)ID_CW_WINDING, nullptr, nullptr);
 
         // OK button
-        CreateWindowW(L"BUTTON", L"OK", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
-            50, 150, 80, 30, m_hWnd, (HMENU)IDOK, nullptr, nullptr);
+        CreateWindowW(L"BUTTON", L"OK", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,  50, 150, 80, 30, m_hWnd, (HMENU)IDOK, nullptr, nullptr);
 
         // Set initial states
-        CheckDlgButton(101, m_options.cullFace ? BST_CHECKED : BST_UNCHECKED);
-        CheckDlgButton(102, m_options.wireframe ? BST_CHECKED : BST_UNCHECKED);
-        CheckDlgButton(103, m_options.showNormals ? BST_CHECKED : BST_UNCHECKED);
-        CheckDlgButton(104, m_options.cwWinding ? BST_CHECKED : BST_UNCHECKED);
+        CheckDlgButton(ID_CULL_FACE, m_options.cullFace ? BST_CHECKED : BST_UNCHECKED);
+        CheckDlgButton(ID_WIREFRAME, m_options.wireframe ? BST_CHECKED : BST_UNCHECKED);
+        CheckDlgButton(ID_SHOW_NORMALS, m_options.showNormals ? BST_CHECKED : BST_UNCHECKED);
+        CheckDlgButton(ID_CW_WINDING, m_options.cwWinding ? BST_CHECKED : BST_UNCHECKED);
 
         // Position dialog to the right of the parent window
         HWND hParent = GetParent();
@@ -72,7 +71,46 @@ public:
 
         return TRUE;
     }
+    LRESULT OnShowWindow(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+    {
+        switch (wParam)
+        {
+        case TRUE:
+            {
+            RECT rcParent;
+            ::GetWindowRect(GetParent(), &rcParent);
+            SetWindowPos(nullptr,
+                rcParent.right + 10,  // 10 pixels to the right of parent
+                rcParent.top,         // Same top position
+                0, 0,
+                SWP_NOSIZE | SWP_NOZORDER);
+            }
+            break;
+        }
+        return 0;
+    }
+    LRESULT OnCommand(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+    {
+		std::cout << "OnCommand called:" << msg<< " wParam: "<< wParam << std::endl;
+        switch (wParam)
+        {
+        case ID_CULL_FACE:
+            m_options.cullFace = (IsDlgButtonChecked(101) == BST_CHECKED);
+			return 0;
+        case ID_WIREFRAME:
+            m_options.wireframe = (IsDlgButtonChecked(102) == BST_CHECKED);
+            return 0;
+        case ID_SHOW_NORMALS:
+            m_options.showNormals = (IsDlgButtonChecked(103) == BST_CHECKED);
+            return 0;
+        case ID_CW_WINDING:
+            m_options.cwWinding = (IsDlgButtonChecked(104) == BST_CHECKED);
+            return 0;
+        }
+        bHandled = FALSE;
 
+        return 0;
+	}
     LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&)
     {
         ShowWindow(SW_HIDE);
@@ -88,30 +126,6 @@ public:
     LRESULT OnCancel(WORD, WORD, HWND, BOOL&)
     {
         ShowWindow(SW_HIDE);
-        return 0;
-    }
-
-    LRESULT OnCullFace(WORD, WORD, HWND, BOOL&)
-    {
-        m_options.cullFace = (IsDlgButtonChecked(101) == BST_CHECKED);
-        return 0;
-    }
-
-    LRESULT OnWireframe(WORD, WORD, HWND, BOOL&)
-    {
-        m_options.wireframe = (IsDlgButtonChecked(102) == BST_CHECKED);
-        return 0;
-    }
-
-    LRESULT OnShowNormals(WORD, WORD, HWND, BOOL&)
-    {
-        m_options.showNormals = (IsDlgButtonChecked(103) == BST_CHECKED);
-        return 0;
-    }
-
-    LRESULT OnCWWinding(WORD, WORD, HWND, BOOL&)
-    {
-        m_options.cwWinding = (IsDlgButtonChecked(104) == BST_CHECKED);
         return 0;
     }
 
@@ -153,6 +167,7 @@ public:
 
         ATLASSERT(m_hWnd == NULL);
         _AtlWinModule.AddCreateWndData(&m_thunk.cd, this);
+        CDialogImpl<OptionsDialog>::
 
         m_hWnd = ::CreateDialogIndirectParamW(
             _AtlBaseModule.GetModuleInstance(),

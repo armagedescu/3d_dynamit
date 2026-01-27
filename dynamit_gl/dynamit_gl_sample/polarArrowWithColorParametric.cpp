@@ -18,39 +18,6 @@
 using namespace dynamit;
 using namespace dynamit::builders;
 
-auto generateNormalDebugLinesFromIndices = [](
-    const std::vector<float>& verts,
-    const std::vector<float>& norms,
-    const std::vector<uint32_t>& indices,
-    std::vector<float>& lineVerts,
-    float normalLength = 0.1f)
-    {
-        lineVerts.clear();
-        lineVerts.reserve(indices.size() * 6);
-
-        for (uint32_t idx : indices)
-        {
-            size_t vi = idx * 3;  // vertex index into verts array
-
-            float vx = verts[vi];
-            float vy = verts[vi + 1];
-            float vz = verts[vi + 2];
-
-            float nx = norms[vi];
-            float ny = norms[vi + 1];
-            float nz = norms[vi + 2];
-
-            // Start point (vertex position)
-            lineVerts.push_back(vx);
-            lineVerts.push_back(vy);
-            lineVerts.push_back(vz);
-
-            // End point (vertex + normal * length)
-            lineVerts.push_back(vx + nx * normalLength);
-            lineVerts.push_back(vy + ny * normalLength);
-            lineVerts.push_back(vz + nz * normalLength);
-        }
-    };
 
 // Build a simple cylinder along Z axis (from z=0 to z=-1)
 void buildnCylinder(std::vector<float>& verts, std::vector<float>& norms,
@@ -60,7 +27,6 @@ void buildnCylinder(std::vector<float>& verts, std::vector<float>& norms,
     uint32_t baseIdx = static_cast<uint32_t>(verts.size() / 3);
 
 	float dtheta = 2.0f * static_cast<float>(M_PI) / sectors;
-    //sectors -= 3;
     for (int h = 0; h <= slices; h++)
     {
         float z = -static_cast<float>(h) / slices;  // Reverted: negative Z direction
@@ -111,8 +77,7 @@ void buildnCylinder(std::vector<float>& verts, std::vector<float>& norms,
 }
 
 // Transform vertices and normals
-void transformnGeometry(std::vector<float>& verts, std::vector<float>& norms,
-    const mat4<float>& m, size_t startIdx = 0)
+void transformnGeometry(std::vector<float>& verts, std::vector<float>& norms, const mat4<float>& m, size_t startIdx = 0)
 {
     for (size_t i = startIdx; i < verts.size(); i += 3)
     {
@@ -134,55 +99,122 @@ void transformnGeometry(std::vector<float>& verts, std::vector<float>& norms,
 const char* normalsShowerVertexShader = R"(
 #version 330 core
 layout(location = 0) in vec3 aPos;
+layout(location = 1) in uint aEndpoint;
+out vec3 vColor;
 uniform mat4 uTransform;
+uniform vec3 uColorStart;
+uniform vec3 uColorEnd;
 void main() {
     gl_Position = uTransform * vec4(aPos, 1.0);
+    vColor = (aEndpoint == 0u) ? uColorStart : uColorEnd;
 }
 )";
 const char* normalsShowerFragmentShader = R"(
 #version 330 core
+in vec3 vColor;
 out vec4 FragColor;
 void main() {
-    FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+    FragColor = vec4(vColor, 1.0);
 }
 )";
 
 class NormalsHighlighter : public Shape
 {
     GLint transformLoc = 0;
-    GLuint vao = 0, vbo = 0;
+    //GLint normalLengthLoc = 0;
+    GLint colorStartLoc = 0;
+    GLint colorEndLoc = 0;
+    GLuint vao = 0, vbo = 0, endpointVbo = 0;
 
 public:
 
-    NormalsHighlighter() : NormalsHighlighter(normalsShowerVertexShader, normalsShowerFragmentShader)
+    NormalsHighlighter(float normalLength = 0.1f) : NormalsHighlighter(normalsShowerVertexShader, normalsShowerFragmentShader, normalLength)
     {
     }
-    NormalsHighlighter(const char* vertexPath, const char* fragmentPath) : Shape(vertexPath, fragmentPath)
+    NormalsHighlighter(const char* vertexPath, const char* fragmentPath, float _normalLength = 0.1f) : Shape(vertexPath, fragmentPath), normalLength(_normalLength)
     {
     }
     std::vector<float> normalLines;
+    std::vector<uint8_t> endpointMap;  // Alternating 0 and 1 for start/end of each spike
+    float normalLength = 0.1f;
 
-    void build(std::vector<float>& verts, std::vector<float>& norms,  std::vector<uint32_t>& indices) {
-        generateNormalDebugLinesFromIndices(verts, norms, indices, normalLines);
+    void visualNormalFromVertsNorms(
+        const std::vector<float>& verts,
+        const std::vector<float>& norms,
+        std::vector<float>& lineVerts,
+        std::vector<uint8_t>& endpoints, float _normalLength = 0.1f)
+    {
+        lineVerts.reserve(lineVerts.size() + verts.size() * 2);
+        endpoints.reserve(endpoints.size() + (verts.size() / 3) * 2);
 
-        //glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform.data());
+        for (size_t vi = 0; vi < verts.size(); vi += 3)
+        {
+            float vx = verts[vi];
+            float vy = verts[vi + 1];
+            float vz = verts[vi + 2];
+
+            float nx = norms[vi];
+            float ny = norms[vi + 1];
+            float nz = norms[vi + 2];
+
+            // Start point (vertex position)
+            lineVerts.push_back(vx);
+            lineVerts.push_back(vy);
+            lineVerts.push_back(vz);
+            endpoints.push_back(0);  // Start of spike
+
+            // End point (vertex + normal * length)
+            lineVerts.push_back(vx + nx *  _normalLength);
+            lineVerts.push_back(vy + ny *  _normalLength);
+            lineVerts.push_back(vz + nz *  _normalLength);
+            endpoints.push_back(1);  // End of spike
+        }
+    };
+
+    void build(std::vector<float>& verts, std::vector<float>& norms) {
+        visualNormalFromVertsNorms(verts, norms, normalLines, endpointMap, normalLength);
+
         transformLoc = glGetUniformLocation(*this, "uTransform");
+        //normalLengthLoc = glGetUniformLocation(*this, "uNormalLength");
+        colorStartLoc = glGetUniformLocation(*this, "uColorStart");
+        colorEndLoc = glGetUniformLocation(*this, "uColorEnd");
 
-        // Create VAO/VBO for lines
+        // Create VAO/VBOs
         glGenVertexArrays(1, &vao);
         glGenBuffers(1, &vbo);
+        glGenBuffers(1, &endpointVbo);
+
         glBindVertexArray(vao);
+
+        // Position buffer
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, normalLines.size() * sizeof(float), normalLines.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
         glEnableVertexAttribArray(0);
-        glBindVertexArray(0);
 
+        // Endpoint map buffer (0 = start, 1 = end)
+        glBindBuffer(GL_ARRAY_BUFFER, endpointVbo);
+        glBufferData(GL_ARRAY_BUFFER, endpointMap.size() * sizeof(uint8_t), endpointMap.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 1, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(uint8_t), nullptr);
+        glEnableVertexAttribArray(1);
+
+        glBindVertexArray(0);
     }
-    void draw(mat4<float>& transform)
+
+    void draw(mat4<float>& transform, 
+              //float normalLength = 0.1f,
+              const float* colorStart = nullptr, 
+              const float* colorEnd = nullptr)
     {
+        static const float defaultColorStart[3] = { 1.0f, 0.0f, 1.0f };  // Yellow
+        static const float defaultColorEnd[3] = { 1.0f, 1.0f, 0.0f };    // Red
+
         glUseProgram(*this);
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform.data());
+        //glUniform1f(normalLengthLoc, normalLength);
+        glUniform3fv(colorStartLoc, 1, colorStart ? colorStart : defaultColorStart);
+        glUniform3fv(colorEndLoc, 1, colorEnd ? colorEnd : defaultColorEnd);
+
         glBindVertexArray(vao);
         glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalLines.size() / 3));
     }
@@ -276,7 +308,7 @@ public:
     }
 };
 
-int main_polarArrowWithColorParametric2()
+int main_polarArrowWithColorParametricRawResearch()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
     if (!window) return -1;
@@ -287,20 +319,18 @@ int main_polarArrowWithColorParametric2()
     TimeController tc(glfwGetTime());
     // In main_polarArrowWithColorParametric2(), before the render loop:
     RenderOptions options;
-    OptionsDialog* optsDlg = new OptionsDialog(options);
+    std::unique_ptr<OptionsDialog> optsDlg = std::make_unique<OptionsDialog>(options); //new OptionsDialog(options);
     assert(optsDlg && "Failed to create OptionsDialog");
     HWND hWndGlfw = glfwGetWin32Window(window);
     optsDlg->CreateModeless(hWndGlfw);
 
     Cylinder cylinder;
 	NormalsHighlighter normalsHighlighter;
-	normalsHighlighter.build(cylinder.verts, cylinder.norms, cylinder.indices);
+	normalsHighlighter.build(cylinder.verts, cylinder.norms);
 
     mat4<float> transform = identity_mat4();
     float anglex = 0.f, angley = 0.f;
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_DEPTH_CLAMP);
-    //glDisable(GL_DEPTH_CLAMP);
     glEnable(GL_CULL_FACE);
     glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
     while (!glfwWindowShouldClose(window))
@@ -352,9 +382,12 @@ int main_polarArrowWithColorParametric2()
         glfwPollEvents();
     }
 
+    if (optsDlg && optsDlg->IsWindow())
+        optsDlg->DestroyWindow();
     glfwTerminate();
     return 0;
 }
+
 int main_polarArrowWithColorParametric()
 {
     GLFWwindow* window = openglWindowInit(720, 720);
@@ -377,34 +410,31 @@ int main_polarArrowWithColorParametric()
     bool buildCircle = true, buildHeart = false, build5PetalRose = false;
 
     PolarBuilder builder = Builder::polar()
-            .sectors_slices(4, 4)
+            .sectors_slices(4, 4).doubleCoated()
             .color(std::array<float, 3>{ 1.0f, 0.0f, 1.0f }, std::array<float, 3>{ 0.0f, 1.0f, 0.0f })  // Red
+            .reversed()
             .buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(-M_PI / 2))
             .color(std::array<float, 3>{0.0f, 1.0f, 0.0f}, std::array<float, 3>{ 1.0f, 0.0f, 1.0f })    // Red
             .buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-            .buildCylinderIndexedWithColor(verts1, norms1, colors1, indices1, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-            //////.buildCylinderIndexedWithColor(verts, norms, colors, indices, rotation_x_mat4(-M_PI / 2))// , arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
-            //.color(std::array<float, 3>{ 1.0f, 0.0f, 1.0f }, std::array<float, 3>{ 0.0f, 1.0f, 0.0f })  // Red
-            //.buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
-            //.color(std::array<float, 3>{0.0f, 1.0f, 0.0f}, std::array<float, 3>{ 1.0f, 0.0f, 1.0f })  // Red
-            //.buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
-            //////.color(std::array<float, 3>{ 1.0f, 0.0f, 1.0f }, std::array<float, 3>{ 0.0f, 1.0f, 0.0f })  // Red
-			//.buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
-            //////.color(std::array<float, 3>{0.0f, 1.0f, 0.0f}, std::array<float, 3>{ 1.0f, 0.0f, 1.0f })  // Red
-            //.buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
+            .color(std::array<float, 3>{ 1.0f, 0.0f, 1.0f }, std::array<float, 3>{ 0.0f, 1.0f, 0.0f })  // Red
+            .buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
+            .color(std::array<float, 3>{0.0f, 1.0f, 0.0f}, std::array<float, 3>{ 1.0f, 0.0f, 1.0f })  // Red
+            .buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))
+            .color(std::array<float, 3>{ 1.0f, 0.0f, 1.0f }, std::array<float, 3>{ 0.0f, 1.0f, 0.0f })  // Red
+            .reversed(false)
+			.buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_x_mat4(M_PI))
+            .color(std::array<float, 3>{0.0f, 1.0f, 0.0f}, std::array<float, 3>{ 1.0f, 0.0f, 1.0f })    // Red
+            .buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(M_PI))
             ;
-    //std::cout << "First 10 normals:\n";
-    //for (size_t i = 0; i < std::min(size_t(30), norms1.size()); i += 3) {
-    //    std::cout << "  n[" << i / 3 << "] = (" << norms1[i] << ", " << norms1[i + 1] << ", " << norms1[i + 2] << ")\n";
-    //}
+
     // Setup:
     Dynamit shape;
     shape
         .withVertices3d(verts)
         .withNormals3d(norms)
-        //.withColors4d(colors)
+        .withColors4d(colors)
         .withIndices(indices)
-        .withConstColor({ 0.0, 1.0, 0.5, 1.0 })
+        //.withConstColor({ 0.0, 1.0, 0.5, 1.0 })
 		.withConstLightDirection({ -0.577f, -0.577f, 0.577f })
         .withTransformMatrix4f()
         //.withTransformMatrix3f()
@@ -412,41 +442,10 @@ int main_polarArrowWithColorParametric()
 	shape.logGeneratedShaders();
 
 
-    // Generate normal debug lines
-    std::vector<float> normalLines;
-    generateNormalDebugLinesFromIndices(verts, norms, indices, normalLines, 0.05f);
-    //generateNormalDebugLines(verts, norms, normalLines, 0.15f);
+    //// Generate normal debug lines
+    NormalsHighlighter normalsHighlighter (0.05f);
+    normalsHighlighter.build(verts, norms);
 
-    // Simple shader for lines
-    const char* lineVertSrc = R"(
-#version 330 core
-layout(location = 0) in vec3 aPos;
-uniform mat4 uTransform;
-void main() {
-    gl_Position = uTransform * vec4(aPos, 1.0);
-}
-)";
-    const char* lineFragSrc = R"(
-#version 330 core
-out vec4 FragColor;
-void main() {
-    FragColor = vec4(1.0, 1.0, 0.0, 1.0);
-}
-)";
-	Program lineProgram(lineVertSrc, lineFragSrc);
-
-    GLint lineTransformLoc = glGetUniformLocation(lineProgram, "uTransform");
-
-    // Create VAO/VBO for lines
-    GLuint lineVAO, lineVBO;
-    glGenVertexArrays(1, &lineVAO);
-    glGenBuffers(1, &lineVBO);
-    glBindVertexArray(lineVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
-    glBufferData(GL_ARRAY_BUFFER, normalLines.size() * sizeof(float), normalLines.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-    glBindVertexArray(0);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -487,12 +486,7 @@ void main() {
 
         shape.transformMatrix4f(mat4Transform);
         shape.drawTrianglesIndexed();
-
-        // Draw normal debug lines
-        glUseProgram(lineProgram);
-        glUniformMatrix4fv(lineTransformLoc, 1, GL_FALSE, mat4Transform.data());
-        glBindVertexArray(lineVAO);
-        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalLines.size() / 3));
+        normalsHighlighter.draw(mat4Transform);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -505,5 +499,5 @@ void main() {
 #include "enabler.h"
 #ifdef __POLAR_ARROW_WITH_COLOR_PARAMETRIC_CPP__
 //int main() { return main_polarArrowWithColorParametric(); }
-int main() { return main_polarArrowWithColorParametric2(); }
+int main() { return main_polarArrowWithColorParametricRawResearch(); }
 #endif
