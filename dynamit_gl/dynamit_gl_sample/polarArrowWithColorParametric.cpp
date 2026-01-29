@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <Dynamit.h>
+#include <NormalsHighlighter.h>
 #include <geometry.h>
 #include <config.h>
 #include <callbacks.h>
@@ -95,130 +96,6 @@ void transformnGeometry(std::vector<float>& verts, std::vector<float>& norms, co
         norms[i] = tnx; norms[i + 1] = tny; norms[i + 2] = tnz;
     }
 }
-
-const char* normalsShowerVertexShader = R"(
-#version 330 core
-layout(location = 0) in vec3 aPos;
-layout(location = 1) in uint aEndpoint;
-out vec3 vColor;
-uniform mat4 uTransform;
-uniform vec3 uColorStart;
-uniform vec3 uColorEnd;
-void main() {
-    gl_Position = uTransform * vec4(aPos, 1.0);
-    vColor = (aEndpoint == 0u) ? uColorStart : uColorEnd;
-}
-)";
-const char* normalsShowerFragmentShader = R"(
-#version 330 core
-in vec3 vColor;
-out vec4 FragColor;
-void main() {
-    FragColor = vec4(vColor, 1.0);
-}
-)";
-
-class NormalsHighlighter : public Shape
-{
-    GLint transformLoc = 0;
-    //GLint normalLengthLoc = 0;
-    GLint colorStartLoc = 0;
-    GLint colorEndLoc = 0;
-    GLuint vao = 0, vbo = 0, endpointVbo = 0;
-
-public:
-
-    NormalsHighlighter(float normalLength = 0.1f) : NormalsHighlighter(normalsShowerVertexShader, normalsShowerFragmentShader, normalLength)
-    {
-    }
-    NormalsHighlighter(const char* vertexPath, const char* fragmentPath, float _normalLength = 0.1f) : Shape(vertexPath, fragmentPath), normalLength(_normalLength)
-    {
-    }
-    std::vector<float> normalLines;
-    std::vector<uint8_t> endpointMap;  // Alternating 0 and 1 for start/end of each spike
-    float normalLength = 0.1f;
-
-    void visualNormalFromVertsNorms(
-        const std::vector<float>& verts,
-        const std::vector<float>& norms,
-        std::vector<float>& lineVerts,
-        std::vector<uint8_t>& endpoints, float _normalLength = 0.1f)
-    {
-        lineVerts.reserve(lineVerts.size() + verts.size() * 2);
-        endpoints.reserve(endpoints.size() + (verts.size() / 3) * 2);
-
-        for (size_t vi = 0; vi < verts.size(); vi += 3)
-        {
-            float vx = verts[vi];
-            float vy = verts[vi + 1];
-            float vz = verts[vi + 2];
-
-            float nx = norms[vi];
-            float ny = norms[vi + 1];
-            float nz = norms[vi + 2];
-
-            // Start point (vertex position)
-            lineVerts.push_back(vx);
-            lineVerts.push_back(vy);
-            lineVerts.push_back(vz);
-            endpoints.push_back(0);  // Start of spike
-
-            // End point (vertex + normal * length)
-            lineVerts.push_back(vx + nx *  _normalLength);
-            lineVerts.push_back(vy + ny *  _normalLength);
-            lineVerts.push_back(vz + nz *  _normalLength);
-            endpoints.push_back(1);  // End of spike
-        }
-    };
-
-    void build(std::vector<float>& verts, std::vector<float>& norms) {
-        visualNormalFromVertsNorms(verts, norms, normalLines, endpointMap, normalLength);
-
-        transformLoc = glGetUniformLocation(*this, "uTransform");
-        //normalLengthLoc = glGetUniformLocation(*this, "uNormalLength");
-        colorStartLoc = glGetUniformLocation(*this, "uColorStart");
-        colorEndLoc = glGetUniformLocation(*this, "uColorEnd");
-
-        // Create VAO/VBOs
-        glGenVertexArrays(1, &vao);
-        glGenBuffers(1, &vbo);
-        glGenBuffers(1, &endpointVbo);
-
-        glBindVertexArray(vao);
-
-        // Position buffer
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, normalLines.size() * sizeof(float), normalLines.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-        glEnableVertexAttribArray(0);
-
-        // Endpoint map buffer (0 = start, 1 = end)
-        glBindBuffer(GL_ARRAY_BUFFER, endpointVbo);
-        glBufferData(GL_ARRAY_BUFFER, endpointMap.size() * sizeof(uint8_t), endpointMap.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 1, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(uint8_t), nullptr);
-        glEnableVertexAttribArray(1);
-
-        glBindVertexArray(0);
-    }
-
-    void draw(mat4<float>& transform, 
-              //float normalLength = 0.1f,
-              const float* colorStart = nullptr, 
-              const float* colorEnd = nullptr)
-    {
-        static const float defaultColorStart[3] = { 1.0f, 0.0f, 1.0f };  // Yellow
-        static const float defaultColorEnd[3] = { 1.0f, 1.0f, 0.0f };    // Red
-
-        glUseProgram(*this);
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform.data());
-        //glUniform1f(normalLengthLoc, normalLength);
-        glUniform3fv(colorStartLoc, 1, colorStart ? colorStart : defaultColorStart);
-        glUniform3fv(colorEndLoc, 1, colorEnd ? colorEnd : defaultColorEnd);
-
-        glBindVertexArray(vao);
-        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(normalLines.size() / 3));
-    }
-};
 
 const char* cyliderVertexShader = R"(
 #version 330 core
@@ -323,7 +200,12 @@ int main_polarArrowWithColorParametricRawResearch()
     optsDlg->CreateModeless(hWndGlfw);
 
     Cylinder cylinder;
-	NormalsHighlighter normalsHighlighter;
+    dynamit::NormalsHighlighter normalsHighlighter;
+    normalsHighlighter
+        .withColorStart(1.0f, 0.0f, 1.0f)
+        .withColorEnd(1.0f, 1.0f, 0.0f)
+        .withLength(0.02);
+    //normalsHighlighter.build(verts, norms);
 	normalsHighlighter.build(cylinder.verts, cylinder.norms);
 
     mat4<float> transform = identity_mat4();
@@ -432,17 +314,14 @@ int main_polarArrowWithColorParametric()
         .withNormals3d(norms)
         .withColors4d(colors)
         .withIndices(indices)
-        //.withConstColor({ 0.0, 1.0, 0.5, 1.0 })
-		.withConstLightDirection({ -0.577f, -0.577f, 0.577f })
-        .withTransformMatrix4f()
-        //.withTransformMatrix3f()
-        ;
-	shape.logGeneratedShaders();
+        .withConstLightDirection({ -0.577f, -0.577f, 0.577f })
+        .withTransformMatrix4f();
+    shape.logGeneratedShaders();
 
-
-    //// Generate normal debug lines
-    NormalsHighlighter normalsHighlighter (0.05f);
-    normalsHighlighter.build(verts, norms);
+    // Create NormalsHighlighter from Dynamit's data
+    std::unique_ptr<NormalsHighlighter> normalsHighlighter = shape.createNormalsHighlighter(0.02f);
+    normalsHighlighter->withColorStart(1.0f, 0.0f, 1.0f)
+                      .withColorEnd(1.0f, 1.0f, 0.0f);
 
 
     glEnable(GL_DEPTH_TEST);
@@ -484,7 +363,7 @@ int main_polarArrowWithColorParametric()
 
         shape.transformMatrix4f(mat4Transform);
         shape.drawTrianglesIndexed();
-        normalsHighlighter.draw(mat4Transform);
+        normalsHighlighter->draw(mat4Transform);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -496,6 +375,6 @@ int main_polarArrowWithColorParametric()
 
 #include "enabler.h"
 #ifdef __POLAR_ARROW_WITH_COLOR_PARAMETRIC_CPP__
-//int main() { return main_polarArrowWithColorParametric(); }
-int main() { return main_polarArrowWithColorParametricRawResearch(); }
+int main() { return main_polarArrowWithColorParametric(); }
+//int main() { return main_polarArrowWithColorParametricRawResearch(); }
 #endif

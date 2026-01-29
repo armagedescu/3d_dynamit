@@ -7,6 +7,7 @@
 #include <sstream>
 #include <optional>
 #include <array>
+#include "NormalsHighlighter.h"
 
 namespace dynamit
 {
@@ -67,6 +68,8 @@ namespace dynamit
         std::string defaultVaryAssign() const;
         std::string vec4(float defaultW = 1.0f) const;
         std::string vec4vary(float defaultW = 1.0f) const;
+
+        const std::vector<float>& getData() const { return data; }
     };
 
     //========================================
@@ -501,6 +504,8 @@ namespace dynamit
         {
             transformMatrix4f(data.data());
         }
+
+        std::unique_ptr<NormalsHighlighter> createNormalsHighlighter(float length = 0.1f);
     };
 
 } // namespace dynamit

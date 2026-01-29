@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "NormalsHighlighter.h"
 
 namespace dynamit

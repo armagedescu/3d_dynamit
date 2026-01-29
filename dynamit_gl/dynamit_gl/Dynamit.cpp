@@ -1328,4 +1328,20 @@ namespace dynamit
         bind();
         glDrawElements(mode, count, type, offset);
     }
+
+    std::unique_ptr<NormalsHighlighter> Dynamit::createNormalsHighlighter(float length)
+    {
+        VAOData& vd = currentVao();
+        
+        GlArrayBuffer* vertBuf = vd.glSet.getVertexBuffer();
+        GlArrayBuffer* normBuf = vd.glSet.getNormalsBuffer();
+        
+        if (!vertBuf || !normBuf)
+            throw std::runtime_error("Cannot create NormalsHighlighter: Dynamit must have vertices and normals");
+        
+        std::unique_ptr<NormalsHighlighter> highlighter = std::make_unique<NormalsHighlighter>(length);
+        highlighter->build(vertBuf->getData(), normBuf->getData());
+        
+        return highlighter;
+    }
 } // namespace dynamit
