@@ -27,23 +27,28 @@ glm::vec3 CubeSet::cubePositions[] =
 //cube verts
 float CubeSet::textureVertices[] =
 {
-	 //VERTEX PPOSITION    //TEXTURE COORDINATES
-	 0.0f,  1.0f,  0.0f,   0.5f, 0.0f, 1.0f,     // Top R Vertex 0
-	-1.0f, -1.0f,  1.0f,   0.0f, 1.0f, 0.5f,     // bottom left front vertex 1
-	 1.0f, -1.0f,  1.0f,   1.0f, 0.5f, 0.0f,     // Bottom right front Vertex 2
-	 0.0f,  1.0f,  0.0f,   0.5f, 0.0f, 1.0f,     // Top R Vertex 0
-	 1.0f, -1.0f,  1.0f,   0.0f, 1.0f, 0.5f,     // bottom left front vertex 1
-	 1.0f, -1.0f, -1.0f,   1.0f, 0.5f, 0.0f,     // bottom left back vertex 4
-	 0.0f,  1.0f,  0.0f,   0.5f, 0.0f, 1.0f,     // Top R Vertex 0
-	 1.0f, -1.0f, -1.0f,   0.0f, 1.0f, 0.5f,     // bottom left back vertex 4
-	-1.0f, -1.0f, -1.0f,   1.0f, 0.5f, 0.0f,     // bottom right back vertex 3
-	 0.0f,  1.0f,  0.0f,   0.5f, 0.0f, 1.0f,     // Top R Vertex 0
-	-1.0f, -1.0f, -1.0f,   0.0f, 1.0f, 0.5f,     // bottom right back vertex 3
-	-1.0f, -1.0f,  1.0f,   1.0f, 0.5f, 0.0f,     // Bottom right front Vertex 2
-	-1.0f, -1.0f,  1.0f,   0.1f, 0.0f, 1.0f,     // bottom left front vertex 1
-	 1.0f, -1.0f,  1.0f,   0.1f, 0.0f, 1.0f,     // bottom left back vertex 4
-	 1.0f, -1.0f, -1.0f,   0.1f, 0.0f, 1.0f,     // bottom right back vertex 3
-	-1.0f, -1.0f, -1.0f,   0.1f, 0.0f, 1.0f,
+	 //VERTEX PPOSITION       //TEXTURE COORDINATES
+	 0.0f,  1.0f,  0.0f,      0.5f, 0.0f, 1.0f,     // Top R Vertex 0
+	-1.0f, -1.0f,  1.0f,      0.0f, 1.0f, 0.5f,     // bottom left front vertex 1
+	 1.0f, -1.0f,  1.0f,      1.0f, 0.5f, 0.0f,     // Bottom right front Vertex 2
+
+	 0.0f,  1.0f,  0.0f,      0.5f, 0.0f, 1.0f,     // Top R Vertex 0
+	 1.0f, -1.0f,  1.0f,      0.0f, 1.0f, 0.5f,     // bottom left front vertex 1
+	 1.0f, -1.0f, -1.0f,      1.0f, 0.5f, 0.0f,     // bottom left back vertex 4
+
+	 0.0f,  1.0f,  0.0f,      0.5f, 0.0f, 1.0f,     // Top R Vertex 0
+	 1.0f, -1.0f, -1.0f,      0.0f, 1.0f, 0.5f,     // bottom left back vertex 4
+	-1.0f, -1.0f, -1.0f,      1.0f, 0.5f, 0.0f,     // bottom right back vertex 3
+
+	 0.0f,  1.0f,  0.0f,      0.5f, 0.0f, 1.0f,     // Top R Vertex 0
+	-1.0f, -1.0f, -1.0f,      0.0f, 1.0f, 0.5f,     // bottom right back vertex 3
+	-1.0f, -1.0f,  1.0f,      1.0f, 0.5f, 0.0f,     // Bottom right front Vertex 2
+
+	-1.0f, -1.0f,  1.0f,      0.1f, 0.0f, 1.0f,     // bottom left front vertex 1
+	 1.0f, -1.0f,  1.0f,      0.1f, 0.0f, 1.0f,     // bottom left back vertex 4
+	 1.0f, -1.0f, -1.0f,      0.1f, 0.0f, 1.0f,     // bottom right back vertex 3
+
+	-1.0f, -1.0f, -1.0f,      0.1f, 0.0f, 1.0f,
 };
 
 CubeSet::CubeSet() : CubeSet("shaders/dynamicPyramid.vs", "shaders/dynamicPyramid.fs") {}

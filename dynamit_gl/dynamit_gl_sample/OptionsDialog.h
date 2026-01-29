@@ -31,12 +31,10 @@ public:
 
     BEGIN_MSG_MAP(OptionsDialog)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
-        MESSAGE_HANDLER(WM_CLOSE, OnClose)
         MESSAGE_HANDLER(WM_COMMAND, OnCommand)
         MESSAGE_HANDLER(WM_SHOWWINDOW, OnShowWindow)
-        COMMAND_ID_HANDLER(IDOK, OnOK)
-        COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
         MESSAGE_HANDLER(WM_KEYDOWN, OnKeyDown)
+        COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
     END_MSG_MAP()
 
     LRESULT OnInitDialog(UINT, WPARAM, LPARAM, BOOL&)
@@ -48,7 +46,7 @@ public:
         CreateWindowW(L"BUTTON", L"CW Winding", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,  20, 110, 150, 25, m_hWnd, (HMENU)ID_CW_WINDING, nullptr, nullptr);
 
         // OK button
-        CreateWindowW(L"BUTTON", L"OK", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,  50, 150, 80, 30, m_hWnd, (HMENU)IDOK, nullptr, nullptr);
+        //CreateWindowW(L"BUTTON", L"OK", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,  50, 150, 80, 30, m_hWnd, (HMENU)IDOK, nullptr, nullptr);
 
         // Set initial states
         CheckDlgButton(ID_CULL_FACE, m_options.cullFace ? BST_CHECKED : BST_UNCHECKED);
@@ -85,6 +83,7 @@ public:
                 0, 0,
                 SWP_NOSIZE | SWP_NOZORDER);
             }
+			bHandled = TRUE;
             break;
         }
         return 0;
@@ -92,6 +91,7 @@ public:
     LRESULT OnCommand(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
     {
 		std::cout << "OnCommand called:" << msg<< " wParam: "<< wParam << std::endl;
+        bHandled = TRUE;
         switch (wParam)
         {
         case ID_CULL_FACE:
@@ -111,17 +111,6 @@ public:
 
         return 0;
 	}
-    LRESULT OnClose(UINT, WPARAM, LPARAM, BOOL&)
-    {
-        ShowWindow(SW_HIDE);
-        return 0;
-    }
-
-    LRESULT OnOK(WORD, WORD, HWND, BOOL&)
-    {
-        ShowWindow(SW_HIDE);
-        return 0;
-    }
 
     LRESULT OnCancel(WORD, WORD, HWND, BOOL&)
     {
@@ -131,6 +120,7 @@ public:
 
     LRESULT OnKeyDown(UINT, WPARAM wParam, LPARAM, BOOL& bHandled)
     {
+		std::cout << "key down: " << wParam << std::endl;
         if (wParam == VK_ESCAPE)
         {
             ShowWindow(SW_HIDE);
@@ -154,8 +144,8 @@ public:
         #pragma pack(pop)
 
         static DlgTemplate dlgData = {};
-        dlgData.tmpl.style = WS_POPUP | WS_CAPTION | WS_SYSMENU;// | DS_CENTER;  // Removed DS_SETFONT
-        dlgData.tmpl.dwExtendedStyle = 0;
+        dlgData.tmpl.style = WS_POPUP | WS_CAPTION | WS_VISIBLE; //;// //| WS_SYSMENU  | DS_CENTER;  // Removed DS_SETFONT
+        dlgData.tmpl.dwExtendedStyle = WS_EX_TOOLWINDOW;
         dlgData.tmpl.cdit = 0;
         dlgData.tmpl.x = 0;
         dlgData.tmpl.y = 0;

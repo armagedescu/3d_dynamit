@@ -159,6 +159,7 @@ copy $(TargetPath)  $(SolutionDir)..\export\dynamitd_cpp\lib\$(Configuration)\$(
     <ClInclude Include="geometry.h" />
     <ClInclude Include="GoogleMapTerrain.h" />
     <ClInclude Include="GoogleMapTerrainIndexed.h" />
+    <ClInclude Include="NormalsHighlighter.h" />
     <ClInclude Include="Particles.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Program.h" />
@@ -194,6 +195,7 @@ copy $(TargetPath)  $(SolutionDir)..\export\dynamitd_cpp\lib\$(Configuration)\$(
     <ClCompile Include="FrameBufferDepthMap.cpp" />
     <ClCompile Include="GoogleMapTerrain.cpp" />
     <ClCompile Include="GoogleMapTerrainIndexed.cpp" />
+    <ClCompile Include="NormalsHighlighter.cpp" />
     <ClCompile Include="Particles.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
