@@ -297,6 +297,7 @@ int main_polarArrowWithColorParametric()
             .color(std::array<float, 3>{0.0f, 1.0f, 0.0f}, std::array<float, 3>{ 1.0f, 0.0f, 1.0f })    // Red
             .buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_x_mat4(-M_PI / 2))
             .color(std::array<float, 3>{ 1.0f, 0.0f, 1.0f }, std::array<float, 3>{ 0.0f, 1.0f, 0.0f })  // Red
+            .smooth(false)
             .buildConeIndexedWithColor(verts, norms, colors, indices, arrowTipScale, arrowTipTranslate, rotation_y_mat4(-M_PI / 2))
             .color(std::array<float, 3>{0.0f, 1.0f, 0.0f}, std::array<float, 3>{ 1.0f, 0.0f, 1.0f })  // Red
             .buildCylinderIndexedWithColor(verts, norms, colors, indices, arrowShaftScale, arrowShaftTranslate, rotation_y_mat4(-M_PI / 2))

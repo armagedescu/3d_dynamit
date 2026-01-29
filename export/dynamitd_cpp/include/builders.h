@@ -131,6 +131,7 @@ private:
     PolarBuilder& buildCylinderDiscrete(GeometryBuffers& buffers);
     PolarBuilder& buildCylinderDiscreteInternal(GeometryBuffers& buffers, bool isSecondCoat);
     PolarBuilder& buildCylinderDiscreteIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat);
+    PolarBuilder& buildConeDiscreteIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat);
 
     std::wstring m_formula;
     float m_domainStart;

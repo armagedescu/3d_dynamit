@@ -1192,7 +1192,164 @@ PolarBuilder& PolarBuilder::buildCylinderDiscreteInternal(GeometryBuffers& buffe
 
     return *this;
 }
+PolarBuilder& PolarBuilder::buildConeDiscreteIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat)
+{
+    using expresie_tokenizer::expression_token_compiler;
+    using expresie_tokenizer::expression;
+    expression_token_compiler compiler;
 
+    long double theta = 0.0L;
+
+    std::unique_ptr<expression> expr_r = compiler.compile(m_formula);
+    expr_r->bind(L"theta", &theta);
+
+    const float z_tip = m_reversed ? 0.0f : -1.0f;
+    const float z_base = m_reversed ? -1.0f : 0.0f;
+
+    float domainRange = m_domainEnd - m_domainStart;
+
+    // Precompute ring positions (ring 0 is at tip, ring m_slices is at base)
+    std::vector<std::vector<float>> ringX(m_slices + 1, std::vector<float>(m_sectors + 1));
+    std::vector<std::vector<float>> ringY(m_slices + 1, std::vector<float>(m_sectors + 1));
+    std::vector<std::vector<float>> ringZ(m_slices + 1, std::vector<float>(m_sectors + 1));
+
+    for (int h = 0; h <= m_slices; h++)
+    {
+        float scale = static_cast<float>(h) / m_slices;
+        float z = z_tip + (z_base - z_tip) * scale;
+
+        for (int i = 0; i <= m_sectors; i++)
+        {
+            theta = m_domainStart + domainRange * i / m_sectors;
+
+            float x = static_cast<float>(expr_r->cyl_x(theta)) * scale;
+            float y = static_cast<float>(expr_r->cyl_y(theta)) * scale;
+
+            ringX[h][i] = x;
+            ringY[h][i] = y;
+            ringZ[h][i] = z;
+        }
+    }
+
+    const std::array<float, 4>& c = isSecondCoat ? m_color_inner : m_color_outer;
+
+    auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
+        uint32_t idx = static_cast<uint32_t>(buffers.verts.size() / 3);
+        buffers.verts.insert(buffers.verts.end(), { x, y, z });
+        buffers.norms.insert(buffers.norms.end(), { nx, ny, nz });
+        buffers.texCoords.insert(buffers.texCoords.end(), { u, v });
+        buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+        return idx;
+        };
+
+    // Tip triangles (h=0 ring is at the tip, all vertices collapse to origin)
+    float tipX = 0.0f, tipY = 0.0f, tipZ = z_tip;
+
+    for (int i = 0; i < m_sectors; i++)
+    {
+        float u0 = static_cast<float>(i) / m_sectors;
+        float u1 = static_cast<float>(i + 1) / m_sectors;
+
+        // First ring vertices
+        float x0 = ringX[1][i], y0 = ringY[1][i], z0 = ringZ[1][i];
+        float x1 = ringX[1][i + 1], y1 = ringY[1][i + 1], z1 = ringZ[1][i + 1];
+
+        // Compute flat normal for tip triangle
+        float nx, ny, nz;
+        if (!isSecondCoat)
+        {
+            crossProductNormalLefthanded(tipX, tipY, tipZ, x0, y0, z0, x1, y1, z1, nx, ny, nz, false);
+            uint32_t i0 = addVertex(tipX, tipY, tipZ, nx, ny, nz, 0.5f, 0.0f);
+            uint32_t i1 = addVertex(x0, y0, z0, nx, ny, nz, u0, 1.0f / m_slices);
+            uint32_t i2 = addVertex(x1, y1, z1, nx, ny, nz, u1, 1.0f / m_slices);
+            buffers.indices.push_back(i0);
+            buffers.indices.push_back(i1);
+            buffers.indices.push_back(i2);
+        }
+        else
+        {
+            crossProductNormalLefthanded(tipX, tipY, tipZ, x1, y1, z1, x0, y0, z0, nx, ny, nz, false);
+            uint32_t i0 = addVertex(tipX, tipY, tipZ, nx, ny, nz, 0.5f, 0.0f);
+            uint32_t i1 = addVertex(x1, y1, z1, nx, ny, nz, u1, 1.0f / m_slices);
+            uint32_t i2 = addVertex(x0, y0, z0, nx, ny, nz, u0, 1.0f / m_slices);
+            buffers.indices.push_back(i0);
+            buffers.indices.push_back(i1);
+            buffers.indices.push_back(i2);
+        }
+    }
+
+    // Remaining quads (from ring 1 to ring m_slices)
+    for (int h = 1; h < m_slices; h++)
+    {
+        float v0 = static_cast<float>(h) / m_slices;
+        float v1 = static_cast<float>(h + 1) / m_slices;
+
+        for (int i = 0; i < m_sectors; i++)
+        {
+            float u0 = static_cast<float>(i) / m_sectors;
+            float u1 = static_cast<float>(i + 1) / m_sectors;
+
+            // Quad corners
+            float x00 = ringX[h][i], y00 = ringY[h][i], z00 = ringZ[h][i];
+            float x01 = ringX[h][i + 1], y01 = ringY[h][i + 1], z01 = ringZ[h][i + 1];
+            float x10 = ringX[h + 1][i], y10 = ringY[h + 1][i], z10 = ringZ[h + 1][i];
+            float x11 = ringX[h + 1][i + 1], y11 = ringY[h + 1][i + 1], z11 = ringZ[h + 1][i + 1];
+
+            // Triangle 1
+            float nx1, ny1, nz1;
+            if (!isSecondCoat)
+            {
+                crossProductNormalLefthanded(x00, y00, z00, x10, y10, z10, x01, y01, z01, nx1, ny1, nz1, false);
+                uint32_t i0 = addVertex(x00, y00, z00, nx1, ny1, nz1, u0, v0);
+                uint32_t i1 = addVertex(x10, y10, z10, nx1, ny1, nz1, u0, v1);
+                uint32_t i2 = addVertex(x01, y01, z01, nx1, ny1, nz1, u1, v0);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
+            }
+            else
+            {
+                crossProductNormalLefthanded(x00, y00, z00, x01, y01, z01, x10, y10, z10, nx1, ny1, nz1, false);
+                uint32_t i0 = addVertex(x00, y00, z00, nx1, ny1, nz1, u0, v0);
+                uint32_t i1 = addVertex(x01, y01, z01, nx1, ny1, nz1, u1, v0);
+                uint32_t i2 = addVertex(x10, y10, z10, nx1, ny1, nz1, u0, v1);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
+            }
+
+            // Triangle 2
+            float nx2, ny2, nz2;
+            if (!isSecondCoat)
+            {
+                crossProductNormalLefthanded(x01, y01, z01, x10, y10, z10, x11, y11, z11, nx2, ny2, nz2, false);
+                uint32_t i0 = addVertex(x01, y01, z01, nx2, ny2, nz2, u1, v0);
+                uint32_t i1 = addVertex(x10, y10, z10, nx2, ny2, nz2, u0, v1);
+                uint32_t i2 = addVertex(x11, y11, z11, nx2, ny2, nz2, u1, v1);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
+            }
+            else
+            {
+                crossProductNormalLefthanded(x01, y01, z01, x11, y11, z11, x10, y10, z10, nx2, ny2, nz2, false);
+                uint32_t i0 = addVertex(x01, y01, z01, nx2, ny2, nz2, u1, v0);
+                uint32_t i1 = addVertex(x11, y11, z11, nx2, ny2, nz2, u1, v1);
+                uint32_t i2 = addVertex(x10, y10, z10, nx2, ny2, nz2, u0, v1);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
+            }
+        }
+    }
+
+    if (!isSecondCoat && m_doubleCoated)
+    {
+        buildConeDiscreteIndexedInternal(buffers, true);
+    }
+
+    return *this;
+}
 PolarBuilder& PolarBuilder::buildConeIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, std::vector<uint32_t>& indices)
 {
     std::vector<float> colors;
@@ -1204,9 +1361,10 @@ PolarBuilder& PolarBuilder::buildConeIndexedWithColor(std::vector<float>& verts,
 {
     std::vector<float> texCoords;
     GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+    if (!m_smooth)
+        return buildConeDiscreteIndexedInternal(buffers, false);
     return buildConeIndexedInternal(buffers, false);
 }
-
 PolarBuilder& PolarBuilder::buildCylinderIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, std::vector<uint32_t>& indices)
 {
     std::vector<float> colors;

@@ -1,5 +1,5 @@
 #pragma once
-//#define __MAIN_MAIN__
+#define __MAIN_MAIN__
 //#define __MAIN_CAMERA_CPP__
 //#define __MAIN_PARTICLES_CPP__
 //#define __MAIN_PARTICLES_TERRAIN_CPP__
@@ -11,4 +11,4 @@
 //#define __MAIN_TERRAIN_BITMAP_SHADERS_CPP__
 //#define __MAIN_TERRAIN_TESSELLATED_CPP__
 //#define __MAIN_TESSELLATION_CPP__
-#define __MAIN_TRIANGLE_LIB__
+//#define __MAIN_TRIANGLE_LIB__
