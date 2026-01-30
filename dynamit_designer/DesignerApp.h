@@ -11,6 +11,7 @@
 
 // Forward declarations for dialog panels
 class MainToolbar;
+class ExportToolbar;
 class BuilderPanel;
 class TransformPanel;
 class ColorPanel;
@@ -83,11 +84,13 @@ private:
 
     // Dialog panels
     std::unique_ptr<MainToolbar> m_mainToolbar;
+    std::unique_ptr<ExportToolbar> m_exportToolbar;
     std::unique_ptr<BuilderPanel> m_builderPanel;
     std::unique_ptr<TransformPanel> m_transformPanel;
     std::unique_ptr<ColorPanel> m_colorPanel;
 
     HWND m_mainToolbarHwnd;
+    HWND m_exportToolbarHwnd;
     HWND m_builderPanelHwnd;
     HWND m_transformPanelHwnd;
     HWND m_colorPanelHwnd;

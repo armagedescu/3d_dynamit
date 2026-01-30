@@ -4,6 +4,7 @@
 #include <GLFW/glfw3native.h>
 
 #include "dialogs/MainToolbar.h"
+#include "dialogs/ExportToolbar.h"
 #include "dialogs/BuilderPanel.h"
 #include "dialogs/TransformPanel.h"
 #include "dialogs/ColorPanel.h"
@@ -33,6 +34,7 @@ DesignerApp::DesignerApp(HINSTANCE hInstance, GLFWwindow* window, int width, int
     , m_lastMouseY(0.0)
     , m_selectedShapeIndex(-1)
     , m_mainToolbarHwnd(nullptr)
+    , m_exportToolbarHwnd(nullptr)
     , m_builderPanelHwnd(nullptr)
     , m_transformPanelHwnd(nullptr)
     , m_colorPanelHwnd(nullptr)
@@ -63,11 +65,13 @@ void DesignerApp::shutdown()
 
     // Destroy dialogs
     if (m_mainToolbarHwnd) { DestroyWindow(m_mainToolbarHwnd); m_mainToolbarHwnd = nullptr; }
+    if (m_exportToolbarHwnd) { DestroyWindow(m_exportToolbarHwnd); m_exportToolbarHwnd = nullptr; }
     if (m_builderPanelHwnd) { DestroyWindow(m_builderPanelHwnd); m_builderPanelHwnd = nullptr; }
     if (m_transformPanelHwnd) { DestroyWindow(m_transformPanelHwnd); m_transformPanelHwnd = nullptr; }
     if (m_colorPanelHwnd) { DestroyWindow(m_colorPanelHwnd); m_colorPanelHwnd = nullptr; }
 
     m_mainToolbar.reset();
+    m_exportToolbar.reset();
     m_builderPanel.reset();
     m_transformPanel.reset();
     m_colorPanel.reset();
@@ -80,12 +84,14 @@ void DesignerApp::createDialogs()
 
     // Create dialog panels using ATL
     m_mainToolbar = std::make_unique<MainToolbar>(this);
+    m_exportToolbar = std::make_unique<ExportToolbar>(this);
     m_builderPanel = std::make_unique<BuilderPanel>(this);
     m_transformPanel = std::make_unique<TransformPanel>(this);
     m_colorPanel = std::make_unique<ColorPanel>(this);
 
     // Create windows
     m_mainToolbarHwnd = m_mainToolbar->Create(glfwHwnd);
+    m_exportToolbarHwnd = m_exportToolbar->Create(glfwHwnd);
     m_builderPanelHwnd = m_builderPanel->Create(glfwHwnd);
     m_transformPanelHwnd = m_transformPanel->Create(glfwHwnd);
     m_colorPanelHwnd = m_colorPanel->Create(glfwHwnd);
@@ -94,6 +100,7 @@ void DesignerApp::createDialogs()
 
     // Show panels
     ShowWindow(m_mainToolbarHwnd, SW_SHOW);
+    ShowWindow(m_exportToolbarHwnd, SW_SHOW);
     ShowWindow(m_builderPanelHwnd, SW_SHOW);
     ShowWindow(m_transformPanelHwnd, SW_SHOW);
     ShowWindow(m_colorPanelHwnd, SW_SHOW);
@@ -108,7 +115,8 @@ void DesignerApp::updateDialogPositions()
     // Stack panels vertically on the left
     int y = 30; // Start below title bar area
     int panelGap = 5;
-    int toolbarHeight = 160;
+    int shapesToolbarHeight = 120;
+    int exportToolbarHeight = 180;
     int builderHeight = 280;
     int transformHeight = 180;
     int colorHeight = 200;
@@ -116,8 +124,15 @@ void DesignerApp::updateDialogPositions()
     if (m_mainToolbarHwnd)
     {
         SetWindowPos(m_mainToolbarHwnd, HWND_TOPMOST, winX + 5, winY + y,
-            m_panelWidth - 10, toolbarHeight, SWP_NOZORDER);
-        y += toolbarHeight + panelGap;
+            m_panelWidth - 10, shapesToolbarHeight, SWP_NOZORDER);
+        y += shapesToolbarHeight + panelGap;
+    }
+
+    if (m_exportToolbarHwnd)
+    {
+        SetWindowPos(m_exportToolbarHwnd, HWND_TOPMOST, winX + 5, winY + y,
+            m_panelWidth - 10, exportToolbarHeight, SWP_NOZORDER);
+        y += exportToolbarHeight + panelGap;
     }
 
     if (m_builderPanelHwnd)
@@ -261,6 +276,7 @@ void DesignerApp::onKey(int key, int scancode, int action, int mods)
             m_panelsVisible = !m_panelsVisible;
             int showCmd = m_panelsVisible ? SW_SHOW : SW_HIDE;
             if (m_mainToolbarHwnd) ShowWindow(m_mainToolbarHwnd, showCmd);
+            if (m_exportToolbarHwnd) ShowWindow(m_exportToolbarHwnd, showCmd);
             if (m_builderPanelHwnd) ShowWindow(m_builderPanelHwnd, showCmd);
             if (m_transformPanelHwnd) ShowWindow(m_transformPanelHwnd, showCmd);
             if (m_colorPanelHwnd) ShowWindow(m_colorPanelHwnd, showCmd);

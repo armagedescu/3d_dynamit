@@ -10,9 +10,7 @@ class DesignerApp;
 #define ID_BTN_NEW_CONE     1001
 #define ID_BTN_NEW_CYLINDER 1002
 #define ID_BTN_DELETE       1003
-#define ID_BTN_EXPORT_CLIP  1004
-#define ID_BTN_EXPORT_FILE  1005
-#define ID_CHK_SHOW_NORMALS 1006
+#define ID_CHK_SHOW_NORMALS 1004
 
 class MainToolbar
 {
@@ -37,7 +35,7 @@ public:
             L"MainToolbarClass",
             L"Shapes",
             WS_POPUP | WS_CAPTION | WS_VISIBLE,
-            0, 0, 280, 160,
+            0, 0, 280, 120,
             parent, nullptr, GetModuleHandle(nullptr), this);
 
         if (m_hwnd)
@@ -76,24 +74,10 @@ private:
             GetModuleHandle(nullptr), nullptr);
         SendMessage(btnDel, WM_SETFONT, (WPARAM)hFont, TRUE);
 
-        // Export to Clipboard button
-        HWND btnExportClip = CreateWindowW(L"BUTTON", L"Copy Code",
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            10, 35, 85, 25, m_hwnd, (HMENU)ID_BTN_EXPORT_CLIP,
-            GetModuleHandle(nullptr), nullptr);
-        SendMessage(btnExportClip, WM_SETFONT, (WPARAM)hFont, TRUE);
-
-        // Export to File button
-        HWND btnExportFile = CreateWindowW(L"BUTTON", L"Save Code...",
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            100, 35, 90, 25, m_hwnd, (HMENU)ID_BTN_EXPORT_FILE,
-            GetModuleHandle(nullptr), nullptr);
-        SendMessage(btnExportFile, WM_SETFONT, (WPARAM)hFont, TRUE);
-
         // Show Normals checkbox
         HWND chkNormals = CreateWindowW(L"BUTTON", L"Show Normals",
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            10, 65, 120, 20, m_hwnd, (HMENU)ID_CHK_SHOW_NORMALS,
+            10, 40, 120, 20, m_hwnd, (HMENU)ID_CHK_SHOW_NORMALS,
             GetModuleHandle(nullptr), nullptr);
         SendMessage(chkNormals, WM_SETFONT, (WPARAM)hFont, TRUE);
     }
@@ -130,7 +114,6 @@ private:
 // Include implementation inline to avoid separate cpp
 #include "../DesignerApp.h"
 #include "../ShapeManager.h"
-#include "../CodeExporter.h"
 
 inline LRESULT MainToolbar::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -149,48 +132,6 @@ inline LRESULT MainToolbar::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, LP
 
         case ID_BTN_DELETE:
             if (m_app) m_app->deleteSelectedShape();
-            return 0;
-
-        case ID_BTN_EXPORT_CLIP:
-            if (m_app)
-            {
-                ShapeConfig* config = m_app->getSelectedShapeConfig();
-                if (config)
-                {
-                    std::wstring code = CodeExporter::generateCppCode(*config);
-                    if (CodeExporter::copyToClipboard(code))
-                    {
-                        MessageBoxW(hwnd, L"C++ code copied to clipboard!", L"Export", MB_OK | MB_ICONINFORMATION);
-                    }
-                    else
-                    {
-                        MessageBoxW(hwnd, L"Failed to copy to clipboard", L"Error", MB_OK | MB_ICONERROR);
-                    }
-                }
-                else
-                {
-                    MessageBoxW(hwnd, L"No shape selected", L"Export", MB_OK | MB_ICONWARNING);
-                }
-            }
-            return 0;
-
-        case ID_BTN_EXPORT_FILE:
-            if (m_app)
-            {
-                ShapeConfig* config = m_app->getSelectedShapeConfig();
-                if (config)
-                {
-                    std::wstring code = CodeExporter::generateCppCode(*config);
-                    if (CodeExporter::saveToFile(hwnd, code))
-                    {
-                        MessageBoxW(hwnd, L"C++ code saved successfully!", L"Export", MB_OK | MB_ICONINFORMATION);
-                    }
-                }
-                else
-                {
-                    MessageBoxW(hwnd, L"No shape selected", L"Export", MB_OK | MB_ICONWARNING);
-                }
-            }
             return 0;
 
         case ID_CHK_SHOW_NORMALS:
