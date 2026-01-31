@@ -12,6 +12,8 @@ class DesignerApp;
 #define ID_CHK_INCLUDE_DYNAMIT  2003
 #define ID_CHK_COMPLETE_APP     2004
 #define ID_CHK_INCLUDE_NORMALS  2005
+#define ID_BTN_SAVE_PROJECT     2006
+#define ID_BTN_LOAD_PROJECT     2007
 
 class ExportToolbar
 {
@@ -34,9 +36,9 @@ public:
         m_hwnd = CreateWindowExW(
             WS_EX_TOOLWINDOW,
             L"ExportToolbarClass",
-            L"Export",
+            L"Export / Project",
             WS_POPUP | WS_CAPTION | WS_VISIBLE,
-            0, 0, 280, 180,
+            0, 0, 290, 195,
             parent, nullptr, GetModuleHandle(nullptr), this);
 
         if (m_hwnd)
@@ -54,17 +56,10 @@ private:
     {
         HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
-        // Export Options label
-        HWND lblOptions = CreateWindowW(L"STATIC", L"Export Options:",
-            WS_CHILD | WS_VISIBLE | SS_LEFT,
-            10, 10, 100, 20, m_hwnd, nullptr,
-            GetModuleHandle(nullptr), nullptr);
-        SendMessage(lblOptions, WM_SETFONT, (WPARAM)hFont, TRUE);
-
         // Include Dynamit Setup checkbox
         HWND chkDynamit = CreateWindowW(L"BUTTON", L"Include Dynamit Renderer Setup",
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            10, 35, 250, 20, m_hwnd, (HMENU)ID_CHK_INCLUDE_DYNAMIT,
+            10, 10, 265, 18, m_hwnd, (HMENU)ID_CHK_INCLUDE_DYNAMIT,
             GetModuleHandle(nullptr), nullptr);
         SendMessage(chkDynamit, WM_SETFONT, (WPARAM)hFont, TRUE);
         SendMessage(chkDynamit, BM_SETCHECK, BST_CHECKED, 0); // Default checked
@@ -72,30 +67,51 @@ private:
         // Generate Complete App checkbox
         HWND chkApp = CreateWindowW(L"BUTTON", L"Generate Complete Standalone App",
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            10, 60, 250, 20, m_hwnd, (HMENU)ID_CHK_COMPLETE_APP,
+            10, 32, 265, 18, m_hwnd, (HMENU)ID_CHK_COMPLETE_APP,
             GetModuleHandle(nullptr), nullptr);
         SendMessage(chkApp, WM_SETFONT, (WPARAM)hFont, TRUE);
 
         // Include Normals Highlighter checkbox
         HWND chkNormals = CreateWindowW(L"BUTTON", L"Include Normals Highlighter",
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            10, 85, 250, 20, m_hwnd, (HMENU)ID_CHK_INCLUDE_NORMALS,
+            10, 54, 265, 18, m_hwnd, (HMENU)ID_CHK_INCLUDE_NORMALS,
             GetModuleHandle(nullptr), nullptr);
         SendMessage(chkNormals, WM_SETFONT, (WPARAM)hFont, TRUE);
 
         // Copy Code button
         HWND btnExportClip = CreateWindowW(L"BUTTON", L"Copy Code",
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            10, 115, 120, 30, m_hwnd, (HMENU)ID_BTN_EXPORT_CLIP,
+            10, 82, 125, 26, m_hwnd, (HMENU)ID_BTN_EXPORT_CLIP,
             GetModuleHandle(nullptr), nullptr);
         SendMessage(btnExportClip, WM_SETFONT, (WPARAM)hFont, TRUE);
 
         // Save Code button
         HWND btnExportFile = CreateWindowW(L"BUTTON", L"Save Code...",
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            140, 115, 120, 30, m_hwnd, (HMENU)ID_BTN_EXPORT_FILE,
+            145, 82, 125, 26, m_hwnd, (HMENU)ID_BTN_EXPORT_FILE,
             GetModuleHandle(nullptr), nullptr);
         SendMessage(btnExportFile, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+        // Separator line (static text)
+        HWND separator = CreateWindowW(L"STATIC", L"── Project ──",
+            WS_CHILD | WS_VISIBLE | SS_CENTER,
+            10, 115, 265, 16, m_hwnd, nullptr,
+            GetModuleHandle(nullptr), nullptr);
+        SendMessage(separator, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+        // Save Project button
+        HWND btnSaveProject = CreateWindowW(L"BUTTON", L"Save Project...",
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            10, 135, 125, 26, m_hwnd, (HMENU)ID_BTN_SAVE_PROJECT,
+            GetModuleHandle(nullptr), nullptr);
+        SendMessage(btnSaveProject, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+        // Load Project button
+        HWND btnLoadProject = CreateWindowW(L"BUTTON", L"Load Project...",
+            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            145, 135, 125, 26, m_hwnd, (HMENU)ID_BTN_LOAD_PROJECT,
+            GetModuleHandle(nullptr), nullptr);
+        SendMessage(btnLoadProject, WM_SETFONT, (WPARAM)hFont, TRUE);
     }
 
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -131,6 +147,7 @@ private:
 #include "../DesignerApp.h"
 #include "../ShapeManager.h"
 #include "../CodeExporter.h"
+#include "../ProjectManager.h"
 
 inline LRESULT ExportToolbar::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -205,6 +222,36 @@ inline LRESULT ExportToolbar::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, 
                 else
                 {
                     MessageBoxW(hwnd, L"No shape selected", L"Export", MB_OK | MB_ICONWARNING);
+                }
+            }
+            return 0;
+
+        case ID_BTN_SAVE_PROJECT:
+            if (m_app)
+            {
+                ProjectManager pm(m_app);
+                if (pm.saveProject(hwnd))
+                {
+                    MessageBoxW(hwnd, L"Project saved successfully!", L"Save Project", MB_OK | MB_ICONINFORMATION);
+                }
+                else if (!pm.getLastError().empty())
+                {
+                    MessageBoxW(hwnd, pm.getLastError().c_str(), L"Error", MB_OK | MB_ICONERROR);
+                }
+            }
+            return 0;
+
+        case ID_BTN_LOAD_PROJECT:
+            if (m_app)
+            {
+                ProjectManager pm(m_app);
+                if (pm.loadProject(hwnd))
+                {
+                    MessageBoxW(hwnd, L"Project loaded successfully!", L"Load Project", MB_OK | MB_ICONINFORMATION);
+                }
+                else if (!pm.getLastError().empty())
+                {
+                    MessageBoxW(hwnd, pm.getLastError().c_str(), L"Error", MB_OK | MB_ICONERROR);
                 }
             }
             return 0;

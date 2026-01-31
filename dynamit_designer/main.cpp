@@ -193,10 +193,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     std::cout << "  Escape: Exit" << std::endl;
     std::cout << std::endl;
 
-    // Enable depth testing and blending
+    // Enable depth testing, blending, and face culling
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_CULL_FACE);
 
     // Main render loop
     double lastTime = glfwGetTime();

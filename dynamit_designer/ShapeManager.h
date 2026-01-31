@@ -66,6 +66,9 @@ struct ShapeInstance
 
     bool dirty = true;
     bool visible = true;
+
+    // Last error from formula parsing (empty if no error)
+    std::string lastError;
 };
 
 class ShapeManager
@@ -95,8 +98,12 @@ public:
     std::array<float, 16> getTransformMatrix(int index) const;
 
 private:
-    void buildCone(ShapeInstance& shape);
-    void buildCylinder(ShapeInstance& shape);
+    void buildConeData(const ShapeConfig& cfg,
+        std::vector<float>& verts, std::vector<float>& norms,
+        std::vector<float>& colors, std::vector<uint32_t>& indices);
+    void buildCylinderData(const ShapeConfig& cfg,
+        std::vector<float>& verts, std::vector<float>& norms,
+        std::vector<float>& colors, std::vector<uint32_t>& indices);
     void setupDynamitRenderer(ShapeInstance& shape);
 
     std::vector<ShapeInstance> m_shapes;

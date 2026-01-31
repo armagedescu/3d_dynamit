@@ -68,24 +68,45 @@ void ShapeManager::rebuildShape(int index)
     if (!shape)
         return;
 
-    // Clear existing data
-    shape->verts.clear();
-    shape->norms.clear();
-    shape->colors.clear();
-    shape->indices.clear();
+    // Try to build - if formula is invalid, keep existing geometry
+    std::vector<float> newVerts, newNorms, newColors;
+    std::vector<uint32_t> newIndices;
 
-    // Build based on type
-    if (shape->config.type == ShapeConfig::Type::Cone)
+    try
     {
-        buildCone(*shape);
-    }
-    else
-    {
-        buildCylinder(*shape);
-    }
+        // Build based on type
+        if (shape->config.type == ShapeConfig::Type::Cone)
+        {
+            buildConeData(shape->config, newVerts, newNorms, newColors, newIndices);
+        }
+        else
+        {
+            buildCylinderData(shape->config, newVerts, newNorms, newColors, newIndices);
+        }
 
-    // Setup Dynamit renderer with auto-generated shaders
-    setupDynamitRenderer(*shape);
+        // Success - update shape data
+        shape->verts = std::move(newVerts);
+        shape->norms = std::move(newNorms);
+        shape->colors = std::move(newColors);
+        shape->indices = std::move(newIndices);
+
+        // Setup Dynamit renderer with auto-generated shaders
+        setupDynamitRenderer(*shape);
+
+        shape->lastError.clear();
+    }
+    catch (const std::exception& e)
+    {
+        // Formula parsing failed - keep existing geometry, log error
+        shape->lastError = e.what();
+        std::cerr << "Formula error: " << e.what() << std::endl;
+    }
+    catch (...)
+    {
+        // Unknown error - keep existing geometry
+        shape->lastError = "Unknown error parsing formula";
+        std::cerr << "Unknown formula error" << std::endl;
+    }
 
     shape->dirty = false;
 }
@@ -101,10 +122,10 @@ void ShapeManager::rebuildAllDirty()
     }
 }
 
-void ShapeManager::buildCone(ShapeInstance& shape)
+void ShapeManager::buildConeData(const ShapeConfig& cfg,
+    std::vector<float>& verts, std::vector<float>& norms,
+    std::vector<float>& colors, std::vector<uint32_t>& indices)
 {
-    const ShapeConfig& cfg = shape.config;
-
     PolarBuilder builder = Builder::polar();
 
     builder.formula(cfg.formula)
@@ -117,16 +138,16 @@ void ShapeManager::buildCone(ShapeInstance& shape)
         .reversed(cfg.reversed)
         .color(cfg.outerColor, cfg.innerColor);
 
-    builder.buildConeIndexedWithColor(shape.verts, shape.norms, shape.colors, shape.indices);
+    builder.buildConeIndexedWithColor(verts, norms, colors, indices);
 
-    std::cout << "Built cone: " << shape.verts.size() / 3 << " vertices, "
-              << shape.indices.size() / 3 << " triangles" << std::endl;
+    std::cout << "Built cone: " << verts.size() / 3 << " vertices, "
+              << indices.size() / 3 << " triangles" << std::endl;
 }
 
-void ShapeManager::buildCylinder(ShapeInstance& shape)
+void ShapeManager::buildCylinderData(const ShapeConfig& cfg,
+    std::vector<float>& verts, std::vector<float>& norms,
+    std::vector<float>& colors, std::vector<uint32_t>& indices)
 {
-    const ShapeConfig& cfg = shape.config;
-
     PolarBuilder builder = Builder::polar();
 
     builder.formula(cfg.formula)
@@ -139,10 +160,10 @@ void ShapeManager::buildCylinder(ShapeInstance& shape)
         .reversed(cfg.reversed)
         .color(cfg.outerColor, cfg.innerColor);
 
-    builder.buildCylinderIndexedWithColor(shape.verts, shape.norms, shape.colors, shape.indices);
+    builder.buildCylinderIndexedWithColor(verts, norms, colors, indices);
 
-    std::cout << "Built cylinder: " << shape.verts.size() / 3 << " vertices, "
-              << shape.indices.size() / 3 << " triangles" << std::endl;
+    std::cout << "Built cylinder: " << verts.size() / 3 << " vertices, "
+              << indices.size() / 3 << " triangles" << std::endl;
 }
 
 void ShapeManager::setupDynamitRenderer(ShapeInstance& shape)

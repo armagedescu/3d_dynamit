@@ -8,6 +8,7 @@
 #include "dialogs/BuilderPanel.h"
 #include "dialogs/TransformPanel.h"
 #include "dialogs/ColorPanel.h"
+#include "dialogs/ViewPanel.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -38,6 +39,7 @@ DesignerApp::DesignerApp(HINSTANCE hInstance, GLFWwindow* window, int width, int
     , m_builderPanelHwnd(nullptr)
     , m_transformPanelHwnd(nullptr)
     , m_colorPanelHwnd(nullptr)
+    , m_viewPanelHwnd(nullptr)
 {
 }
 
@@ -50,6 +52,9 @@ bool DesignerApp::initialize()
 {
     // No manual shader init needed - Dynamit auto-generates shaders!
     std::cout << "Using Dynamit for rendering - shaders auto-generated per shape" << std::endl;
+
+    // Initialize visualization helpers (axes, light direction, grid)
+    m_vizHelpers.initialize();
 
     createDialogs();
 
@@ -69,12 +74,14 @@ void DesignerApp::shutdown()
     if (m_builderPanelHwnd) { DestroyWindow(m_builderPanelHwnd); m_builderPanelHwnd = nullptr; }
     if (m_transformPanelHwnd) { DestroyWindow(m_transformPanelHwnd); m_transformPanelHwnd = nullptr; }
     if (m_colorPanelHwnd) { DestroyWindow(m_colorPanelHwnd); m_colorPanelHwnd = nullptr; }
+    if (m_viewPanelHwnd) { DestroyWindow(m_viewPanelHwnd); m_viewPanelHwnd = nullptr; }
 
     m_mainToolbar.reset();
     m_exportToolbar.reset();
     m_builderPanel.reset();
     m_transformPanel.reset();
     m_colorPanel.reset();
+    m_viewPanel.reset();
 }
 
 void DesignerApp::createDialogs()
@@ -88,6 +95,7 @@ void DesignerApp::createDialogs()
     m_builderPanel = std::make_unique<BuilderPanel>(this);
     m_transformPanel = std::make_unique<TransformPanel>(this);
     m_colorPanel = std::make_unique<ColorPanel>(this);
+    m_viewPanel = std::make_unique<ViewPanel>(this);
 
     // Create windows
     m_mainToolbarHwnd = m_mainToolbar->Create(glfwHwnd);
@@ -95,6 +103,7 @@ void DesignerApp::createDialogs()
     m_builderPanelHwnd = m_builderPanel->Create(glfwHwnd);
     m_transformPanelHwnd = m_transformPanel->Create(glfwHwnd);
     m_colorPanelHwnd = m_colorPanel->Create(glfwHwnd);
+    m_viewPanelHwnd = m_viewPanel->Create(glfwHwnd);
 
     updateDialogPositions();
 
@@ -104,6 +113,7 @@ void DesignerApp::createDialogs()
     ShowWindow(m_builderPanelHwnd, SW_SHOW);
     ShowWindow(m_transformPanelHwnd, SW_SHOW);
     ShowWindow(m_colorPanelHwnd, SW_SHOW);
+    ShowWindow(m_viewPanelHwnd, SW_SHOW);
 }
 
 void DesignerApp::updateDialogPositions()
@@ -116,7 +126,7 @@ void DesignerApp::updateDialogPositions()
     int y = 30; // Start below title bar area
     int panelGap = 5;
     int shapesToolbarHeight = 120;
-    int exportToolbarHeight = 180;
+    int exportToolbarHeight = 215;
     int builderHeight = 280;
     int transformHeight = 180;
     int colorHeight = 200;
@@ -153,6 +163,16 @@ void DesignerApp::updateDialogPositions()
     {
         SetWindowPos(m_colorPanelHwnd, HWND_TOPMOST, winX + 5, winY + y,
             m_panelWidth - 10, colorHeight, SWP_NOZORDER);
+    }
+
+    // View panel on the right side
+    int viewPanelWidth = 160;
+    int viewPanelHeight = 240;
+    if (m_viewPanelHwnd)
+    {
+        SetWindowPos(m_viewPanelHwnd, HWND_TOPMOST,
+            winX + m_windowWidth - viewPanelWidth - 5, winY + 30,
+            viewPanelWidth, viewPanelHeight, SWP_NOZORDER);
     }
 }
 
@@ -224,6 +244,9 @@ void DesignerApp::render()
     // Compute view-projection matrix
     std::array<float, 16> viewProjection = computeViewProjection();
 
+    // Render visualization helpers (axes, light, grid)
+    m_vizHelpers.render(viewProjection);
+
     // Render all shapes - Dynamit handles shaders automatically!
     m_shapeManager.render(viewProjection, m_showNormals);
 
@@ -280,6 +303,7 @@ void DesignerApp::onKey(int key, int scancode, int action, int mods)
             if (m_builderPanelHwnd) ShowWindow(m_builderPanelHwnd, showCmd);
             if (m_transformPanelHwnd) ShowWindow(m_transformPanelHwnd, showCmd);
             if (m_colorPanelHwnd) ShowWindow(m_colorPanelHwnd, showCmd);
+            if (m_viewPanelHwnd) ShowWindow(m_viewPanelHwnd, showCmd);
             std::cout << "Panels: " << (m_panelsVisible ? "visible" : "hidden") << std::endl;
         }
         break;

@@ -251,9 +251,24 @@ inline LRESULT BuilderPanel::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, L
     switch (msg)
     {
     case WM_COMMAND:
-        if (HIWORD(wParam) == EN_CHANGE || HIWORD(wParam) == BN_CLICKED)
         {
-            applyChanges();
+            WORD notifyCode = HIWORD(wParam);
+            WORD controlId = LOWORD(wParam);
+
+            // For formula edit: only apply on focus lost (user finished typing)
+            // This prevents crashes from incomplete formulas like "sin("
+            if (controlId == ID_EDIT_FORMULA)
+            {
+                if (notifyCode == EN_KILLFOCUS)
+                {
+                    applyChanges();
+                }
+            }
+            // For other edit boxes and checkboxes: apply immediately
+            else if (notifyCode == EN_CHANGE || notifyCode == BN_CLICKED)
+            {
+                applyChanges();
+            }
         }
         return 0;
 
