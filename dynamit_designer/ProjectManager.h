@@ -20,13 +20,52 @@ class DesignerApp;  // Forward declaration
 class ProjectManager
 {
 public:
-    ProjectManager(DesignerApp* app) : m_app(app) {}
+    ProjectManager(DesignerApp* app) : m_app(app), m_hasProject(false) {}
 
-    bool saveProject(HWND parentHwnd)
+    // Initialize with project info (from startup dialog)
+    void initProject(const std::wstring& projectPath,
+                     const std::wstring& projectDir,
+                     const std::wstring& projectName,
+                     bool isNew)
+    {
+        m_currentProjectPath = projectPath;
+        m_projectDirectory = projectDir;
+        m_projectName = projectName;
+        m_hasProject = true;
+        m_isNewProject = isNew;
+    }
+
+    bool hasProject() const { return m_hasProject; }
+    bool isNewProject() const { return m_isNewProject; }
+
+    // Save to current project file (no dialog)
+    bool saveProject()
+    {
+        if (!m_hasProject || m_currentProjectPath.empty())
+            return false;
+        return saveToFile(m_currentProjectPath);
+    }
+
+    // Save with dialog (Save As)
+    bool saveProjectAs(HWND parentHwnd)
     {
         std::wstring filePath = showSaveDialog(parentHwnd);
         if (filePath.empty())
             return false;
+
+        // Update project info based on new location
+        size_t lastSlash = filePath.find_last_of(L"\\/");
+        if (lastSlash != std::wstring::npos)
+        {
+            m_projectDirectory = filePath.substr(0, lastSlash);
+            std::wstring fileName = filePath.substr(lastSlash + 1);
+            size_t dotPos = fileName.find_last_of(L'.');
+            if (dotPos != std::wstring::npos)
+                m_projectName = fileName.substr(0, dotPos);
+            else
+                m_projectName = fileName;
+        }
+        m_currentProjectPath = filePath;
 
         return saveToFile(filePath);
     }
@@ -43,8 +82,13 @@ public:
     bool saveToFile(const std::wstring& filePath);
     bool loadFromFile(const std::wstring& filePath);
 
+    // Create empty project file for new projects
+    bool createEmptyProject();
+
     const std::wstring& getLastError() const { return m_lastError; }
     const std::wstring& getCurrentProjectPath() const { return m_currentProjectPath; }
+    const std::wstring& getProjectDirectory() const { return m_projectDirectory; }
+    const std::wstring& getProjectName() const { return m_projectName; }
 
 private:
     std::wstring showSaveDialog(HWND parentHwnd)
@@ -128,6 +172,10 @@ private:
     DesignerApp* m_app;
     std::wstring m_lastError;
     std::wstring m_currentProjectPath;
+    std::wstring m_projectDirectory;
+    std::wstring m_projectName;
+    bool m_hasProject;
+    bool m_isNewProject;
 };
 
 // Include implementation after DesignerApp is fully defined
@@ -470,6 +518,65 @@ inline bool ProjectManager::loadFromFile(const std::wstring& filePath)
         m_app->selectShape(0);
     }
 
+    // Update project info from loaded path
     m_currentProjectPath = filePath;
+    size_t lastSlash = filePath.find_last_of(L"\\/");
+    if (lastSlash != std::wstring::npos)
+    {
+        m_projectDirectory = filePath.substr(0, lastSlash);
+        std::wstring fileName = filePath.substr(lastSlash + 1);
+        size_t dotPos = fileName.find_last_of(L'.');
+        if (dotPos != std::wstring::npos)
+            m_projectName = fileName.substr(0, dotPos);
+        else
+            m_projectName = fileName;
+    }
+    m_hasProject = true;
+    m_isNewProject = false;
+
+    return true;
+}
+
+inline bool ProjectManager::createEmptyProject()
+{
+    if (!m_hasProject || m_currentProjectPath.empty())
+    {
+        m_lastError = L"No project initialized";
+        return false;
+    }
+
+    // Create an empty project file with default settings
+    std::ofstream file(m_currentProjectPath);
+    if (!file.is_open())
+    {
+        m_lastError = L"Failed to create project file";
+        return false;
+    }
+
+    // Write minimal valid project JSON
+    file << "{\n";
+    file << "  \"version\": 1,\n";
+    file << "  \"projectType\": \"dynamit_designer\",\n";
+    file << "  \"projectName\": \"" << wstringToUtf8(m_projectName) << "\",\n";
+    file << "  \"view\": {\n";
+    file << "    \"rotationX\": 0.3,\n";
+    file << "    \"rotationY\": 0.5,\n";
+    file << "    \"zoom\": 3.0,\n";
+    file << "    \"showNormals\": false,\n";
+    file << "    \"showAxisX\": true,\n";
+    file << "    \"showAxisY\": true,\n";
+    file << "    \"showAxisZ\": true,\n";
+    file << "    \"showGrid3D\": false,\n";
+    file << "    \"showGridXZ\": true,\n";
+    file << "    \"showGridXY\": false,\n";
+    file << "    \"showGridYZ\": false,\n";
+    file << "    \"showLight\": false\n";
+    file << "  },\n";
+    file << "  \"selectedShape\": -1,\n";
+    file << "  \"shapes\": []\n";
+    file << "}\n";
+
+    file.close();
+    m_isNewProject = false;  // No longer "new" after creating the file
     return true;
 }

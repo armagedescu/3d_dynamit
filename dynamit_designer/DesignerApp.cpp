@@ -1,4 +1,5 @@
 #include "DesignerApp.h"
+#include "ProjectManager.h"
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
@@ -24,9 +25,9 @@ DesignerApp::DesignerApp(HINSTANCE hInstance, GLFWwindow* window, int width, int
     , m_panelWidth(panelWidth)
     , m_viewportX(panelWidth)
     , m_viewportWidth(width - panelWidth)
-    , m_rotationX(-30.0f)
-    , m_rotationY(45.0f)
-    , m_zoom(5.0f)
+    , m_rotationX(17.0f)
+    , m_rotationY(132.0f)
+    , m_zoom(6.0f)
     , m_wireframeMode(false)
     , m_panelsVisible(true)
     , m_showNormals(false)
@@ -40,12 +41,34 @@ DesignerApp::DesignerApp(HINSTANCE hInstance, GLFWwindow* window, int width, int
     , m_transformPanelHwnd(nullptr)
     , m_colorPanelHwnd(nullptr)
     , m_viewPanelHwnd(nullptr)
+    , m_projectManager(std::make_unique<ProjectManager>(this))
 {
 }
 
 DesignerApp::~DesignerApp()
 {
     shutdown();
+}
+
+void DesignerApp::initProject(const std::wstring& projectPath,
+                              const std::wstring& projectDir,
+                              const std::wstring& projectName,
+                              bool isNew)
+{
+    m_projectManager->initProject(projectPath, projectDir, projectName, isNew);
+}
+
+void DesignerApp::updateWindowTitle()
+{
+    std::wstring wtitle = L"Dynamit Designer - ";
+    wtitle += m_projectManager->getProjectName();
+
+    // Convert wide string to UTF-8
+    int size = WideCharToMultiByte(CP_UTF8, 0, wtitle.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    std::string title(size - 1, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wtitle.c_str(), -1, &title[0], size, nullptr, nullptr);
+
+    glfwSetWindowTitle(m_window, title.c_str());
 }
 
 bool DesignerApp::initialize()
@@ -58,8 +81,40 @@ bool DesignerApp::initialize()
 
     createDialogs();
 
-    // Create initial shape
-    newShape(ShapeConfig::Type::Cone);
+    // Handle project loading/creation
+    if (m_projectManager->hasProject())
+    {
+        if (m_projectManager->isNewProject())
+        {
+            std::cout << "Created new project" << std::endl;
+
+            // Create initial shape for new projects
+            newShape(ShapeConfig::Type::Cone);
+
+            // Save initial state
+            if (!m_projectManager->saveProject())
+            {
+                std::wcerr << L"Failed to save project: " << m_projectManager->getLastError() << std::endl;
+            }
+        }
+        else
+        {
+            // Existing project - load it
+            if (!m_projectManager->loadFromFile(m_projectManager->getCurrentProjectPath()))
+            {
+                std::cerr << "Failed to load project" << std::endl;
+                return false;
+            }
+            std::cout << "Loaded existing project" << std::endl;
+        }
+
+        updateWindowTitle();
+    }
+    else
+    {
+        // No project (shouldn't happen with startup dialog)
+        newShape(ShapeConfig::Type::Cone);
+    }
 
     return true;
 }
@@ -195,21 +250,21 @@ void DesignerApp::update(float deltaTime)
 
 std::array<float, 16> DesignerApp::computeViewProjection()
 {
-    // Calculate view matrix
+    // Left-handed coordinate system: +X right, +Y up, +Z into screen
     glm::vec3 cameraPos(
         m_zoom * cos(glm::radians(m_rotationX)) * sin(glm::radians(m_rotationY)),
         m_zoom * sin(glm::radians(m_rotationX)),
         m_zoom * cos(glm::radians(m_rotationX)) * cos(glm::radians(m_rotationY))
     );
 
-    glm::mat4 view = glm::lookAt(cameraPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 view = glm::lookAtLH(cameraPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // Calculate projection matrix
+    // Calculate projection matrix (left-handed)
     float aspectRatio = m_panelsVisible
         ? static_cast<float>(m_viewportWidth) / static_cast<float>(m_windowHeight)
         : static_cast<float>(m_windowWidth) / static_cast<float>(m_windowHeight);
 
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspectiveLH(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
 
     // Combine view and projection
     glm::mat4 vp = projection * view;

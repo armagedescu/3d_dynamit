@@ -106,8 +106,8 @@ private:
             GetModuleHandle(nullptr), nullptr);
         SendMessage(btnSaveProject, WM_SETFONT, (WPARAM)hFont, TRUE);
 
-        // Load Project button
-        HWND btnLoadProject = CreateWindowW(L"BUTTON", L"Load Project...",
+        // Save As button
+        HWND btnLoadProject = CreateWindowW(L"BUTTON", L"Save As...",
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
             145, 135, 125, 26, m_hwnd, (HMENU)ID_BTN_LOAD_PROJECT,
             GetModuleHandle(nullptr), nullptr);
@@ -229,8 +229,8 @@ inline LRESULT ExportToolbar::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, 
         case ID_BTN_SAVE_PROJECT:
             if (m_app)
             {
-                ProjectManager pm(m_app);
-                if (pm.saveProject(hwnd))
+                ProjectManager& pm = m_app->getProjectManager();
+                if (pm.saveProject())
                 {
                     MessageBoxW(hwnd, L"Project saved successfully!", L"Save Project", MB_OK | MB_ICONINFORMATION);
                 }
@@ -242,12 +242,14 @@ inline LRESULT ExportToolbar::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, 
             return 0;
 
         case ID_BTN_LOAD_PROJECT:
+            // Note: Loading is now done at startup. This could be "Save As" or removed.
             if (m_app)
             {
-                ProjectManager pm(m_app);
-                if (pm.loadProject(hwnd))
+                ProjectManager& pm = m_app->getProjectManager();
+                if (pm.saveProjectAs(hwnd))
                 {
-                    MessageBoxW(hwnd, L"Project loaded successfully!", L"Load Project", MB_OK | MB_ICONINFORMATION);
+                    MessageBoxW(hwnd, L"Project saved successfully!", L"Save As", MB_OK | MB_ICONINFORMATION);
+                    m_app->updateWindowTitle();
                 }
                 else if (!pm.getLastError().empty())
                 {

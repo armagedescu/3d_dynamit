@@ -10,6 +10,9 @@
 #include "ShapeManager.h"
 #include "VisualizationHelpers.h"
 
+// Forward declaration
+class ProjectManager;
+
 // Forward declarations for dialog panels
 class MainToolbar;
 class ExportToolbar;
@@ -23,6 +26,12 @@ class DesignerApp
 public:
     DesignerApp(HINSTANCE hInstance, GLFWwindow* window, int width, int height, int panelWidth);
     ~DesignerApp();
+
+    // Initialize with project info
+    void initProject(const std::wstring& projectPath,
+                     const std::wstring& projectDir,
+                     const std::wstring& projectName,
+                     bool isNew);
 
     bool initialize();
     void shutdown();
@@ -67,6 +76,12 @@ public:
     // Get GLFW window for dialogs
     GLFWwindow* getWindow() const { return m_window; }
 
+    // Project management
+    ProjectManager& getProjectManager() { return *m_projectManager; }
+
+    // Get window title with project name
+    void updateWindowTitle();
+
 private:
     void createDialogs();
     void updateDialogPositions();
@@ -100,6 +115,9 @@ private:
 
     // Visualization helpers
     VisualizationHelpers m_vizHelpers;
+
+    // Project manager
+    std::unique_ptr<ProjectManager> m_projectManager;
 
     // Dialog panels
     std::unique_ptr<MainToolbar> m_mainToolbar;

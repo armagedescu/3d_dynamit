@@ -23,17 +23,17 @@ struct ShapeConfig
     // Builder settings
     std::wstring formula = L"1";
     float domainStart = 0.0f;
-    float domainEnd = static_cast<float>(2.0 * M_PI);
+    float domainEnd = 6.2832f;
     int sectors = 16;
     int slices = 8;
     bool smooth = true;
     bool turbo = true;
-    bool doubleCoated = false;
-    bool reversed = false;
+    bool doubleCoated = true;
+    bool reversed = true;
 
     // Colors (RGBA)
-    std::array<float, 4> outerColor = { 0.8f, 0.4f, 0.1f, 1.0f };
-    std::array<float, 4> innerColor = { 0.4f, 0.2f, 0.8f, 1.0f };
+    std::array<float, 4> outerColor = { 1.0f, 0.0f, 0.501961f, 1.0f };
+    std::array<float, 4> innerColor = { 0.0f, 1.0f, 0.0f, 1.0f };
 
     // Transform
     float posX = 0.0f, posY = 0.0f, posZ = 0.0f;

@@ -14,6 +14,8 @@
 #pragma comment(lib, "comctl32.lib")
 
 #include "DesignerApp.h"
+#include "dialogs/StartupDialog.h"
+#include "ProjectManager.h"
 
 // Window dimensions
 constexpr int WINDOW_WIDTH = 1600;
@@ -156,6 +158,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     std::cout << "Visual Shape Designer for PolarBuilder" << std::endl;
     std::cout << std::endl;
 
+    // Show startup dialog to create/open project
+    StartupDialog startupDlg;
+    StartupResult projectInfo = startupDlg.Show(hInstance);
+
+    if (!projectInfo.success)
+    {
+        std::cout << "No project selected. Exiting." << std::endl;
+        return 0;
+    }
+
+    std::wcout << L"Project: " << projectInfo.projectName << std::endl;
+    std::wcout << L"Directory: " << projectInfo.projectDirectory << std::endl;
+    std::wcout << L"Path: " << projectInfo.projectPath << std::endl;
+
     // Initialize GLFW
     GLFWwindow* window = initGLFW();
     if (!window)
@@ -174,6 +190,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // Create application
     DesignerApp app(hInstance, window, WINDOW_WIDTH, WINDOW_HEIGHT, PANEL_WIDTH);
     g_app = &app;
+
+    // Initialize project from startup dialog result
+    app.initProject(projectInfo.projectPath,
+                    projectInfo.projectDirectory,
+                    projectInfo.projectName,
+                    projectInfo.isNewProject);
 
     if (!app.initialize())
     {
