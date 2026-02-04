@@ -101,5 +101,11 @@
     <ClCompile Include="generated1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cartesianFirst.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cartesianFirstDraw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

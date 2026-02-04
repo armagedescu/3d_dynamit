@@ -383,6 +383,14 @@ PolarBuilder Builder::polar()
 {
     return PolarBuilder();
 }
+PolarBuilder Builder::cylindrical()
+{
+    return PolarBuilder();
+}
+CartesianBuilder cartesian()
+{
+    return CartesianBuilder();
+}
 
 // ============================================================================
 // CONE - INTERNAL (UNCHANGED COMPUTATION LOGIC)
@@ -1466,5 +1474,608 @@ PolarBuilder& PolarBuilder::buildCylinder(std::vector<float>& verts, std::vector
 
     return *this;
 }
+// Add at the end, before the closing namespace brace:
 
+// ============================================================================
+// CARTESIAN BUILDER
+// ============================================================================
+
+CartesianBuilder::CartesianBuilder()
+    : m_formula(L"0")
+    , m_xStart(-1.0f)
+    , m_xEnd(1.0f)
+    , m_yStart(-1.0f)
+    , m_yEnd(1.0f)
+    , m_divisionsX(10)
+    , m_divisionsY(10)
+    , m_smooth(true)
+    , m_doubleCoated(false)
+    , m_reversed(false)
+{
+}
+
+CartesianBuilder& CartesianBuilder::formula(const std::wstring& formula)
+{
+    m_formula = formula;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::formula(const std::string& formula)
+{
+    m_formula = std::wstring(formula.begin(), formula.end());
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::domainX(float start, float end)
+{
+    m_xStart = start;
+    m_xEnd = end;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::domainY(float start, float end)
+{
+    m_yStart = start;
+    m_yEnd = end;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::domain(float xStart, float xEnd, float yStart, float yEnd)
+{
+    m_xStart = xStart;
+    m_xEnd = xEnd;
+    m_yStart = yStart;
+    m_yEnd = yEnd;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::divisionsX(int divisions)
+{
+    m_divisionsX = divisions;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::divisionsY(int divisions)
+{
+    m_divisionsY = divisions;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::divisions(int x, int y)
+{
+    m_divisionsX = x;
+    m_divisionsY = y;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::smooth(bool enabled)
+{
+    m_smooth = enabled;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::edged(bool enabled)
+{
+    return smooth(!enabled);
+}
+
+CartesianBuilder& CartesianBuilder::doubleCoated(bool enabled)
+{
+    m_doubleCoated = enabled;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::singleCoated(bool enabled)
+{
+    return doubleCoated(!enabled);
+}
+
+CartesianBuilder& CartesianBuilder::reversed(bool enabled)
+{
+    m_reversed = enabled;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::nonreversed(bool enabled)
+{
+    return reversed(!enabled);
+}
+
+CartesianBuilder& CartesianBuilder::color(const std::array<float, 4>& rgba)
+{
+    m_color_top = rgba;
+    m_color_bottom = rgba;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::color(const std::array<float, 3>& rgb)
+{
+    m_color_top = { rgb[0], rgb[1], rgb[2], 1.0f };
+    m_color_bottom = m_color_top;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::color(const std::array<float, 4>& rgbaTop, const std::array<float, 4>& rgbaBottom)
+{
+    m_color_top = rgbaTop;
+    m_color_bottom = rgbaBottom;
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::color(const std::array<float, 3>& rgbTop, const std::array<float, 3>& rgbBottom)
+{
+    m_color_top = { rgbTop[0], rgbTop[1], rgbTop[2], 1.0f };
+    m_color_bottom = { rgbBottom[0], rgbBottom[1], rgbBottom[2], 1.0f };
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::buildSurfaceIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat)
+{
+    using expresie_tokenizer::expression_token_compiler;
+    using expresie_tokenizer::expression;
+    expression_token_compiler compiler;
+
+    long double x_var = 0.0L, y_var = 0.0L;
+
+    std::unique_ptr<expression> expr_z = compiler.compile(m_formula);
+    expr_z->bind(L"x", &x_var);
+    expr_z->bind(L"y", &y_var);
+
+    const std::array<float, 4>& c = isSecondCoat ? m_color_bottom : m_color_top;
+
+    auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
+        uint32_t idx = static_cast<uint32_t>(buffers.verts.size() / 3);
+        buffers.verts.insert(buffers.verts.end(), { x, y, z });
+        buffers.norms.insert(buffers.norms.end(), { nx, ny, nz });
+        buffers.texCoords.insert(buffers.texCoords.end(), { u, v });
+        buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+        return idx;
+        };
+
+    float dx = (m_xEnd - m_xStart) / m_divisionsX;
+    float dy = (m_yEnd - m_yStart) / m_divisionsY;
+    float epsilon = 0.001f;
+
+    // Build grid of vertices
+    std::vector<std::vector<uint32_t>> grid(m_divisionsY + 1, std::vector<uint32_t>(m_divisionsX + 1));
+
+    for (int j = 0; j <= m_divisionsY; j++)
+    {
+        float y = m_yStart + dy * j;
+        float v = static_cast<float>(j) / m_divisionsY;
+
+        for (int i = 0; i <= m_divisionsX; i++)
+        {
+            float x = m_xStart + dx * i;
+            float u = static_cast<float>(i) / m_divisionsX;
+
+            x_var = x;
+            y_var = y;
+            float z = static_cast<float>(expr_z->eval());
+
+            // Compute normal using finite differences
+            x_var = x + epsilon;
+            y_var = y;
+            float z_dx = static_cast<float>(expr_z->eval());
+
+            x_var = x;
+            y_var = y + epsilon;
+            float z_dy = static_cast<float>(expr_z->eval());
+
+            float dzdx = (z_dx - z) / epsilon;
+            float dzdy = (z_dy - z) / epsilon;
+
+            // Normal = (-dz/dx, -dz/dy, 1) normalized
+            float nx = -dzdx;
+            float ny = -dzdy;
+            float nz = 1.0f;
+
+            if (isSecondCoat || m_reversed)
+            {
+                nx = -nx;
+                ny = -ny;
+                nz = -nz;
+            }
+
+            float len = std::sqrt(nx * nx + ny * ny + nz * nz);
+            if (len > 0.0001f)
+            {
+                nx /= len;
+                ny /= len;
+                nz /= len;
+            }
+
+            grid[j][i] = addVertex(x, y, z, nx, ny, nz, u, v);
+        }
+    }
+
+    // Generate indices
+    for (int j = 0; j < m_divisionsY; j++)
+    {
+        for (int i = 0; i < m_divisionsX; i++)
+        {
+            uint32_t v00 = grid[j][i];
+            uint32_t v10 = grid[j][i + 1];
+            uint32_t v01 = grid[j + 1][i];
+            uint32_t v11 = grid[j + 1][i + 1];
+
+            if (!isSecondCoat)
+            {
+                buffers.indices.push_back(v00);
+                buffers.indices.push_back(v01);
+                buffers.indices.push_back(v10);
+
+                buffers.indices.push_back(v10);
+                buffers.indices.push_back(v01);
+                buffers.indices.push_back(v11);
+            }
+            else
+            {
+                buffers.indices.push_back(v00);
+                buffers.indices.push_back(v10);
+                buffers.indices.push_back(v01);
+
+                buffers.indices.push_back(v10);
+                buffers.indices.push_back(v11);
+                buffers.indices.push_back(v01);
+            }
+        }
+    }
+
+    if (!isSecondCoat && m_doubleCoated)
+    {
+        buildSurfaceIndexedInternal(buffers, true);
+    }
+
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::buildSurfaceDiscreteIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat)
+{
+    using expresie_tokenizer::expression_token_compiler;
+    using expresie_tokenizer::expression;
+    expression_token_compiler compiler;
+
+    long double x_var = 0.0L, y_var = 0.0L;
+
+    std::unique_ptr<expression> expr_z = compiler.compile(m_formula);
+    expr_z->bind(L"x", &x_var);
+    expr_z->bind(L"y", &y_var);
+
+    const std::array<float, 4>& c = isSecondCoat ? m_color_bottom : m_color_top;
+
+    auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
+        uint32_t idx = static_cast<uint32_t>(buffers.verts.size() / 3);
+        buffers.verts.insert(buffers.verts.end(), { x, y, z });
+        buffers.norms.insert(buffers.norms.end(), { nx, ny, nz });
+        buffers.texCoords.insert(buffers.texCoords.end(), { u, v });
+        buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+        return idx;
+        };
+
+    float dx = (m_xEnd - m_xStart) / m_divisionsX;
+    float dy = (m_yEnd - m_yStart) / m_divisionsY;
+
+    // Precompute Z values
+    std::vector<std::vector<float>> zGrid(m_divisionsY + 1, std::vector<float>(m_divisionsX + 1));
+    std::vector<std::vector<float>> xGrid(m_divisionsY + 1, std::vector<float>(m_divisionsX + 1));
+    std::vector<std::vector<float>> yGrid(m_divisionsY + 1, std::vector<float>(m_divisionsX + 1));
+
+    for (int j = 0; j <= m_divisionsY; j++)
+    {
+        float y = m_yStart + dy * j;
+        for (int i = 0; i <= m_divisionsX; i++)
+        {
+            float x = m_xStart + dx * i;
+            x_var = x;
+            y_var = y;
+            xGrid[j][i] = x;
+            yGrid[j][i] = y;
+            zGrid[j][i] = static_cast<float>(expr_z->eval());
+        }
+    }
+
+    // Generate triangles with flat normals
+    for (int j = 0; j < m_divisionsY; j++)
+    {
+        float v0 = static_cast<float>(j) / m_divisionsY;
+        float v1 = static_cast<float>(j + 1) / m_divisionsY;
+
+        for (int i = 0; i < m_divisionsX; i++)
+        {
+            float u0 = static_cast<float>(i) / m_divisionsX;
+            float u1 = static_cast<float>(i + 1) / m_divisionsX;
+
+            float x00 = xGrid[j][i], y00 = yGrid[j][i], z00 = zGrid[j][i];
+            float x10 = xGrid[j][i + 1], y10 = yGrid[j][i + 1], z10 = zGrid[j][i + 1];
+            float x01 = xGrid[j + 1][i], y01 = yGrid[j + 1][i], z01 = zGrid[j + 1][i];
+            float x11 = xGrid[j + 1][i + 1], y11 = yGrid[j + 1][i + 1], z11 = zGrid[j + 1][i + 1];
+
+            // Triangle 1
+            float nx1, ny1, nz1;
+            if (!isSecondCoat)
+            {
+                crossProductNormalLefthanded(x00, y00, z00, x01, y01, z01, x10, y10, z10, nx1, ny1, nz1, m_reversed);
+                uint32_t i0 = addVertex(x00, y00, z00, nx1, ny1, nz1, u0, v0);
+                uint32_t i1 = addVertex(x01, y01, z01, nx1, ny1, nz1, u0, v1);
+                uint32_t i2 = addVertex(x10, y10, z10, nx1, ny1, nz1, u1, v0);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
+            }
+            else
+            {
+                crossProductNormalLefthanded(x00, y00, z00, x10, y10, z10, x01, y01, z01, nx1, ny1, nz1, !m_reversed);
+                uint32_t i0 = addVertex(x00, y00, z00, nx1, ny1, nz1, u0, v0);
+                uint32_t i1 = addVertex(x10, y10, z10, nx1, ny1, nz1, u1, v0);
+                uint32_t i2 = addVertex(x01, y01, z01, nx1, ny1, nz1, u0, v1);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
+            }
+
+            // Triangle 2
+            float nx2, ny2, nz2;
+            if (!isSecondCoat)
+            {
+                crossProductNormalLefthanded(x10, y10, z10, x01, y01, z01, x11, y11, z11, nx2, ny2, nz2, m_reversed);
+                uint32_t i0 = addVertex(x10, y10, z10, nx2, ny2, nz2, u1, v0);
+                uint32_t i1 = addVertex(x01, y01, z01, nx2, ny2, nz2, u0, v1);
+                uint32_t i2 = addVertex(x11, y11, z11, nx2, ny2, nz2, u1, v1);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
+            }
+            else
+            {
+                crossProductNormalLefthanded(x10, y10, z10, x11, y11, z11, x01, y01, z01, nx2, ny2, nz2, !m_reversed);
+                uint32_t i0 = addVertex(x10, y10, z10, nx2, ny2, nz2, u1, v0);
+                uint32_t i1 = addVertex(x11, y11, z11, nx2, ny2, nz2, u1, v1);
+                uint32_t i2 = addVertex(x01, y01, z01, nx2, ny2, nz2, u0, v1);
+                buffers.indices.push_back(i0);
+                buffers.indices.push_back(i1);
+                buffers.indices.push_back(i2);
+            }
+        }
+    }
+
+    if (!isSecondCoat && m_doubleCoated)
+    {
+        buildSurfaceDiscreteIndexedInternal(buffers, true);
+    }
+
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::buildPlaneIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat)
+{
+    const std::array<float, 4>& c = isSecondCoat ? m_color_bottom : m_color_top;
+
+    auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
+        uint32_t idx = static_cast<uint32_t>(buffers.verts.size() / 3);
+        buffers.verts.insert(buffers.verts.end(), { x, y, z });
+        buffers.norms.insert(buffers.norms.end(), { nx, ny, nz });
+        buffers.texCoords.insert(buffers.texCoords.end(), { u, v });
+        buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+        return idx;
+        };
+
+    float nx = 0.0f, ny = 0.0f, nz = 1.0f;
+    if (isSecondCoat || m_reversed)
+    {
+        nz = -1.0f;
+    }
+
+    uint32_t v00 = addVertex(m_xStart, m_yStart, 0.0f, nx, ny, nz, 0.0f, 0.0f);
+    uint32_t v10 = addVertex(m_xEnd, m_yStart, 0.0f, nx, ny, nz, 1.0f, 0.0f);
+    uint32_t v01 = addVertex(m_xStart, m_yEnd, 0.0f, nx, ny, nz, 0.0f, 1.0f);
+    uint32_t v11 = addVertex(m_xEnd, m_yEnd, 0.0f, nx, ny, nz, 1.0f, 1.0f);
+
+    if (!isSecondCoat)
+    {
+        buffers.indices.push_back(v00);
+        buffers.indices.push_back(v01);
+        buffers.indices.push_back(v10);
+
+        buffers.indices.push_back(v10);
+        buffers.indices.push_back(v01);
+        buffers.indices.push_back(v11);
+    }
+    else
+    {
+        buffers.indices.push_back(v00);
+        buffers.indices.push_back(v10);
+        buffers.indices.push_back(v01);
+
+        buffers.indices.push_back(v10);
+        buffers.indices.push_back(v11);
+        buffers.indices.push_back(v01);
+    }
+
+    if (!isSecondCoat && m_doubleCoated)
+    {
+        buildPlaneIndexedInternal(buffers, true);
+    }
+
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::buildBoxIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat)
+{
+    const std::array<float, 4>& c = isSecondCoat ? m_color_bottom : m_color_top;
+
+    auto addVertex = [&](float x, float y, float z, float nx, float ny, float nz, float u, float v) -> uint32_t {
+        uint32_t idx = static_cast<uint32_t>(buffers.verts.size() / 3);
+        buffers.verts.insert(buffers.verts.end(), { x, y, z });
+        buffers.norms.insert(buffers.norms.end(), { nx, ny, nz });
+        buffers.texCoords.insert(buffers.texCoords.end(), { u, v });
+        buffers.colors.insert(buffers.colors.end(), { c[0], c[1], c[2], c[3] });
+        return idx;
+        };
+
+    auto addQuad = [&](
+        float x0, float y0, float z0,
+        float x1, float y1, float z1,
+        float x2, float y2, float z2,
+        float x3, float y3, float z3,
+        float nx, float ny, float nz)
+        {
+            if (isSecondCoat || m_reversed)
+            {
+                nx = -nx;
+                ny = -ny;
+                nz = -nz;
+            }
+
+            uint32_t v0 = addVertex(x0, y0, z0, nx, ny, nz, 0.0f, 0.0f);
+            uint32_t v1 = addVertex(x1, y1, z1, nx, ny, nz, 1.0f, 0.0f);
+            uint32_t v2 = addVertex(x2, y2, z2, nx, ny, nz, 0.0f, 1.0f);
+            uint32_t v3 = addVertex(x3, y3, z3, nx, ny, nz, 1.0f, 1.0f);
+
+            if (!isSecondCoat)
+            {
+                buffers.indices.push_back(v0);
+                buffers.indices.push_back(v2);
+                buffers.indices.push_back(v1);
+                buffers.indices.push_back(v1);
+                buffers.indices.push_back(v2);
+                buffers.indices.push_back(v3);
+            }
+            else
+            {
+                buffers.indices.push_back(v0);
+                buffers.indices.push_back(v1);
+                buffers.indices.push_back(v2);
+                buffers.indices.push_back(v1);
+                buffers.indices.push_back(v3);
+                buffers.indices.push_back(v2);
+            }
+        };
+
+    float x0 = m_xStart, x1 = m_xEnd;
+    float y0 = m_yStart, y1 = m_yEnd;
+    float z0 = -1.0f, z1 = 0.0f;
+
+    // Front (+Z)
+    addQuad(x0, y0, z1, x1, y0, z1, x0, y1, z1, x1, y1, z1, 0, 0, 1);
+    // Back (-Z)
+    addQuad(x1, y0, z0, x0, y0, z0, x1, y1, z0, x0, y1, z0, 0, 0, -1);
+    // Right (+X)
+    addQuad(x1, y0, z1, x1, y0, z0, x1, y1, z1, x1, y1, z0, 1, 0, 0);
+    // Left (-X)
+    addQuad(x0, y0, z0, x0, y0, z1, x0, y1, z0, x0, y1, z1, -1, 0, 0);
+    // Top (+Y)
+    addQuad(x0, y1, z1, x1, y1, z1, x0, y1, z0, x1, y1, z0, 0, 1, 0);
+    // Bottom (-Y)
+    addQuad(x0, y0, z0, x1, y0, z0, x0, y0, z1, x1, y0, z1, 0, -1, 0);
+
+    if (!isSecondCoat && m_doubleCoated)
+    {
+        buildBoxIndexedInternal(buffers, true);
+    }
+
+    return *this;
+}
+
+// Public methods
+CartesianBuilder& CartesianBuilder::buildSurface(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
+{
+    std::vector<float> colors;
+    std::vector<uint32_t> indices;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+
+    if (!m_smooth)
+        buildSurfaceDiscreteIndexedInternal(buffers, false);
+    else
+        buildSurfaceIndexedInternal(buffers, false);
+
+    return *this;
+}
+
+CartesianBuilder& CartesianBuilder::buildSurface(std::vector<float>& verts, std::vector<float>& norms)
+{
+    std::vector<float> texCoords;
+    return buildSurface(verts, norms, texCoords);
+}
+
+CartesianBuilder& CartesianBuilder::buildSurfaceIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, std::vector<uint32_t>& indices)
+{
+    std::vector<float> colors;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+
+    if (!m_smooth)
+        return buildSurfaceDiscreteIndexedInternal(buffers, false);
+    return buildSurfaceIndexedInternal(buffers, false);
+}
+
+CartesianBuilder& CartesianBuilder::buildSurfaceIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords;
+    return buildSurfaceIndexed(verts, norms, texCoords, indices);
+}
+
+CartesianBuilder& CartesianBuilder::buildSurfaceIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+
+    if (!m_smooth)
+        return buildSurfaceDiscreteIndexedInternal(buffers, false);
+    return buildSurfaceIndexedInternal(buffers, false);
+}
+
+CartesianBuilder& CartesianBuilder::buildPlane(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
+{
+    std::vector<float> colors;
+    std::vector<uint32_t> indices;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+    return buildPlaneIndexedInternal(buffers, false);
+}
+
+CartesianBuilder& CartesianBuilder::buildPlane(std::vector<float>& verts, std::vector<float>& norms)
+{
+    std::vector<float> texCoords;
+    return buildPlane(verts, norms, texCoords);
+}
+
+CartesianBuilder& CartesianBuilder::buildPlaneIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords, colors;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+    return buildPlaneIndexedInternal(buffers, false);
+}
+
+CartesianBuilder& CartesianBuilder::buildPlaneIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+    return buildPlaneIndexedInternal(buffers, false);
+}
+
+CartesianBuilder& CartesianBuilder::buildBox(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords)
+{
+    std::vector<float> colors;
+    std::vector<uint32_t> indices;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+    return buildBoxIndexedInternal(buffers, false);
+}
+
+CartesianBuilder& CartesianBuilder::buildBoxIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords, colors;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+    return buildBoxIndexedInternal(buffers, false);
+}
+
+CartesianBuilder& CartesianBuilder::buildBoxIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices)
+{
+    std::vector<float> texCoords;
+    GeometryBuffers buffers(verts, norms, texCoords, colors, indices);
+    return buildBoxIndexedInternal(buffers, false);
+}
+
+CartesianBuilder Builder::cartesian()
+{
+    return CartesianBuilder();
+}
 }
