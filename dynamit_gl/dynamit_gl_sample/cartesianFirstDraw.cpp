@@ -27,11 +27,13 @@ int main_cartesianFirstDraw()
     Builder::cartesian()
         //.formula("sin(x) * cos(y)")
         .formula("x*x")
-        .domain(-3.14, 3.14, -3.14, 3.14)
-        .divisions(10, 10)
+        .domain(-3.14, 3.14) //, -3.14, 3.14)
+        //.divisions(10, 10)
+        .sectors_slices(100, 40)
         .smooth(true)
         .color(std::array<float, 3>{ 0.2f, 0.6f, 1.0f })
-        .buildSurfaceIndexedWithColor(verts, norms, colors, indices);
+        //.buildConeIndexedWithColor(verts, norms, colors, indices);
+        .buildCylinderIndexedWithColor(verts, norms, colors, indices);
 
     //// Build a simple plane
     //Builder::cartesian()

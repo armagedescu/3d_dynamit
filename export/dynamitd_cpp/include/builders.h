@@ -290,28 +290,28 @@ PolarBuilder& PolarBuilder::buildCylinderIndexedWithColor(std::vector<float>& ve
     applyTransformsToRange(verts, norms, startVertex, transforms...);
     return *this;
 }
-// Add after the PolarBuilder class definition, before the Builder class:
+// Add after PolarBuilder class, before Builder class:
 
 class CartesianBuilder
 {
 public:
     CartesianBuilder();
 
-    // Formula for z = f(x, y)
+    // Formula Y = f(X) - defines the curve in X-Y plane
     CartesianBuilder& formula(const std::wstring& formula);
     CartesianBuilder& formula(const std::string& formula);
 
-    // Domain settings
-    CartesianBuilder& domainX(float start, float end);
-    CartesianBuilder& domainY(float start, float end);
-    CartesianBuilder& domain(float xStart, float xEnd, float yStart, float yEnd);
+    // Domain for X
+    CartesianBuilder& domain(float xStart, float xEnd);
 
     // Resolution
-    CartesianBuilder& divisionsX(int divisions);
-    CartesianBuilder& divisionsY(int divisions);
-    CartesianBuilder& divisions(int x, int y);
+    CartesianBuilder& sectors(int sectors);  // Divisions along X
+    CartesianBuilder& slices(int slices);    // Divisions along Z
+    CartesianBuilder& sectors_slices(int sectors, int slices);
+    CartesianBuilder& slices_sectors(int slices, int sectors);
 
     // Options
+    CartesianBuilder& turbo(bool enabled = true);
     CartesianBuilder& smooth(bool enabled = true);
     CartesianBuilder& edged(bool enabled = true);
     CartesianBuilder& doubleCoated(bool enabled = true);
@@ -322,123 +322,67 @@ public:
     // Colors
     CartesianBuilder& color(const std::array<float, 4>& rgba);
     CartesianBuilder& color(const std::array<float, 3>& rgb);
-    CartesianBuilder& color(const std::array<float, 4>& rgbaTop, const std::array<float, 4>& rgbaBottom);
-    CartesianBuilder& color(const std::array<float, 3>& rgbTop, const std::array<float, 3>& rgbBottom);
+    CartesianBuilder& color(const std::array<float, 4>& outer, const std::array<float, 4>& inner);
+    CartesianBuilder& color(const std::array<float, 3>& outer, const std::array<float, 3>& inner);
 
-    // Build methods - base (no transform)
-    CartesianBuilder& buildSurface(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords);
-    CartesianBuilder& buildSurface(std::vector<float>& verts, std::vector<float>& norms);
-    CartesianBuilder& buildSurfaceIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, std::vector<uint32_t>& indices);
-    CartesianBuilder& buildSurfaceIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<uint32_t>& indices);
-    CartesianBuilder& buildSurfaceIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices);
+    // Cone - base (no transform)
+    CartesianBuilder& buildCone(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords);
+    CartesianBuilder& buildCone(std::vector<float>& verts, std::vector<float>& norms);
+    CartesianBuilder& buildConeIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, std::vector<uint32_t>& indices);
+    CartesianBuilder& buildConeIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<uint32_t>& indices);
+    CartesianBuilder& buildConeIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices);
 
-    // Build methods - with transforms
+    // Cone - variadic transforms
     template<typename... Transforms>
-    CartesianBuilder& buildSurface(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, const Transforms&... transforms);
-    template<typename... Transforms>
-    CartesianBuilder& buildSurface(std::vector<float>& verts, std::vector<float>& norms, const Transforms&... transforms);
-    template<typename... Transforms>
-    CartesianBuilder& buildSurfaceIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, std::vector<uint32_t>& indices, const Transforms&... transforms);
-    template<typename... Transforms>
-    CartesianBuilder& buildSurfaceIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<uint32_t>& indices, const Transforms&... transforms);
-    template<typename... Transforms>
-    CartesianBuilder& buildSurfaceIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices, const Transforms&... transforms);
+    CartesianBuilder& buildConeIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices, const Transforms&... transforms);
 
-    // Plane (constant z)
-    CartesianBuilder& buildPlane(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords);
-    CartesianBuilder& buildPlane(std::vector<float>& verts, std::vector<float>& norms);
-    CartesianBuilder& buildPlaneIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<uint32_t>& indices);
-    CartesianBuilder& buildPlaneIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices);
+    // Cylinder - base (no transform)
+    CartesianBuilder& buildCylinder(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords);
+    CartesianBuilder& buildCylinder(std::vector<float>& verts, std::vector<float>& norms);
+    CartesianBuilder& buildCylinderIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, std::vector<uint32_t>& indices);
+    CartesianBuilder& buildCylinderIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<uint32_t>& indices);
+    CartesianBuilder& buildCylinderIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices);
 
+    // Cylinder - variadic transforms
     template<typename... Transforms>
-    CartesianBuilder& buildPlaneIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices, const Transforms&... transforms);
-
-    // Box (6 faces)
-    CartesianBuilder& buildBox(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords);
-    CartesianBuilder& buildBoxIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<uint32_t>& indices);
-    CartesianBuilder& buildBoxIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices);
-
-    template<typename... Transforms>
-    CartesianBuilder& buildBoxIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices, const Transforms&... transforms);
+    CartesianBuilder& buildCylinderIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices, const Transforms&... transforms);
 
 private:
-    CartesianBuilder& buildSurfaceIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat);
-    CartesianBuilder& buildSurfaceDiscreteIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat);
-    CartesianBuilder& buildPlaneIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat);
-    CartesianBuilder& buildBoxIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat);
+    CartesianBuilder& buildConeIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat);
+    CartesianBuilder& buildConeDiscreteIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat);
+    CartesianBuilder& buildCylinderIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat);
+    CartesianBuilder& buildCylinderDiscreteIndexedInternal(GeometryBuffers& buffers, bool isSecondCoat);
 
     std::wstring m_formula;
     float m_xStart, m_xEnd;
-    float m_yStart, m_yEnd;
-    int m_divisionsX;
-    int m_divisionsY;
+    int m_sectors;
+    int m_slices;
+    bool m_turbo;
     bool m_smooth;
     bool m_doubleCoated;
     bool m_reversed;
-    std::array<float, 4> m_color_top = { 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<float, 4> m_color_bottom = { 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 4> m_color_outer = { 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<float, 4> m_color_inner = { 1.0f, 1.0f, 1.0f, 1.0f };
 };
 
-// Template implementations for CartesianBuilder
+// Template implementations
 template<typename... Transforms>
-CartesianBuilder& CartesianBuilder::buildSurface(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, const Transforms&... transforms)
+CartesianBuilder& CartesianBuilder::buildConeIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices, const Transforms&... transforms)
 {
     size_t startVertex = verts.size() / 3;
-    buildSurface(verts, norms, texCoords);
+    buildConeIndexedWithColor(verts, norms, colors, indices);
     applyTransformsToRange(verts, norms, startVertex, transforms...);
     return *this;
 }
 
 template<typename... Transforms>
-CartesianBuilder& CartesianBuilder::buildSurface(std::vector<float>& verts, std::vector<float>& norms, const Transforms&... transforms)
-{
-    std::vector<float> texCoords;
-    return buildSurface(verts, norms, texCoords, transforms...);
-}
-
-template<typename... Transforms>
-CartesianBuilder& CartesianBuilder::buildSurfaceIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& texCoords, std::vector<uint32_t>& indices, const Transforms&... transforms)
+CartesianBuilder& CartesianBuilder::buildCylinderIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices, const Transforms&... transforms)
 {
     size_t startVertex = verts.size() / 3;
-    buildSurfaceIndexed(verts, norms, texCoords, indices);
+    buildCylinderIndexedWithColor(verts, norms, colors, indices);
     applyTransformsToRange(verts, norms, startVertex, transforms...);
     return *this;
 }
-
-template<typename... Transforms>
-CartesianBuilder& CartesianBuilder::buildSurfaceIndexed(std::vector<float>& verts, std::vector<float>& norms, std::vector<uint32_t>& indices, const Transforms&... transforms)
-{
-    std::vector<float> texCoords;
-    return buildSurfaceIndexed(verts, norms, texCoords, indices, transforms...);
-}
-
-template<typename... Transforms>
-CartesianBuilder& CartesianBuilder::buildSurfaceIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices, const Transforms&... transforms)
-{
-    size_t startVertex = verts.size() / 3;
-    buildSurfaceIndexedWithColor(verts, norms, colors, indices);
-    applyTransformsToRange(verts, norms, startVertex, transforms...);
-    return *this;
-}
-
-template<typename... Transforms>
-CartesianBuilder& CartesianBuilder::buildPlaneIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices, const Transforms&... transforms)
-{
-    size_t startVertex = verts.size() / 3;
-    buildPlaneIndexedWithColor(verts, norms, colors, indices);
-    applyTransformsToRange(verts, norms, startVertex, transforms...);
-    return *this;
-}
-
-template<typename... Transforms>
-CartesianBuilder& CartesianBuilder::buildBoxIndexedWithColor(std::vector<float>& verts, std::vector<float>& norms, std::vector<float>& colors, std::vector<uint32_t>& indices, const Transforms&... transforms)
-{
-    size_t startVertex = verts.size() / 3;
-    buildBoxIndexedWithColor(verts, norms, colors, indices);
-    applyTransformsToRange(verts, norms, startVertex, transforms...);
-    return *this;
-}
-
 class Builder
 {
 public:
