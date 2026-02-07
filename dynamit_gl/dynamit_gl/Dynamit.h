@@ -184,6 +184,20 @@ namespace dynamit
         }
     };
 
+    struct TextureUnit
+    {
+        std::string name;              // Sampler name in shader
+        GLuint textureId = 0;          // OpenGL texture ID
+        GLint unit = 0;                // Texture unit (0, 1, 2, ...)
+        GLint location = -1;           // Uniform location
+        GLenum target = GL_TEXTURE_2D; // GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc.
+        
+        std::string toGLSLUniform() const
+        {
+            return "uniform sampler2D " + name + ";";
+        }
+    };
+
     //========================================
     // GlSet - Holds all rendering state
     //========================================
@@ -200,6 +214,8 @@ namespace dynamit
         std::optional<ConstTranslation> constTranslation;
         std::optional<TransformMatrix3> transformMatrix3;
         std::optional<TransformMatrix4> transformMatrix4;
+        std::vector<TextureUnit> textureUnits;
+        std::unique_ptr<GlArrayBuffer> texCoordsBuffer;
 
     public:
         // Getters
@@ -213,6 +229,8 @@ namespace dynamit
         const std::optional<ConstTranslation>& getConstTranslation() const;
         const std::optional<TransformMatrix3>& getTransformMatrix3() const;
         const std::optional<TransformMatrix4>& getTransformMatrix4() const;
+        GlArrayBuffer* getTexCoordsBuffer() const;
+        const std::vector<TextureUnit>& getTextureUnits() const;
 
         // Setters
         void setPrecision(const std::string& p);
@@ -231,12 +249,14 @@ namespace dynamit
         {
             transformMatrix4 = matrix;
         }
+        void setTexCoordsBuffer(std::unique_ptr<GlArrayBuffer> buffer);
 
         void requireColor(const std::array<float, 4>& defaultValue = { 0.7f, 0.7f, 0.7f, 1.0f },
             const std::string& name = "constColor");
         void requireLightDirection(const std::array<float, 3>& defaultValue = { 0.0f, 0.5f, 1.0f },
             bool normalize = true,
             const std::string& name = "lightDirection");
+        void addTextureUnit(const TextureUnit& texture);
     };
 
     //========================================
@@ -344,6 +364,8 @@ namespace dynamit
         VAOData& currentVao();
         GLuint getLocationFor(const std::string& attribName);
         void applyStrideLayout(VAOData& vd);
+
+        void bindTextures();
 
     public:
         Dynamit();
@@ -506,6 +528,18 @@ namespace dynamit
         }
 
         std::unique_ptr<NormalsHighlighter> createNormalsHighlighter(float length = 0.1f);
+
+        // Fluent API - Texture coordinates
+        Dynamit& withTexCoords2d(const std::vector<float>& data);
+        Dynamit& withTexCoords2d(const float* data, size_t count);
+        
+        // Fluent API - Textures
+        Dynamit& withTexture(GLuint textureId, GLint unit = 0, const std::string& name = "texture0");
+        Dynamit& withTexture(const char* path, GLint unit = 0, const std::string& name = "texture0");
+        
+        // Runtime texture binding
+        void bindTexture(GLint unit, GLuint textureId);
+        void bindTexture(const std::string& name, GLuint textureId);
     };
 
 } // namespace dynamit

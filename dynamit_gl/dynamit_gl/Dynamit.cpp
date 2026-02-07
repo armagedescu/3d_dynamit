@@ -253,12 +253,14 @@ namespace dynamit
     GlArrayBuffer* GlSet::getVertexBuffer() const { return vertexBuffer.get(); }
     GlArrayBuffer* GlSet::getNormalsBuffer() const { return normalsBuffer.get(); }
     GlArrayBuffer* GlSet::getColorsBuffer() const { return colorsBuffer.get(); }
+    GlArrayBuffer* GlSet::getTexCoordsBuffer() const { return texCoordsBuffer.get(); }
     const std::optional<ConstColor>& GlSet::getConstColor() const { return constColor; }
     const std::optional<LightDirection>& GlSet::getLightDirection() const { return lightDirection; }
     const std::optional<Translation>& GlSet::getTranslation() const { return translation; }
     const std::optional<ConstTranslation>& GlSet::getConstTranslation() const { return constTranslation; }
     const std::optional<TransformMatrix3>& GlSet::getTransformMatrix3() const { return transformMatrix3; }
     const std::optional<TransformMatrix4>& GlSet::getTransformMatrix4() const { return transformMatrix4; }
+    const std::vector<TextureUnit>& GlSet::getTextureUnits() const { return textureUnits; }
 
     void GlSet::setPrecision(const std::string& p) { precision = p; }
 
@@ -286,6 +288,10 @@ namespace dynamit
             throw std::runtime_error("Cannot set const color when color buffer is used");
         constColor = color;
     }
+    void GlSet::setTexCoordsBuffer(std::unique_ptr<GlArrayBuffer> buffer)
+    {
+        texCoordsBuffer = std::move(buffer);
+    }
 
     void GlSet::setLightDirection(const LightDirection& light)
     {
@@ -300,6 +306,11 @@ namespace dynamit
     void GlSet::setConstTranslation(const ConstTranslation& trans)
     {
         constTranslation = trans;
+    }
+
+    void GlSet::addTextureUnit(const TextureUnit& texture)
+    {
+        textureUnits.push_back(texture);
     }
 
     //void GlSet::setTransformMatrix3(std::unique_ptr<GlArrayBuffer> buffer)
@@ -502,6 +513,19 @@ namespace dynamit
             fsBuilder.addHead("in " + cb->declVary() + ";");
         }
 
+        if (GlArrayBuffer* tcb = glSet.getTexCoordsBuffer())
+        {
+            vsBuilder.addHead("layout (location = " + std::to_string(tcb->getLocation()) +
+                ") in " + tcb->decl() + ";");
+            vsBuilder.addHead("out " + tcb->declVary() + ";");
+            fsBuilder.addHead("in " + tcb->declVary() + ";");
+        }
+
+        for (const TextureUnit& tex : glSet.getTextureUnits())
+        {
+            fsBuilder.addHead(tex.toGLSLUniform());
+        }
+
         if (glSet.getConstColor())
             fsBuilder.addHead(glSet.getConstColor()->toGLSL());
 
@@ -665,11 +689,16 @@ namespace dynamit
                 else if (glSet.getTransformMatrix3())
                     vsBuilder.addMain(nb->nameVary() + " = " + glSet.getTransformMatrix3()->name + " * " + nb->name() + ";");
                 else
+                {
                     vsBuilder.addMain(nb->defaultVaryAssign() + ";");
+                }
             }
 
             if (GlArrayBuffer* cb = glSet.getColorsBuffer())
                 vsBuilder.addMain(cb->defaultVaryAssign() + ";");
+
+            if (GlArrayBuffer* tcb = glSet.getTexCoordsBuffer())
+                vsBuilder.addMain(tcb->defaultVaryAssign() + ";");
         }
     }
 
@@ -677,8 +706,26 @@ namespace dynamit
     {
         std::string colorExpr = buildColorExpression();
         std::string lightingFactor = buildLightingFactor();
-
-        if (!lightingFactor.empty())
+        
+        // Apply texture if present
+        const std::vector<TextureUnit>& textures = glSet.getTextureUnits();
+        if (!textures.empty() && glSet.getTexCoordsBuffer())
+        {
+            std::string texCoordName = glSet.getTexCoordsBuffer()->nameVary();
+            std::string texSample = "texture(" + textures[0].name + ", " + texCoordName + ")";
+            
+            if (!lightingFactor.empty())
+            {
+                fsBuilder.addMain("float prod = " + lightingFactor + ";");
+                fsBuilder.addMain("vec4 texColor = " + texSample + ";");
+                fsBuilder.addMain("fragColor = vec4(texColor.rgb * prod, texColor.a);");
+            }
+            else
+            {
+                fsBuilder.addMain("fragColor = " + texSample + ";");
+            }
+        }
+        else if (!lightingFactor.empty())
         {
             fsBuilder.addMain("float prod = " + lightingFactor + ";");
             fsBuilder.addMain("fragColor = vec4(" + colorExpr + ".rgb * prod, 1.0);");
@@ -1174,6 +1221,7 @@ namespace dynamit
     void Dynamit::drawTriangles(GLint start)
     {
         useProgram();
+        bindTextures();
 
         for (const auto& vd : vaoList)
         {
@@ -1311,6 +1359,7 @@ namespace dynamit
     void Dynamit::drawTrianglesIndexed()
     {
         useProgram();
+        bindTextures();
 
         for (const auto& vd : vaoList)
         {
@@ -1343,5 +1392,22 @@ namespace dynamit
         highlighter->build(vertBuf->getData(), normBuf->getData());
         
         return highlighter;
+    }
+
+    // Add helper method:
+    void Dynamit::bindTextures()
+    {
+        for (const TextureUnit& tex : vaoList[0].glSet.getTextureUnits())
+        {
+            glActiveTexture(GL_TEXTURE0 + tex.unit);
+            glBindTexture(tex.target, tex.textureId);
+            
+            TextureUnit& mutableTex = const_cast<TextureUnit&>(tex);
+            if (mutableTex.location == -1)
+            {
+                mutableTex.location = glGetUniformLocation(program.id, tex.name.c_str());
+            }
+            glUniform1i(mutableTex.location, tex.unit);
+        }
     }
 } // namespace dynamit
