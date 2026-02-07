@@ -1,0 +1,10 @@
+[package]
+name = "calculator_3d"
+version = "0.1.0"
+edition = "2021"
+description = "Mathematical expression compiler for 3D graphics - Rust port of 3DCalculator"
+license = "MIT"
+
+[dependencies]
+
+[dev-dependencies]

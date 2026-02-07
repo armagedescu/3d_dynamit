@@ -1,0 +1,17 @@
+[package]
+name = "dynamit_rs"
+version = "0.1.0"
+edition = "2021"
+description = "3D graphics library with automatic shader generation - Rust port of dynamit_gl"
+license = "MIT"
+
+[dependencies]
+calculator_3d = { path = "../calculator_3d" }
+glow = "0.14"
+glutin = "0.31"
+glutin-winit = "0.4"
+winit = "0.29"
+raw-window-handle = "0.5"
+bytemuck = { version = "1.14", features = ["derive"] }
+
+[dev-dependencies]
