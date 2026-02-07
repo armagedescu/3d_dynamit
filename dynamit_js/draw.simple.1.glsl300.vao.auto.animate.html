@@ -1,0 +1,35 @@
+<html lang="en">
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>webgl test</title>
+   <link rel="stylesheet" href="./lib/css/default.css">
+   <script src="./lib/js/math/3dmath.js"></script>
+   <script src="./lib/js/gl2js/glcanvas.js"></script>
+   <script src="./lib/js/gl2js/gldynamic.js"></script>
+   <script src="./lib/js/gl2js/gl3dcalc.js"></script>
+   <script src="./lib/js/gl2js/gl3dbuilders.js"></script>
+</head>
+<body>
+   DynamiTD<br/>
+   Automatic Dynamic GLSL 300 Shader Handling. Migrated from  <a href="./draw.simple.1.glsl300.vao.html">WebGL2 GLSL 300</a><br/>
+   Older version available here <a href="./draw.simple.1.glsl300.html">WebGL</a><br/>
+   A WebGPU variant <a href="./webgpu1.html">available</a><br/>
+
+   <div class="sample">
+      Animate 1/2 combined<br/>
+      2 progs<br/>
+      P1 Verts dynamic<br/> P2 2 VAOs static<br/>
+      <canvas id = "animate"  width = "120" height = "120" class="cyan">
+         <script src="./draw.simple.1.glsl300.vao.auto.animate/animate.js"></script>
+      </canvas>
+   </div>
+
+   <br/>
+   <canvas id = "mycanvas1"  width = "310" height =  "40" class = "red"  ><script src="./draw.simple.1.glsl300.vao.auto/2d.js"    ></script></canvas>
+   <canvas id = "mycanvas2"  width =  "40" height =  "40" class = "green"><script src="./draw.simple.1.glsl300.vao.auto/simple.js"></script></canvas><br/>
+   <a href="./tutorials.html">Tutorials</a>
+
+
+</body>
+</html>

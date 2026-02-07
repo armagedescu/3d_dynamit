@@ -195,11 +195,45 @@ class LightDirection {
    get vary       ()    { return  this.isConst ?  null : this; }
 }
 
+class TextureUnit {
+   constructor(obj) {
+      this.name = obj.name || "texture0";
+      this.textureId = obj.textureId || null;
+      this.unit = obj.unit || 0;
+      this.target = obj.target || WebGL2S.TEXTURE_2D;
+      this.location = null;
+   }
+}
+
+class TransformMatrix {
+   #name = null;
+   #data = null;
+   #location = null;
+   #size = 4; // 3 or 4
+   
+   constructor(obj) {
+      this.#name = obj.name || "transformMatrix";
+      this.#size = obj.size || 4;
+      this.#data = obj.data || (this.#size === 4 
+         ? [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]
+         : [1,0,0, 0,1,0, 0,0,1]);
+   }
+   
+   get name()     { return this.#name; }
+   get data()     { return this.#data; }
+   get size()     { return this.#size; }
+   get location() { return this.#location; }
+   set location(val) { this.#location = val; }
+   
+   toGLSLUniform() {
+      return `uniform mat${this.#size} ${this.#name};`;
+   }
+}
+
 class GlSet {
    #precision           = "mediump float";
    #vertexBuffer        = null; //in array buffer only
    #normalsBuffer       = null; //in array buffer only
-   //TODO: unify color and translation
    #colorsBuffer        = null; //in array buffer
    #constColor          = null;
    #translation         = null; //uniform
@@ -209,18 +243,20 @@ class GlSet {
    #indexCount          = 0;    // NEW: number of indices
    #indexType           = null; // NEW: gl.UNSIGNED_INT, gl.UNSIGNED_SHORT, gl.UNSIGNED_BYTE
    #primitiveType       = null; // NEW: gl.TRIANGLES, gl.TRIANGLE_FAN, etc.
+   #texCoordsBuffer     = null;
+   #textureUnits        = [];
+   #transformMatrix3    = null;
+   #transformMatrix4    = null;
 
    constructor () {
       Object.preventExtensions(this); //properties can't be added manually
    }
-   //TODO: subject to interference with lights uniforms //{name: "constColor", value: [ 0.0,  0.0,  0.1]}
    requireColor (dvalue = [ 0.7,  0.7,  0.7,  1.0], dname = "constColor")  { 
        if (this.colorsBuffer)        return;
        if (this.constColor)          return;
        ArrayUtil.validateType (dvalue);
        this.constColor = {name: dname, data: dvalue};
    } //TODO: subject to interference with lights uniforms
-   //TODO: subject to interference with lights uniforms
    requireLightDirection (dvalue = [0.0, 0.5, 1.0], normalize = true, dname = "lightDirection")  { 
        if (this.lightDirection)      return;
        ArrayUtil.validateType (dvalue);
@@ -277,6 +313,14 @@ class GlSet {
    }
    get constTranslation    ()    { return this.#constTranslation; }
    set constTranslation    (val) { this.#constTranslation = val;  }
+   get texCoordsBuffer()      { return this.#texCoordsBuffer; }
+   set texCoordsBuffer(val)   { this.#texCoordsBuffer = val; }
+   get textureUnits()         { return this.#textureUnits; }
+   addTextureUnit(tex)        { this.#textureUnits.push(tex); }
+   get transformMatrix3()     { return this.#transformMatrix3; }
+   set transformMatrix3(val)  { this.#transformMatrix3 = val; }
+   get transformMatrix4()     { return this.#transformMatrix4; }
+   set transformMatrix4(val)  { this.#transformMatrix4 = val; }
 
    // NEW: Index buffer getters/setters
    get indexBuffer   () { return this.#indexBuffer; }
@@ -403,6 +447,11 @@ class ShaderStrategy {
       // Vertex buffer (required)
       vsBuilder.addHead (`layout (location = ${glSet.vertexBuffer.attribLocation}) in ${glSet.vertexBuffer.decl};`);
       
+      // Uniform translation (optional)
+      if (glSet.translation) {
+         vsBuilder.addHead (`uniform vec4 ${glSet.translation.name};`);
+      }
+      
       // Const color (optional)
       if (glSet.constColor) { 
          let colorStr = ArrayUtil.buildFloatStrings (glSet.constColor.data).join (", ");
@@ -422,6 +471,18 @@ class ShaderStrategy {
          vsBuilder.addHead (`out ${glSet.colorsBuffer.declVary};`);
          fsBuilder.addHead (`in  ${glSet.colorsBuffer.declVary};`);         
       }
+
+      // TexCoords buffer (optional)
+      if (glSet.texCoordsBuffer) {
+         vsBuilder.addHead (`layout (location = ${glSet.texCoordsBuffer.attribLocation}) in ${glSet.texCoordsBuffer.decl};`);
+         vsBuilder.addHead (`out ${glSet.texCoordsBuffer.declVary};`);
+         fsBuilder.addHead (`in  ${glSet.texCoordsBuffer.declVary};`);
+      }
+      
+      // Texture samplers (optional)
+      for (let tex of glSet.textureUnits) {
+         fsBuilder.addHead (`uniform sampler2D ${tex.name};`);
+      }
       
       // Light direction (optional)
       if (glSet.lightDirection) {
@@ -433,38 +494,76 @@ class ShaderStrategy {
             fsBuilder.addHead (`uniform vec3 ${lightDirection.name};`);
       }
       
-      // Uniform translation (optional)
-      if (glSet.translation) {
-         vsBuilder.addHead (`uniform vec4 ${glSet.translation.name};`);
+      // Const translation (optional)
+      if (glSet.constTranslation) {
+         let strTrans = ArrayUtil.buildFloatStrings(glSet.constTranslation).join(", ");
+         vsBuilder.addHead (`const vec4 constTranslation = vec4(${strTrans});`);
+      }
+
+      // Transform matrices (optional)
+      if (glSet.transformMatrix3) {
+         vsBuilder.addHead (glSet.transformMatrix3.toGLSLUniform());
+      }
+      if (glSet.transformMatrix4) {
+         vsBuilder.addHead (glSet.transformMatrix4.toGLSLUniform());
       }
    }
 
    //========================================
    // Compose gl_Position from pieces
    //========================================
-   buildPositionExpression () {
+   buildPositionExpression() {
       let glSet = this.glSet;
       let pos;
       
+      // Get vertex expression
+      let vertexExpr;
+      let vertexDim = 3;
+      
       if (this.strideLayout && this.strideLayout.hasAttribute("vertex")) {
          let attr = this.strideLayout.getAttribute("vertex");
-         pos = attr.vec4();
+         vertexExpr = "vertex";
+         vertexDim = attr.size;
       } else if (glSet.vertexBuffer) {
-         pos = glSet.vertexBuffer.vec4();
+         vertexExpr = glSet.vertexBuffer.name;
+         vertexDim = glSet.vertexBuffer.dimension;
       } else {
-         pos = "vec4(0.0, 0.0, 0.0, 1.0)";
+         vertexExpr = "vec3(0.0, 0.0, 0.0)";
+         vertexDim = 3;
       }
-
-      // Add const translation if present
+      
+      // Apply transform matrix if present
+      if (glSet.transformMatrix4) {
+         if (vertexDim === 4)
+            pos = `${glSet.transformMatrix4.name} * ${vertexExpr}`;
+         else if (vertexDim === 3)
+            pos = `${glSet.transformMatrix4.name} * vec4(${vertexExpr}, 1.0)`;
+         else
+            pos = `${glSet.transformMatrix4.name} * vec4(${vertexExpr}, 0.0, 1.0)`;
+      } else if (glSet.transformMatrix3) {
+         let vec3Expr = vertexDim === 3 ? vertexExpr 
+                      : vertexDim === 2 ? `vec3(${vertexExpr}, 0.0)` 
+                      : `${vertexExpr}.xyz`;
+         pos = `vec4(${glSet.transformMatrix3.name} * ${vec3Expr}, 1.0)`;
+      } else {
+         // No transform
+         if (vertexDim === 4)
+            pos = vertexExpr;
+         else if (vertexDim === 3)
+            pos = `vec4(${vertexExpr}, 1.0)`;
+         else
+            pos = `vec4(${vertexExpr}, 0.0, 1.0)`;
+      }
+      
+      // Add translations
       if (glSet.constTranslation) {
          let strTrans = ArrayUtil.buildFloatStrings(glSet.constTranslation).join(", ");
          pos = `vec4(${strTrans}) + ${pos}`;
       }
       
-      // Add uniform translation if present
       if (glSet.translation)
-         pos = `vec4(${glSet.translation.name}) + ${pos}`;
-
+         pos = `${glSet.translation.name} + ${pos}`;
+      
       return pos;
    }
 
@@ -472,21 +571,34 @@ class ShaderStrategy {
       let vsBuilder = this.vsBuilder;
       let glSet = this.glSet;
 
-      // Position (always required)
-      vsBuilder.addMain (`   gl_Position = ${this.buildPositionExpression()};`);
+      vsBuilder.addMain(`   gl_Position = ${this.buildPositionExpression()};`);
 
       if (this.strideLayout) {
-         // Stride mode: pass attributes via varyings
-         if (this.strideLayout.hasAttribute("normal"))
-            vsBuilder.addMain (`   normalVary = normal;`);
+         if (this.strideLayout.hasAttribute("normal")) {
+            if (glSet.transformMatrix4)
+               vsBuilder.addMain(`   normalVary = mat3(${glSet.transformMatrix4.name}) * normal;`);
+            else if (glSet.transformMatrix3)
+               vsBuilder.addMain(`   normalVary = ${glSet.transformMatrix3.name} * normal;`);
+            else
+               vsBuilder.addMain(`   normalVary = normal;`);
+         }
          if (this.strideLayout.hasAttribute("color"))
-            vsBuilder.addMain (`   colorVary = color;`);
+            vsBuilder.addMain(`   colorVary = color;`);
+         if (this.strideLayout.hasAttribute("texCoord"))
+            vsBuilder.addMain(`   texCoordVary = texCoord;`);
       } else {
-         // Separate buffer mode
-         if (glSet.normalsBuffer)
-            vsBuilder.addMain (`   ${glSet.normalsBuffer.defaultVaryAssign};`);
+         if (glSet.normalsBuffer) {
+            if (glSet.transformMatrix4)
+               vsBuilder.addMain(`   ${glSet.normalsBuffer.nameVary} = mat3(${glSet.transformMatrix4.name}) * ${glSet.normalsBuffer.name};`);
+            else if (glSet.transformMatrix3)
+               vsBuilder.addMain(`   ${glSet.normalsBuffer.nameVary} = ${glSet.transformMatrix3.name} * ${glSet.normalsBuffer.name};`);
+            else
+               vsBuilder.addMain(`   ${glSet.normalsBuffer.defaultVaryAssign};`);
+         }
          if (glSet.colorsBuffer)
-            vsBuilder.addMain (`   ${glSet.colorsBuffer.defaultVaryAssign};`);
+            vsBuilder.addMain(`   ${glSet.colorsBuffer.defaultVaryAssign};`);
+         if (glSet.texCoordsBuffer)
+            vsBuilder.addMain(`   ${glSet.texCoordsBuffer.defaultVaryAssign};`);
       }
    }
 
@@ -539,17 +651,30 @@ class ShaderStrategy {
 
    composeFragmentMain () {
       let fsBuilder = this.fsBuilder;
+      let glSet = this.glSet;
       
       let colorExpr = this.buildColorExpression();
       let lightingFactor = this.buildLightingFactor();
-
-      if (lightingFactor) {
-         // Apply lighting: color.rgb * lightingFactor
-         fsBuilder.addMain (`   float prod = ${lightingFactor};`);
-         fsBuilder.addMain (`   fragColor = vec4(${colorExpr}.rgb * prod, 1.0);`);
+      
+      // Check for texture
+      let hasTexture = glSet.textureUnits.length > 0 && glSet.texCoordsBuffer;
+      
+      if (hasTexture) {
+         let texCoordName = glSet.texCoordsBuffer.nameVary;
+         let texSample = `texture(${glSet.textureUnits[0].name}, ${texCoordName})`;
+         
+         if (lightingFactor) {
+            fsBuilder.addMain(`   float prod = ${lightingFactor};`);
+            fsBuilder.addMain(`   vec4 texColor = ${texSample};`);
+            fsBuilder.addMain(`   fragColor = vec4(texColor.rgb * prod, texColor.a);`);
+         } else {
+            fsBuilder.addMain(`   fragColor = ${texSample};`);
+         }
+      } else if (lightingFactor) {
+         fsBuilder.addMain(`   float prod = ${lightingFactor};`);
+         fsBuilder.addMain(`   fragColor = vec4(${colorExpr}.rgb * prod, 1.0);`);
       } else {
-         // No lighting, just output color
-         fsBuilder.addMain (`   fragColor = vec4(${colorExpr});`);
+         fsBuilder.addMain(`   fragColor = ${colorExpr};`);
       }
    }
 
@@ -1023,6 +1148,7 @@ class Dynamit
    _drawArraysChain(defaultPrimitive, start = 0) {
       let gl = this.gl, glSet = this.glSet;
       this.bindAll();
+      this.#bindTextures();  // Add texture binding
       
       let primitive = glSet.primitiveType || defaultPrimitive;
       let count = this.#strideMode ? this.#vertexCount : (glSet.vertexBuffer ? glSet.vertexBuffer.count : 0);
@@ -1034,6 +1160,21 @@ class Dynamit
       // Draw next in chain
       if (this.next) {
          this.next._drawArraysChain(defaultPrimitive, start);
+      }
+   }
+
+   _drawIndexedChain(defaultPrimitive) {
+      let gl = this.gl, glSet = this.glSet;
+      this.bindAll();
+      this.#bindTextures();  // Add texture binding
+      
+      let primitive = glSet.primitiveType || defaultPrimitive;
+      
+      gl.drawElements(primitive, glSet.indexCount, glSet.indexType, 0);
+      
+      // Draw next in chain
+      if (this.next) {
+         this.next._drawIndexedChain(defaultPrimitive);
       }
    }
 
@@ -1066,5 +1207,79 @@ class Dynamit
       let gl = this.gl;
       this.bindAll();
       gl.drawElements(drawType, count, type, offset);
+   }
+
+   // TexCoords support
+   #withTexCoords(data, arrayType, dimension) {
+      let gl = this.gl, glSet = this.glSet;
+      this.bindVertexArray();
+      
+      let location;
+      if (this.#prev && this.#prev.glSet.texCoordsBuffer) {
+         location = this.#prev.glSet.texCoordsBuffer.attribLocation;
+      } else {
+         location = this.locationCount++;
+         if (this.#prev) this.#prev.locationCount = this.locationCount;
+      }
+      
+      glSet.texCoordsBuffer = GlArrayBuffer.createAndInitBuffer(gl, location, "texCoord", data, arrayType, dimension);
+      return this;
+   }
+   
+   withTexCoords2d(data, arrayType = Float32Array) { return this.#withTexCoords(data, arrayType, 2); }
+   withTexCoords3d(data, arrayType = Float32Array) { return this.#withTexCoords(data, arrayType, 3); }
+   
+   // Texture support
+   withTexture(textureId, unit = 0, name = "texture0") {
+      let tex = new TextureUnit({ name, textureId, unit });
+      this.glSet.addTextureUnit(tex);
+      return this;
+   }
+   
+   // Transform matrix support
+   withTransformMatrix3f(name = "transformMatrix") {
+      this.glSet.transformMatrix3 = new TransformMatrix({ name, size: 3 });
+      return this;
+   }
+   
+   withTransformMatrix4f(name = "transformMatrix") {
+      this.glSet.transformMatrix4 = new TransformMatrix({ name, size: 4 });
+      return this;
+   }
+   
+   transformMatrix3f(data) {
+      let tm = this.glSet.transformMatrix3;
+      if (!tm) throw new Error("Transform matrix 3x3 not initialized. Call withTransformMatrix3f() first.");
+      
+      this.useProgram();
+      if (tm.location === null) {
+         tm.location = this.gl.getUniformLocation(this.programAuto, tm.name);
+      }
+      this.gl.uniformMatrix3fv(tm.location, false, data);
+   }
+   
+   transformMatrix4f(data) {
+      let tm = this.glSet.transformMatrix4;
+      if (!tm) throw new Error("Transform matrix 4x4 not initialized. Call withTransformMatrix4f() first.");
+      
+      this.useProgram();
+      if (tm.location === null) {
+         tm.location = this.gl.getUniformLocation(this.programAuto, tm.name);
+      }
+      this.gl.uniformMatrix4fv(tm.location, false, data);
+   }
+   
+   // Bind textures before drawing
+   #bindTextures() {
+      let gl = this.gl;
+      for (let tex of this.glSet.textureUnits) {
+         gl.activeTexture(gl.TEXTURE0 + tex.unit);
+         gl.bindTexture(tex.target, tex.textureId);
+         
+         if (tex.location === null) {
+            tex.location = gl.getUniformLocation(this.programAuto, tex.name);
+         }
+         gl.uniform1i(tex.location, tex.unit);
+      }
    }
 }
