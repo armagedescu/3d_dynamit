@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Dynamit.h"
+#include "TextureLoader.h"
 #include <iostream>
 #include <cassert>
 
@@ -1409,5 +1410,45 @@ namespace dynamit
             }
             glUniform1i(mutableTex.location, tex.unit);
         }
+    }
+    // Add after withColors4d implementation:
+
+    Dynamit& Dynamit::withTexCoords2d(const std::vector<float>& data)
+    {
+        VAOData& vd = currentVao();
+        glBindVertexArray(vd.vao);
+
+        GLuint location = getLocationFor("texCoord");
+        auto buffer = std::make_unique<GlArrayBuffer>(location, "texCoord");
+        buffer->build();
+        buffer->withData(data);
+        buffer->bufferData();
+        buffer->attrib(2, GL_FLOAT);
+        vd.glSet.setTexCoordsBuffer(std::move(buffer));
+        return *this;
+    }
+
+    Dynamit& Dynamit::withTexCoords2d(const float* data, size_t count)
+    {
+        return withTexCoords2d(std::vector<float>(data, data + count));
+    }
+
+    Dynamit& Dynamit::withTexture(GLuint textureId, GLint unit, const std::string& name)
+    {
+        TextureUnit tex;
+        tex.name = name;
+        tex.textureId = textureId;
+        tex.unit = unit;
+        tex.target = GL_TEXTURE_2D;
+        tex.location = -1;
+
+        currentVao().glSet.addTextureUnit(tex);
+        return *this;
+    }
+
+    Dynamit& Dynamit::withTexture(const char* path, GLint unit, const std::string& name)
+    {
+        GLuint textureId = LoadTexture(path);
+        return withTexture(textureId, unit, name);
     }
 } // namespace dynamit

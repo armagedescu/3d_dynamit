@@ -107,5 +107,8 @@
     <ClCompile Include="cartesianFirstDraw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cartesianFirstTextureDraw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

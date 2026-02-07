@@ -480,6 +480,7 @@
   <ItemGroup>
     <ClCompile Include="cartesianFirst.cpp" />
     <ClCompile Include="cartesianFirstDraw.cpp" />
+    <ClCompile Include="cartesianFirstTextureDraw.cpp" />
     <ClCompile Include="generated1.cpp" />
     <ClCompile Include="hello.cpp" />
     <ClCompile Include="animate.cpp" />
