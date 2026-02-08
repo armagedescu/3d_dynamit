@@ -4,6 +4,9 @@
 #include <windows.h>
 #include <commctrl.h>
 
+#include <atlbase.h>
+#include <atlwin.h>
+
 class DesignerApp;
 
 // Control IDs
@@ -17,43 +20,55 @@ class DesignerApp;
 #define ID_EDIT_SCALE_Y 3008
 #define ID_EDIT_SCALE_Z 3009
 
-class TransformPanel
+class TransformPanel : public CWindowImpl<TransformPanel>
 {
 public:
-    TransformPanel(DesignerApp* app) : m_app(app), m_hwnd(nullptr), m_updating(false) {}
-    ~TransformPanel() { if (m_hwnd) DestroyWindow(m_hwnd); }
+    DECLARE_WND_CLASS(L"TransformPanelClass")
+
+    TransformPanel(DesignerApp* app) : m_app(app), m_updating(false) {}
 
     HWND Create(HWND parent)
     {
-        WNDCLASSEXW wc = {};
-        wc.cbSize = sizeof(WNDCLASSEXW);
-        wc.lpfnWndProc = WndProc;
-        wc.hInstance = GetModuleHandle(nullptr);
-        wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
-        wc.lpszClassName = L"TransformPanelClass";
-        RegisterClassExW(&wc);
+        RECT rc = { 0, 0, 280, 180 };
+        CWindowImpl::Create(parent, rc, L"Transform",
+            WS_POPUP | WS_CAPTION | WS_VISIBLE, WS_EX_TOOLWINDOW);
 
-        m_hwnd = CreateWindowExW(
-            WS_EX_TOOLWINDOW,
-            L"TransformPanelClass",
-            L"Transform",
-            WS_POPUP | WS_CAPTION | WS_VISIBLE,
-            0, 0, 280, 180,
-            parent, nullptr, GetModuleHandle(nullptr), this);
-
-        if (m_hwnd)
+        if (m_hWnd)
         {
             createControls();
         }
 
-        return m_hwnd;
+        return m_hWnd;
     }
-
-    HWND GetHwnd() const { return m_hwnd; }
 
     void updateFromConfig();
 
+    BEGIN_MSG_MAP(TransformPanel)
+        MESSAGE_HANDLER(WM_CLOSE, OnClose)
+        COMMAND_HANDLER(ID_EDIT_POS_X, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER(ID_EDIT_POS_Y, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER(ID_EDIT_POS_Z, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER(ID_EDIT_ROT_X, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER(ID_EDIT_ROT_Y, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER(ID_EDIT_ROT_Z, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER(ID_EDIT_SCALE_X, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER(ID_EDIT_SCALE_Y, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER(ID_EDIT_SCALE_Z, EN_CHANGE, OnEditChange)
+    END_MSG_MAP()
+
 private:
+    LRESULT OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+    {
+        ShowWindow(SW_HIDE);
+        return 0;
+    }
+
+    LRESULT OnEditChange(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+    {
+        applyChanges();
+        return 0;
+    }
+
     void createControls()
     {
         HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -64,14 +79,14 @@ private:
 
         auto createLabel = [&](const wchar_t* text, int xPos, int yPos) {
             HWND h = CreateWindowW(L"STATIC", text, WS_CHILD | WS_VISIBLE,
-                xPos, yPos + 3, labelW, 18, m_hwnd, nullptr, GetModuleHandle(nullptr), nullptr);
-            SendMessage(h, WM_SETFONT, (WPARAM)hFont, TRUE);
+                xPos, yPos + 3, labelW, 18, m_hWnd, nullptr, GetModuleHandle(nullptr), nullptr);
+            ::SendMessage(h, WM_SETFONT, (WPARAM)hFont, TRUE);
         };
 
         auto createEdit = [&](int id, int xPos, int yPos) -> HWND {
             HWND h = CreateWindowW(L"EDIT", L"0", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-                xPos, yPos, editW, 20, m_hwnd, (HMENU)(INT_PTR)id, GetModuleHandle(nullptr), nullptr);
-            SendMessage(h, WM_SETFONT, (WPARAM)hFont, TRUE);
+                xPos, yPos, editW, 20, m_hWnd, (HMENU)(INT_PTR)id, GetModuleHandle(nullptr), nullptr);
+            ::SendMessage(h, WM_SETFONT, (WPARAM)hFont, TRUE);
             return h;
         };
 
@@ -103,34 +118,9 @@ private:
         m_editScaleZ = createEdit(ID_EDIT_SCALE_Z, labelW + 10 + 2 * (editW + gap), y);
     }
 
-    static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-    {
-        TransformPanel* pThis = nullptr;
-
-        if (msg == WM_CREATE)
-        {
-            CREATESTRUCT* pCreate = (CREATESTRUCT*)lParam;
-            pThis = (TransformPanel*)pCreate->lpCreateParams;
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pThis);
-        }
-        else
-        {
-            pThis = (TransformPanel*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-        }
-
-        if (pThis)
-        {
-            return pThis->handleMessage(hwnd, msg, wParam, lParam);
-        }
-
-        return DefWindowProc(hwnd, msg, wParam, lParam);
-    }
-
-    LRESULT handleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
     void applyChanges();
 
     DesignerApp* m_app;
-    HWND m_hwnd;
     bool m_updating;
 
     HWND m_editPosX, m_editPosY, m_editPosZ;
@@ -144,7 +134,7 @@ private:
 
 inline void TransformPanel::updateFromConfig()
 {
-    if (!m_hwnd) return;
+    if (!m_hWnd) return;
 
     ShapeConfig* cfg = m_app->getSelectedShapeConfig();
     if (!cfg) return;
@@ -154,26 +144,24 @@ inline void TransformPanel::updateFromConfig()
     wchar_t buf[32];
 
     swprintf_s(buf, L"%.2f", cfg->posX);
-    SetWindowTextW(m_editPosX, buf);
+    ::SetWindowTextW(m_editPosX, buf);
     swprintf_s(buf, L"%.2f", cfg->posY);
-    SetWindowTextW(m_editPosY, buf);
+    ::SetWindowTextW(m_editPosY, buf);
     swprintf_s(buf, L"%.2f", cfg->posZ);
-    SetWindowTextW(m_editPosZ, buf);
-
+    ::SetWindowTextW(m_editPosZ, buf);
     swprintf_s(buf, L"%.1f", cfg->rotX);
-    SetWindowTextW(m_editRotX, buf);
+    ::SetWindowTextW(m_editRotX, buf);
     swprintf_s(buf, L"%.1f", cfg->rotY);
-    SetWindowTextW(m_editRotY, buf);
+    ::SetWindowTextW(m_editRotY, buf);
     swprintf_s(buf, L"%.1f", cfg->rotZ);
-    SetWindowTextW(m_editRotZ, buf);
+    ::SetWindowTextW(m_editRotZ, buf);
 
     swprintf_s(buf, L"%.2f", cfg->scaleX);
-    SetWindowTextW(m_editScaleX, buf);
+    ::SetWindowTextW(m_editScaleX, buf);
     swprintf_s(buf, L"%.2f", cfg->scaleY);
-    SetWindowTextW(m_editScaleY, buf);
+    ::SetWindowTextW(m_editScaleY, buf);
     swprintf_s(buf, L"%.2f", cfg->scaleZ);
-    SetWindowTextW(m_editScaleZ, buf);
-
+    ::SetWindowTextW(m_editScaleZ, buf);
     m_updating = false;
 }
 
@@ -186,48 +174,29 @@ inline void TransformPanel::applyChanges()
 
     wchar_t buf[32];
 
-    GetWindowTextW(m_editPosX, buf, 32);
+    ::GetWindowTextW(m_editPosX, buf, 32);
     cfg->posX = static_cast<float>(_wtof(buf));
-    GetWindowTextW(m_editPosY, buf, 32);
+    ::GetWindowTextW(m_editPosY, buf, 32);
     cfg->posY = static_cast<float>(_wtof(buf));
-    GetWindowTextW(m_editPosZ, buf, 32);
+    ::GetWindowTextW(m_editPosZ, buf, 32);
     cfg->posZ = static_cast<float>(_wtof(buf));
 
-    GetWindowTextW(m_editRotX, buf, 32);
+    ::GetWindowTextW(m_editRotX, buf, 32);
     cfg->rotX = static_cast<float>(_wtof(buf));
-    GetWindowTextW(m_editRotY, buf, 32);
+    ::GetWindowTextW(m_editRotY, buf, 32);
     cfg->rotY = static_cast<float>(_wtof(buf));
-    GetWindowTextW(m_editRotZ, buf, 32);
+    ::GetWindowTextW(m_editRotZ, buf, 32);
     cfg->rotZ = static_cast<float>(_wtof(buf));
 
-    GetWindowTextW(m_editScaleX, buf, 32);
+    ::GetWindowTextW(m_editScaleX, buf, 32);
     cfg->scaleX = static_cast<float>(_wtof(buf));
     if (cfg->scaleX < 0.01f) cfg->scaleX = 0.01f;
-    GetWindowTextW(m_editScaleY, buf, 32);
+    ::GetWindowTextW(m_editScaleY, buf, 32);
     cfg->scaleY = static_cast<float>(_wtof(buf));
     if (cfg->scaleY < 0.01f) cfg->scaleY = 0.01f;
-    GetWindowTextW(m_editScaleZ, buf, 32);
+    ::GetWindowTextW(m_editScaleZ, buf, 32);
     cfg->scaleZ = static_cast<float>(_wtof(buf));
     if (cfg->scaleZ < 0.01f) cfg->scaleZ = 0.01f;
 
     m_app->onShapeConfigChanged();
-}
-
-inline LRESULT TransformPanel::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    switch (msg)
-    {
-    case WM_COMMAND:
-        if (HIWORD(wParam) == EN_CHANGE)
-        {
-            applyChanges();
-        }
-        return 0;
-
-    case WM_CLOSE:
-        ShowWindow(hwnd, SW_HIDE);
-        return 0;
-    }
-
-    return DefWindowProc(hwnd, msg, wParam, lParam);
 }

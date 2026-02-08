@@ -4,7 +4,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
-#include "dialogs/MainToolbar.h"
+#include "dialogs/ShapesListPanel.h"
 #include "dialogs/ExportToolbar.h"
 #include "dialogs/BuilderPanel.h"
 #include "dialogs/TransformPanel.h"
@@ -16,6 +16,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
+#include <cfloat>
 
 DesignerApp::DesignerApp(HINSTANCE hInstance, GLFWwindow* window, int width, int height, int panelWidth)
     : m_hInstance(hInstance)
@@ -35,7 +36,7 @@ DesignerApp::DesignerApp(HINSTANCE hInstance, GLFWwindow* window, int width, int
     , m_lastMouseX(0.0)
     , m_lastMouseY(0.0)
     , m_selectedShapeIndex(-1)
-    , m_mainToolbarHwnd(nullptr)
+    , m_shapesListPanelHwnd(nullptr)
     , m_exportToolbarHwnd(nullptr)
     , m_builderPanelHwnd(nullptr)
     , m_transformPanelHwnd(nullptr)
@@ -116,6 +117,9 @@ bool DesignerApp::initialize()
         newShape(ShapeConfig::Type::Cone);
     }
 
+    // Initial refresh of shapes list
+    if (m_shapesListPanel) m_shapesListPanel->refreshList();
+
     return true;
 }
 
@@ -124,14 +128,14 @@ void DesignerApp::shutdown()
     m_shapeManager.clearAll();
 
     // Destroy dialogs
-    if (m_mainToolbarHwnd) { DestroyWindow(m_mainToolbarHwnd); m_mainToolbarHwnd = nullptr; }
+    if (m_shapesListPanelHwnd) { DestroyWindow(m_shapesListPanelHwnd); m_shapesListPanelHwnd = nullptr; }
     if (m_exportToolbarHwnd) { DestroyWindow(m_exportToolbarHwnd); m_exportToolbarHwnd = nullptr; }
     if (m_builderPanelHwnd) { DestroyWindow(m_builderPanelHwnd); m_builderPanelHwnd = nullptr; }
     if (m_transformPanelHwnd) { DestroyWindow(m_transformPanelHwnd); m_transformPanelHwnd = nullptr; }
     if (m_colorPanelHwnd) { DestroyWindow(m_colorPanelHwnd); m_colorPanelHwnd = nullptr; }
     if (m_viewPanelHwnd) { DestroyWindow(m_viewPanelHwnd); m_viewPanelHwnd = nullptr; }
 
-    m_mainToolbar.reset();
+    m_shapesListPanel.reset();
     m_exportToolbar.reset();
     m_builderPanel.reset();
     m_transformPanel.reset();
@@ -145,7 +149,7 @@ void DesignerApp::createDialogs()
     HWND glfwHwnd = glfwGetWin32Window(m_window);
 
     // Create dialog panels using ATL
-    m_mainToolbar = std::make_unique<MainToolbar>(this);
+    m_shapesListPanel = std::make_unique<ShapesListPanel>(this);
     m_exportToolbar = std::make_unique<ExportToolbar>(this);
     m_builderPanel = std::make_unique<BuilderPanel>(this);
     m_transformPanel = std::make_unique<TransformPanel>(this);
@@ -153,7 +157,7 @@ void DesignerApp::createDialogs()
     m_viewPanel = std::make_unique<ViewPanel>(this);
 
     // Create windows
-    m_mainToolbarHwnd = m_mainToolbar->Create(glfwHwnd);
+    m_shapesListPanelHwnd = m_shapesListPanel->Create(glfwHwnd);
     m_exportToolbarHwnd = m_exportToolbar->Create(glfwHwnd);
     m_builderPanelHwnd = m_builderPanel->Create(glfwHwnd);
     m_transformPanelHwnd = m_transformPanel->Create(glfwHwnd);
@@ -163,7 +167,7 @@ void DesignerApp::createDialogs()
     updateDialogPositions();
 
     // Show panels
-    ShowWindow(m_mainToolbarHwnd, SW_SHOW);
+    ShowWindow(m_shapesListPanelHwnd, SW_SHOW);
     ShowWindow(m_exportToolbarHwnd, SW_SHOW);
     ShowWindow(m_builderPanelHwnd, SW_SHOW);
     ShowWindow(m_transformPanelHwnd, SW_SHOW);
@@ -180,17 +184,17 @@ void DesignerApp::updateDialogPositions()
     // Stack panels vertically on the left
     int y = 30; // Start below title bar area
     int panelGap = 5;
-    int shapesToolbarHeight = 120;
+    int shapesListHeight = 200;
     int exportToolbarHeight = 215;
     int builderHeight = 280;
     int transformHeight = 180;
     int colorHeight = 200;
 
-    if (m_mainToolbarHwnd)
+    if (m_shapesListPanelHwnd)
     {
-        SetWindowPos(m_mainToolbarHwnd, HWND_TOPMOST, winX + 5, winY + y,
-            m_panelWidth - 10, shapesToolbarHeight, SWP_NOZORDER);
-        y += shapesToolbarHeight + panelGap;
+        SetWindowPos(m_shapesListPanelHwnd, HWND_TOPMOST, winX + 5, winY + y,
+            m_panelWidth - 10, shapesListHeight, SWP_NOZORDER);
+        y += shapesListHeight + panelGap;
     }
 
     if (m_exportToolbarHwnd)
@@ -353,7 +357,7 @@ void DesignerApp::onKey(int key, int scancode, int action, int mods)
         {
             m_panelsVisible = !m_panelsVisible;
             int showCmd = m_panelsVisible ? SW_SHOW : SW_HIDE;
-            if (m_mainToolbarHwnd) ShowWindow(m_mainToolbarHwnd, showCmd);
+            if (m_shapesListPanelHwnd) ShowWindow(m_shapesListPanelHwnd, showCmd);
             if (m_exportToolbarHwnd) ShowWindow(m_exportToolbarHwnd, showCmd);
             if (m_builderPanelHwnd) ShowWindow(m_builderPanelHwnd, showCmd);
             if (m_transformPanelHwnd) ShowWindow(m_transformPanelHwnd, showCmd);
@@ -381,6 +385,19 @@ void DesignerApp::onMouseButton(int button, int action, int mods, double x, doub
         }
         else if (action == GLFW_RELEASE)
         {
+            // Check if this was a click (minimal movement) for shape selection
+            double dx = x - m_lastMouseX;
+            double dy = y - m_lastMouseY;
+            if (dx * dx + dy * dy < 25.0)  // Less than 5 pixels movement
+            {
+                // Try to pick a shape
+                int pickedShape = pickShape(x, y);
+                if (pickedShape >= 0)
+                {
+                    selectShape(pickedShape);
+                    if (m_shapesListPanel) m_shapesListPanel->refreshList();
+                }
+            }
             m_mouseDragging = false;
         }
     }
@@ -421,6 +438,9 @@ void DesignerApp::newShape(ShapeConfig::Type type)
     int index = m_shapeManager.addShape(config);
     selectShape(index);
 
+    // Refresh shapes list
+    if (m_shapesListPanel) m_shapesListPanel->refreshList();
+
     std::cout << "Created new " << config.name << std::endl;
 }
 
@@ -439,6 +459,9 @@ void DesignerApp::deleteSelectedShape()
         {
             m_selectedShapeIndex = -1;
         }
+
+        // Refresh shapes list
+        if (m_shapesListPanel) m_shapesListPanel->refreshList();
     }
 }
 
@@ -449,6 +472,7 @@ void DesignerApp::selectShape(int index)
         m_selectedShapeIndex = index;
 
         // Update panels with new selection
+        if (m_shapesListPanel) m_shapesListPanel->updateSelection();
         if (m_builderPanel) m_builderPanel->updateFromConfig();
         if (m_transformPanel) m_transformPanel->updateFromConfig();
         if (m_colorPanel) m_colorPanel->updateFromConfig();
@@ -468,4 +492,138 @@ void DesignerApp::onShapeConfigChanged()
     {
         shape->dirty = true;
     }
+}
+
+void DesignerApp::refreshShapesList()
+{
+    if (m_shapesListPanel) m_shapesListPanel->refreshList();
+}
+
+bool DesignerApp::rayTriangleIntersect(const float* rayOrigin, const float* rayDir,
+    const float* v0, const float* v1, const float* v2, float& t)
+{
+    // Moller-Trumbore intersection algorithm
+    const float EPSILON = 0.0000001f;
+
+    float edge1[3] = { v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2] };
+    float edge2[3] = { v2[0] - v0[0], v2[1] - v0[1], v2[2] - v0[2] };
+
+    // h = rayDir x edge2
+    float h[3] = {
+        rayDir[1] * edge2[2] - rayDir[2] * edge2[1],
+        rayDir[2] * edge2[0] - rayDir[0] * edge2[2],
+        rayDir[0] * edge2[1] - rayDir[1] * edge2[0]
+    };
+
+    float a = edge1[0] * h[0] + edge1[1] * h[1] + edge1[2] * h[2];
+    if (a > -EPSILON && a < EPSILON)
+        return false;  // Ray parallel to triangle
+
+    float f = 1.0f / a;
+    float s[3] = { rayOrigin[0] - v0[0], rayOrigin[1] - v0[1], rayOrigin[2] - v0[2] };
+    float u = f * (s[0] * h[0] + s[1] * h[1] + s[2] * h[2]);
+    if (u < 0.0f || u > 1.0f)
+        return false;
+
+    // q = s x edge1
+    float q[3] = {
+        s[1] * edge1[2] - s[2] * edge1[1],
+        s[2] * edge1[0] - s[0] * edge1[2],
+        s[0] * edge1[1] - s[1] * edge1[0]
+    };
+
+    float v = f * (rayDir[0] * q[0] + rayDir[1] * q[1] + rayDir[2] * q[2]);
+    if (v < 0.0f || u + v > 1.0f)
+        return false;
+
+    t = f * (edge2[0] * q[0] + edge2[1] * q[1] + edge2[2] * q[2]);
+    return t > EPSILON;
+}
+
+int DesignerApp::pickShape(double mouseX, double mouseY)
+{
+    // Convert mouse position to normalized device coordinates
+    float vpX = m_panelsVisible ? static_cast<float>(m_viewportX) : 0.0f;
+    float vpW = m_panelsVisible ? static_cast<float>(m_viewportWidth) : static_cast<float>(m_windowWidth);
+    float vpH = static_cast<float>(m_windowHeight);
+
+    // Mouse in viewport coordinates
+    float localX = static_cast<float>(mouseX) - vpX;
+    float ndcX = (2.0f * localX / vpW) - 1.0f;
+    float ndcY = 1.0f - (2.0f * static_cast<float>(mouseY) / vpH);
+
+    // Compute camera position
+    glm::vec3 cameraPos(
+        m_zoom * cos(glm::radians(m_rotationX)) * sin(glm::radians(m_rotationY)),
+        m_zoom * sin(glm::radians(m_rotationX)),
+        m_zoom * cos(glm::radians(m_rotationX)) * cos(glm::radians(m_rotationY))
+    );
+
+    // Compute view and projection matrices
+    glm::mat4 view = glm::lookAtLH(cameraPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    float aspectRatio = vpW / vpH;
+    glm::mat4 projection = glm::perspectiveLH(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
+
+    // Inverse VP to unproject
+    glm::mat4 invVP = glm::inverse(projection * view);
+
+    // Unproject near and far points
+    glm::vec4 nearPoint = invVP * glm::vec4(ndcX, ndcY, 0.0f, 1.0f);
+    glm::vec4 farPoint = invVP * glm::vec4(ndcX, ndcY, 1.0f, 1.0f);
+
+    nearPoint /= nearPoint.w;
+    farPoint /= farPoint.w;
+
+    // Ray origin and direction
+    float rayOrigin[3] = { nearPoint.x, nearPoint.y, nearPoint.z };
+    glm::vec3 rayDirVec = glm::normalize(glm::vec3(farPoint) - glm::vec3(nearPoint));
+    float rayDir[3] = { rayDirVec.x, rayDirVec.y, rayDirVec.z };
+
+    // Test intersection with each shape
+    int closestShape = -1;
+    float closestT = FLT_MAX;
+
+    for (int i = 0; i < m_shapeManager.getShapeCount(); ++i)
+    {
+        const ShapeInstance* shape = m_shapeManager.getShape(i);
+        if (!shape || !shape->visible || shape->verts.empty())
+            continue;
+
+        // Get transform matrix for this shape
+        std::array<float, 16> transform = m_shapeManager.getTransformMatrix(i);
+        glm::mat4 modelMat = glm::make_mat4(transform.data());
+
+        // Test each triangle
+        for (size_t t = 0; t < shape->indices.size(); t += 3)
+        {
+            uint32_t i0 = shape->indices[t];
+            uint32_t i1 = shape->indices[t + 1];
+            uint32_t i2 = shape->indices[t + 2];
+
+            // Get vertices and transform to world space
+            glm::vec4 v0_local(shape->verts[i0 * 3], shape->verts[i0 * 3 + 1], shape->verts[i0 * 3 + 2], 1.0f);
+            glm::vec4 v1_local(shape->verts[i1 * 3], shape->verts[i1 * 3 + 1], shape->verts[i1 * 3 + 2], 1.0f);
+            glm::vec4 v2_local(shape->verts[i2 * 3], shape->verts[i2 * 3 + 1], shape->verts[i2 * 3 + 2], 1.0f);
+
+            glm::vec3 v0_world = glm::vec3(modelMat * v0_local);
+            glm::vec3 v1_world = glm::vec3(modelMat * v1_local);
+            glm::vec3 v2_world = glm::vec3(modelMat * v2_local);
+
+            float v0[3] = { v0_world.x, v0_world.y, v0_world.z };
+            float v1[3] = { v1_world.x, v1_world.y, v1_world.z };
+            float v2[3] = { v2_world.x, v2_world.y, v2_world.z };
+
+            float hitT;
+            if (rayTriangleIntersect(rayOrigin, rayDir, v0, v1, v2, hitT))
+            {
+                if (hitT < closestT)
+                {
+                    closestT = hitT;
+                    closestShape = i;
+                }
+            }
+        }
+    }
+
+    return closestShape;
 }

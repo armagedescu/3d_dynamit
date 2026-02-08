@@ -163,6 +163,8 @@ pub struct Dynamit {
 
     // Uniform locations (cached after program build)
     transform_matrix_location: Option<glow::UniformLocation>,
+    // TODO: Implement light_direction_uniform() similar to transform_matrix_4f()
+    #[allow(dead_code)]
     light_direction_location: Option<glow::UniformLocation>,
 }
 

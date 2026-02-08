@@ -15,21 +15,59 @@
 
 #include <Dynamit.h>  // Use dynamit for rendering! (includes NormalsHighlighter.h)
 
+// Formula segment for multi-segment formulas
+struct FormulaSegment
+{
+    std::wstring formula = L"1";
+    float domainStart = 0.0f;
+    float domainEnd = 6.2832f;  // 2*PI
+};
+
 // Shape configuration
 struct ShapeConfig
 {
     enum class Type { Cone, Cylinder };
 
-    // Builder settings
+    // Multi-segment formula support
+    std::vector<FormulaSegment> segments;
+
+    // Legacy single formula (for backward compatibility during transition)
     std::wstring formula = L"1";
     float domainStart = 0.0f;
     float domainEnd = 6.2832f;
+
     int sectors = 16;
     int slices = 8;
     bool smooth = true;
     bool turbo = true;
     bool doubleCoated = true;
     bool reversed = true;
+
+    // Helper: get effective segments (uses legacy if segments empty)
+    std::vector<FormulaSegment> getEffectiveSegments() const
+    {
+        if (!segments.empty())
+            return segments;
+        // Return single segment from legacy fields
+        FormulaSegment seg;
+        seg.formula = formula;
+        seg.domainStart = domainStart;
+        seg.domainEnd = domainEnd;
+        return { seg };
+    }
+
+    // Helper: set from segments (also updates legacy for compatibility)
+    void setSegments(const std::vector<FormulaSegment>& segs)
+    {
+        segments = segs;
+        if (!segs.empty())
+        {
+            // Update legacy fields from first segment for UI display
+            formula = segs[0].formula;
+            domainStart = segs[0].domainStart;
+            domainEnd = segs.back().domainEnd;
+        }
+    }
 
     // Colors (RGBA)
     std::array<float, 4> outerColor = { 1.0f, 0.0f, 0.501961f, 1.0f };
@@ -90,6 +128,12 @@ public:
     // Building
     void rebuildShape(int index);
     void rebuildAllDirty();
+
+    // Reordering
+    void swapShapes(int indexA, int indexB);
+
+    // Weld all shapes into one
+    bool weldAllShapes();
 
     // Rendering - no shader program needed, dynamit handles it!
     void render(const std::array<float, 16>& viewProjection, bool showNormals = false);

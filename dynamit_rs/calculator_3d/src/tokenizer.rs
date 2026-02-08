@@ -38,15 +38,11 @@ pub enum TokenResult {
     Accept,
     Reject,
     Empty,
-    Finish,
-    EndOfString,
 }
 
 /// Expression tokenizer
 pub struct Tokenizer {
     binary_ops: SyntaxTree,
-    unary_ops: SyntaxTree,
-    parens: SyntaxTree,
 }
 
 impl Default for Tokenizer {
@@ -60,8 +56,6 @@ impl Tokenizer {
     pub fn new() -> Self {
         Self {
             binary_ops: SyntaxTree::merge(&["+", "-", "*", "**", "/", "%"]),
-            unary_ops: SyntaxTree::merge(&["+", "-"]),
-            parens: SyntaxTree::merge(&["(", ")"]),
         }
     }
 

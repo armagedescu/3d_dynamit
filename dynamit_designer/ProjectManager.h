@@ -3,14 +3,15 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <commdlg.h>
-#include <shlobj.h>
 
 #include <string>
 #include <fstream>
-#include <sstream>
-#include <iomanip>
+#include <iostream>
 
+#include <nlohmann/json.hpp>
 #include "ShapeManager.h"
+
+using json = nlohmann::json;
 
 // Project file format: JSON
 // Extension: .dproj (Dynamit Project)
@@ -132,25 +133,7 @@ private:
         return L"";
     }
 
-    // JSON helpers
-    static std::string escapeJson(const std::string& s)
-    {
-        std::string result;
-        for (char c : s)
-        {
-            switch (c)
-            {
-            case '"': result += "\\\""; break;
-            case '\\': result += "\\\\"; break;
-            case '\n': result += "\\n"; break;
-            case '\r': result += "\\r"; break;
-            case '\t': result += "\\t"; break;
-            default: result += c; break;
-            }
-        }
-        return result;
-    }
-
+    // String conversion helpers
     static std::string wstringToUtf8(const std::wstring& ws)
     {
         if (ws.empty()) return "";
@@ -181,47 +164,40 @@ private:
 // Include implementation after DesignerApp is fully defined
 #include "DesignerApp.h"
 #include "VisualizationHelpers.h"
+#include "dialogs/StartupDialog.h"
 
 inline bool ProjectManager::saveToFile(const std::wstring& filePath)
 {
-    std::ofstream file(filePath);
-    if (!file.is_open())
-    {
-        m_lastError = L"Failed to open file for writing";
-        return false;
-    }
-
     ShapeManager& sm = m_app->getShapeManager();
     VisualizationHelpers& viz = m_app->getVisualizationHelpers();
 
-    std::ostringstream json;
-    json << std::fixed << std::setprecision(6);
+    std::cout << "[Save] Saving " << sm.getShapeCount() << " shapes to project" << std::endl;
 
-    json << "{\n";
-    json << "  \"version\": 1,\n";
-    json << "  \"projectType\": \"dynamit_designer\",\n";
+    // Build JSON structure
+    json j;
+    j["version"] = 1;
+    j["projectType"] = "dynamit_designer";
 
     // View settings
-    json << "  \"view\": {\n";
-    json << "    \"rotationX\": " << m_app->getRotationX() << ",\n";
-    json << "    \"rotationY\": " << m_app->getRotationY() << ",\n";
-    json << "    \"zoom\": " << m_app->getZoom() << ",\n";
-    json << "    \"showNormals\": " << (m_app->getShowNormals() ? "true" : "false") << ",\n";
-    json << "    \"showAxisX\": " << (viz.getShowAxisX() ? "true" : "false") << ",\n";
-    json << "    \"showAxisY\": " << (viz.getShowAxisY() ? "true" : "false") << ",\n";
-    json << "    \"showAxisZ\": " << (viz.getShowAxisZ() ? "true" : "false") << ",\n";
-    json << "    \"showGrid3D\": " << (viz.getShowGrid() ? "true" : "false") << ",\n";
-    json << "    \"showGridXZ\": " << (viz.getShowGridXZ() ? "true" : "false") << ",\n";
-    json << "    \"showGridXY\": " << (viz.getShowGridXY() ? "true" : "false") << ",\n";
-    json << "    \"showGridYZ\": " << (viz.getShowGridYZ() ? "true" : "false") << ",\n";
-    json << "    \"showLight\": " << (viz.getShowLight() ? "true" : "false") << "\n";
-    json << "  },\n";
+    j["view"] = {
+        {"rotationX", m_app->getRotationX()},
+        {"rotationY", m_app->getRotationY()},
+        {"zoom", m_app->getZoom()},
+        {"showNormals", m_app->getShowNormals()},
+        {"showAxisX", viz.getShowAxisX()},
+        {"showAxisY", viz.getShowAxisY()},
+        {"showAxisZ", viz.getShowAxisZ()},
+        {"showGrid3D", viz.getShowGrid()},
+        {"showGridXZ", viz.getShowGridXZ()},
+        {"showGridXY", viz.getShowGridXY()},
+        {"showGridYZ", viz.getShowGridYZ()},
+        {"showLight", viz.getShowLight()}
+    };
 
-    // Selected shape
-    json << "  \"selectedShape\": " << m_app->getSelectedShapeIndex() << ",\n";
+    j["selectedShape"] = m_app->getSelectedShapeIndex();
 
     // Shapes array
-    json << "  \"shapes\": [\n";
+    j["shapes"] = json::array();
 
     for (int i = 0; i < sm.getShapeCount(); ++i)
     {
@@ -230,38 +206,60 @@ inline bool ProjectManager::saveToFile(const std::wstring& filePath)
 
         const ShapeConfig& cfg = shape->config;
 
-        if (i > 0) json << ",\n";
+        json shapeJson = {
+            {"name", cfg.name},
+            {"type", cfg.type == ShapeConfig::Type::Cone ? "cone" : "cylinder"},
+            {"formula", wstringToUtf8(cfg.formula)},
+            {"domainStart", cfg.domainStart},
+            {"domainEnd", cfg.domainEnd},
+            {"sectors", cfg.sectors},
+            {"slices", cfg.slices},
+            {"smooth", cfg.smooth},
+            {"turbo", cfg.turbo},
+            {"doubleCoated", cfg.doubleCoated},
+            {"reversed", cfg.reversed},
+            {"visible", shape->visible},
+            {"outerColor", {cfg.outerColor[0], cfg.outerColor[1], cfg.outerColor[2], cfg.outerColor[3]}},
+            {"innerColor", {cfg.innerColor[0], cfg.innerColor[1], cfg.innerColor[2], cfg.innerColor[3]}},
+            {"position", {cfg.posX, cfg.posY, cfg.posZ}},
+            {"rotation", {cfg.rotX, cfg.rotY, cfg.rotZ}},
+            {"scale", {cfg.scaleX, cfg.scaleY, cfg.scaleZ}}
+        };
 
-        json << "    {\n";
-        json << "      \"name\": \"" << escapeJson(cfg.name) << "\",\n";
-        json << "      \"type\": \"" << (cfg.type == ShapeConfig::Type::Cone ? "cone" : "cylinder") << "\",\n";
-        json << "      \"formula\": \"" << escapeJson(wstringToUtf8(cfg.formula)) << "\",\n";
-        json << "      \"domainStart\": " << cfg.domainStart << ",\n";
-        json << "      \"domainEnd\": " << cfg.domainEnd << ",\n";
-        json << "      \"sectors\": " << cfg.sectors << ",\n";
-        json << "      \"slices\": " << cfg.slices << ",\n";
-        json << "      \"smooth\": " << (cfg.smooth ? "true" : "false") << ",\n";
-        json << "      \"turbo\": " << (cfg.turbo ? "true" : "false") << ",\n";
-        json << "      \"doubleCoated\": " << (cfg.doubleCoated ? "true" : "false") << ",\n";
-        json << "      \"reversed\": " << (cfg.reversed ? "true" : "false") << ",\n";
-        json << "      \"visible\": " << (shape->visible ? "true" : "false") << ",\n";
-        json << "      \"outerColor\": [" << cfg.outerColor[0] << ", " << cfg.outerColor[1] << ", "
-             << cfg.outerColor[2] << ", " << cfg.outerColor[3] << "],\n";
-        json << "      \"innerColor\": [" << cfg.innerColor[0] << ", " << cfg.innerColor[1] << ", "
-             << cfg.innerColor[2] << ", " << cfg.innerColor[3] << "],\n";
-        json << "      \"position\": [" << cfg.posX << ", " << cfg.posY << ", " << cfg.posZ << "],\n";
-        json << "      \"rotation\": [" << cfg.rotX << ", " << cfg.rotY << ", " << cfg.rotZ << "],\n";
-        json << "      \"scale\": [" << cfg.scaleX << ", " << cfg.scaleY << ", " << cfg.scaleZ << "]\n";
-        json << "    }";
+        // Save formula segments (multi-segment support)
+        if (!cfg.segments.empty())
+        {
+            json segmentsJson = json::array();
+            for (const auto& seg : cfg.segments)
+            {
+                segmentsJson.push_back({
+                    {"formula", wstringToUtf8(seg.formula)},
+                    {"domainStart", seg.domainStart},
+                    {"domainEnd", seg.domainEnd}
+                });
+            }
+            shapeJson["segments"] = segmentsJson;
+        }
+
+        j["shapes"].push_back(shapeJson);
     }
 
-    json << "\n  ]\n";
-    json << "}\n";
+    // Write to file
+    std::ofstream file(filePath);
+    if (!file.is_open())
+    {
+        m_lastError = L"Failed to open file for writing";
+        return false;
+    }
 
-    file << json.str();
+    file << j.dump(2);  // Pretty print with 2-space indent
     file.close();
 
     m_currentProjectPath = filePath;
+
+    // Add to recent projects
+    StartupDialog::AddToRecentProjects(filePath, m_projectName);
+
     return true;
 }
 
@@ -274,112 +272,20 @@ inline bool ProjectManager::loadFromFile(const std::wstring& filePath)
         return false;
     }
 
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    std::string content = buffer.str();
+    json j;
+    try
+    {
+        file >> j;
+    }
+    catch (const json::parse_error& e)
+    {
+        m_lastError = L"JSON parse error: " + utf8ToWstring(e.what());
+        return false;
+    }
     file.close();
 
-    // Simple JSON parser for our known format
-    auto findValue = [&](const std::string& key, size_t startPos = 0) -> std::string {
-        std::string searchKey = "\"" + key + "\":";
-        size_t pos = content.find(searchKey, startPos);
-        if (pos == std::string::npos) return "";
-
-        pos += searchKey.length();
-        while (pos < content.size() && (content[pos] == ' ' || content[pos] == '\t')) pos++;
-
-        if (pos >= content.size()) return "";
-
-        // Handle different value types
-        if (content[pos] == '"')
-        {
-            // String value
-            pos++;
-            size_t end = pos;
-            while (end < content.size() && content[end] != '"')
-            {
-                if (content[end] == '\\') end++; // Skip escaped char
-                end++;
-            }
-            return content.substr(pos, end - pos);
-        }
-        else if (content[pos] == '[')
-        {
-            // Array value
-            size_t end = content.find(']', pos);
-            if (end == std::string::npos) return "";
-            return content.substr(pos, end - pos + 1);
-        }
-        else
-        {
-            // Number or boolean
-            size_t end = pos;
-            while (end < content.size() && content[end] != ',' && content[end] != '\n' && content[end] != '}')
-                end++;
-            std::string val = content.substr(pos, end - pos);
-            // Trim whitespace
-            while (!val.empty() && (val.back() == ' ' || val.back() == '\t' || val.back() == '\r'))
-                val.pop_back();
-            return val;
-        }
-    };
-
-    auto parseFloat = [](const std::string& s) -> float {
-        try { return std::stof(s); }
-        catch (...) { return 0.0f; }
-    };
-
-    auto parseInt = [](const std::string& s) -> int {
-        try { return std::stoi(s); }
-        catch (...) { return 0; }
-    };
-
-    auto parseBool = [](const std::string& s) -> bool {
-        return s == "true";
-    };
-
-    auto parseFloatArray = [&](const std::string& arr, float* out, int count) {
-        // Format: [1.0, 2.0, 3.0]
-        size_t pos = 1; // Skip '['
-        for (int i = 0; i < count && pos < arr.size(); ++i)
-        {
-            while (pos < arr.size() && (arr[pos] == ' ' || arr[pos] == ',')) pos++;
-            size_t end = pos;
-            while (end < arr.size() && arr[end] != ',' && arr[end] != ']') end++;
-            if (end > pos)
-            {
-                out[i] = parseFloat(arr.substr(pos, end - pos));
-            }
-            pos = end + 1;
-        }
-    };
-
-    auto unescapeJson = [](const std::string& s) -> std::string {
-        std::string result;
-        for (size_t i = 0; i < s.size(); ++i)
-        {
-            if (s[i] == '\\' && i + 1 < s.size())
-            {
-                switch (s[i + 1])
-                {
-                case '"': result += '"'; i++; break;
-                case '\\': result += '\\'; i++; break;
-                case 'n': result += '\n'; i++; break;
-                case 'r': result += '\r'; i++; break;
-                case 't': result += '\t'; i++; break;
-                default: result += s[i]; break;
-                }
-            }
-            else
-            {
-                result += s[i];
-            }
-        }
-        return result;
-    };
-
     // Check version
-    int version = parseInt(findValue("version"));
+    int version = j.value("version", 0);
     if (version != 1)
     {
         m_lastError = L"Unsupported project version";
@@ -389,121 +295,128 @@ inline bool ProjectManager::loadFromFile(const std::wstring& filePath)
     // Load view settings
     VisualizationHelpers& viz = m_app->getVisualizationHelpers();
 
-    std::string rotX = findValue("rotationX");
-    std::string rotY = findValue("rotationY");
-    std::string zoom = findValue("zoom");
+    if (j.contains("view"))
+    {
+        const auto& view = j["view"];
+        m_app->setRotationX(view.value("rotationX", 0.0f));
+        m_app->setRotationY(view.value("rotationY", 0.0f));
+        m_app->setZoom(view.value("zoom", 3.0f));
+        m_app->setShowNormals(view.value("showNormals", false));
+        viz.setShowAxisX(view.value("showAxisX", true));
+        viz.setShowAxisY(view.value("showAxisY", true));
+        viz.setShowAxisZ(view.value("showAxisZ", true));
+        viz.setShowGrid(view.value("showGrid3D", false));
+        viz.setShowGridXZ(view.value("showGridXZ", true));
+        viz.setShowGridXY(view.value("showGridXY", false));
+        viz.setShowGridYZ(view.value("showGridYZ", false));
+        viz.setShowLight(view.value("showLight", false));
+    }
 
-    if (!rotX.empty()) m_app->setRotationX(parseFloat(rotX));
-    if (!rotY.empty()) m_app->setRotationY(parseFloat(rotY));
-    if (!zoom.empty()) m_app->setZoom(parseFloat(zoom));
-
-    m_app->setShowNormals(parseBool(findValue("showNormals")));
-    viz.setShowAxisX(parseBool(findValue("showAxisX")));
-    viz.setShowAxisY(parseBool(findValue("showAxisY")));
-    viz.setShowAxisZ(parseBool(findValue("showAxisZ")));
-    viz.setShowGrid(parseBool(findValue("showGrid3D")));
-    viz.setShowGridXZ(parseBool(findValue("showGridXZ")));
-    viz.setShowGridXY(parseBool(findValue("showGridXY")));
-    viz.setShowGridYZ(parseBool(findValue("showGridYZ")));
-    viz.setShowLight(parseBool(findValue("showLight")));
-
-    int selectedShape = parseInt(findValue("selectedShape"));
+    int selectedShape = j.value("selectedShape", 0);
 
     // Clear existing shapes
     m_app->getShapeManager().clearAll();
 
-    // Find shapes array
-    size_t shapesPos = content.find("\"shapes\":");
-    if (shapesPos == std::string::npos)
+    // Load shapes
+    if (j.contains("shapes") && j["shapes"].is_array())
     {
-        m_lastError = L"No shapes found in project";
-        return false;
+        for (const auto& shapeJson : j["shapes"])
+        {
+            ShapeConfig cfg;
+
+            cfg.name = shapeJson.value("name", "Shape");
+            std::string type = shapeJson.value("type", "cone");
+            cfg.type = (type == "cylinder") ? ShapeConfig::Type::Cylinder : ShapeConfig::Type::Cone;
+
+            cfg.formula = utf8ToWstring(shapeJson.value("formula", "1"));
+            cfg.domainStart = shapeJson.value("domainStart", 0.0f);
+            cfg.domainEnd = shapeJson.value("domainEnd", 6.2832f);
+
+            // Load formula segments (multi-segment support)
+            if (shapeJson.contains("segments") && shapeJson["segments"].is_array())
+            {
+                cfg.segments.clear();
+                for (const auto& segJson : shapeJson["segments"])
+                {
+                    FormulaSegment seg;
+                    seg.formula = utf8ToWstring(segJson.value("formula", "1"));
+                    seg.domainStart = segJson.value("domainStart", 0.0f);
+                    seg.domainEnd = segJson.value("domainEnd", 6.2832f);
+                    cfg.segments.push_back(seg);
+                }
+            }
+
+            cfg.sectors = shapeJson.value("sectors", 16);
+            cfg.slices = shapeJson.value("slices", 8);
+            cfg.smooth = shapeJson.value("smooth", true);
+            cfg.turbo = shapeJson.value("turbo", true);
+            cfg.doubleCoated = shapeJson.value("doubleCoated", true);
+            cfg.reversed = shapeJson.value("reversed", true);
+
+            if (shapeJson.contains("outerColor") && shapeJson["outerColor"].is_array())
+            {
+                const auto& c = shapeJson["outerColor"];
+                if (c.size() >= 4)
+                {
+                    cfg.outerColor = {c[0].get<float>(), c[1].get<float>(), c[2].get<float>(), c[3].get<float>()};
+                }
+            }
+
+            if (shapeJson.contains("innerColor") && shapeJson["innerColor"].is_array())
+            {
+                const auto& c = shapeJson["innerColor"];
+                if (c.size() >= 4)
+                {
+                    cfg.innerColor = {c[0].get<float>(), c[1].get<float>(), c[2].get<float>(), c[3].get<float>()};
+                }
+            }
+
+            if (shapeJson.contains("position") && shapeJson["position"].is_array())
+            {
+                const auto& p = shapeJson["position"];
+                if (p.size() >= 3)
+                {
+                    cfg.posX = p[0].get<float>();
+                    cfg.posY = p[1].get<float>();
+                    cfg.posZ = p[2].get<float>();
+                }
+            }
+
+            if (shapeJson.contains("rotation") && shapeJson["rotation"].is_array())
+            {
+                const auto& r = shapeJson["rotation"];
+                if (r.size() >= 3)
+                {
+                    cfg.rotX = r[0].get<float>();
+                    cfg.rotY = r[1].get<float>();
+                    cfg.rotZ = r[2].get<float>();
+                }
+            }
+
+            if (shapeJson.contains("scale") && shapeJson["scale"].is_array())
+            {
+                const auto& s = shapeJson["scale"];
+                if (s.size() >= 3)
+                {
+                    cfg.scaleX = s[0].get<float>();
+                    cfg.scaleY = s[1].get<float>();
+                    cfg.scaleZ = s[2].get<float>();
+                }
+            }
+
+            // Add shape
+            int idx = m_app->getShapeManager().addShape(cfg);
+
+            // Set visibility
+            ShapeInstance* inst = m_app->getShapeManager().getShape(idx);
+            if (inst)
+            {
+                inst->visible = shapeJson.value("visible", true);
+            }
+        }
     }
 
-    // Parse each shape object
-    size_t searchPos = shapesPos;
-    while (true)
-    {
-        size_t shapeStart = content.find('{', searchPos);
-        if (shapeStart == std::string::npos) break;
-
-        size_t shapeEnd = content.find('}', shapeStart);
-        if (shapeEnd == std::string::npos) break;
-
-        // Check if this is inside shapes array
-        size_t arrayEnd = content.find(']', shapesPos);
-        if (shapeStart > arrayEnd) break;
-
-        std::string shapeJson = content.substr(shapeStart, shapeEnd - shapeStart + 1);
-
-        // Parse shape properties
-        ShapeConfig cfg;
-
-        std::string name = findValue("name", shapeStart);
-        if (!name.empty()) cfg.name = unescapeJson(name);
-
-        std::string type = findValue("type", shapeStart);
-        cfg.type = (type == "cylinder") ? ShapeConfig::Type::Cylinder : ShapeConfig::Type::Cone;
-
-        std::string formula = findValue("formula", shapeStart);
-        if (!formula.empty()) cfg.formula = utf8ToWstring(unescapeJson(formula));
-
-        std::string domainStart = findValue("domainStart", shapeStart);
-        std::string domainEnd = findValue("domainEnd", shapeStart);
-        if (!domainStart.empty()) cfg.domainStart = parseFloat(domainStart);
-        if (!domainEnd.empty()) cfg.domainEnd = parseFloat(domainEnd);
-
-        std::string sectors = findValue("sectors", shapeStart);
-        std::string slices = findValue("slices", shapeStart);
-        if (!sectors.empty()) cfg.sectors = parseInt(sectors);
-        if (!slices.empty()) cfg.slices = parseInt(slices);
-
-        cfg.smooth = parseBool(findValue("smooth", shapeStart));
-        cfg.turbo = parseBool(findValue("turbo", shapeStart));
-        cfg.doubleCoated = parseBool(findValue("doubleCoated", shapeStart));
-        cfg.reversed = parseBool(findValue("reversed", shapeStart));
-
-        std::string outerColor = findValue("outerColor", shapeStart);
-        std::string innerColor = findValue("innerColor", shapeStart);
-        if (!outerColor.empty()) parseFloatArray(outerColor, cfg.outerColor.data(), 4);
-        if (!innerColor.empty()) parseFloatArray(innerColor, cfg.innerColor.data(), 4);
-
-        std::string position = findValue("position", shapeStart);
-        std::string rotation = findValue("rotation", shapeStart);
-        std::string scale = findValue("scale", shapeStart);
-
-        if (!position.empty())
-        {
-            float pos[3] = { 0, 0, 0 };
-            parseFloatArray(position, pos, 3);
-            cfg.posX = pos[0]; cfg.posY = pos[1]; cfg.posZ = pos[2];
-        }
-        if (!rotation.empty())
-        {
-            float rot[3] = { 0, 0, 0 };
-            parseFloatArray(rotation, rot, 3);
-            cfg.rotX = rot[0]; cfg.rotY = rot[1]; cfg.rotZ = rot[2];
-        }
-        if (!scale.empty())
-        {
-            float scl[3] = { 1, 1, 1 };
-            parseFloatArray(scale, scl, 3);
-            cfg.scaleX = scl[0]; cfg.scaleY = scl[1]; cfg.scaleZ = scl[2];
-        }
-
-        // Add shape
-        int idx = m_app->getShapeManager().addShape(cfg);
-
-        // Set visibility
-        ShapeInstance* inst = m_app->getShapeManager().getShape(idx);
-        if (inst)
-        {
-            std::string visible = findValue("visible", shapeStart);
-            inst->visible = visible.empty() ? true : parseBool(visible);
-        }
-
-        searchPos = shapeEnd + 1;
-    }
+    std::cout << "[Load] Loaded " << m_app->getShapeManager().getShapeCount() << " shapes" << std::endl;
 
     // Rebuild all shapes
     m_app->getShapeManager().rebuildAllDirty();
@@ -517,6 +430,9 @@ inline bool ProjectManager::loadFromFile(const std::wstring& filePath)
     {
         m_app->selectShape(0);
     }
+
+    // Refresh shapes list panel
+    m_app->refreshShapesList();
 
     // Update project info from loaded path
     m_currentProjectPath = filePath;
@@ -534,6 +450,9 @@ inline bool ProjectManager::loadFromFile(const std::wstring& filePath)
     m_hasProject = true;
     m_isNewProject = false;
 
+    // Add to recent projects
+    StartupDialog::AddToRecentProjects(filePath, m_projectName);
+
     return true;
 }
 
@@ -545,7 +464,29 @@ inline bool ProjectManager::createEmptyProject()
         return false;
     }
 
-    // Create an empty project file with default settings
+    // Build JSON structure
+    json j;
+    j["version"] = 1;
+    j["projectType"] = "dynamit_designer";
+    j["projectName"] = wstringToUtf8(m_projectName);
+    j["view"] = {
+        {"rotationX", 0.3},
+        {"rotationY", 0.5},
+        {"zoom", 3.0},
+        {"showNormals", false},
+        {"showAxisX", true},
+        {"showAxisY", true},
+        {"showAxisZ", true},
+        {"showGrid3D", false},
+        {"showGridXZ", true},
+        {"showGridXY", false},
+        {"showGridYZ", false},
+        {"showLight", false}
+    };
+    j["selectedShape"] = -1;
+    j["shapes"] = json::array();
+
+    // Write to file
     std::ofstream file(m_currentProjectPath);
     if (!file.is_open())
     {
@@ -553,30 +494,9 @@ inline bool ProjectManager::createEmptyProject()
         return false;
     }
 
-    // Write minimal valid project JSON
-    file << "{\n";
-    file << "  \"version\": 1,\n";
-    file << "  \"projectType\": \"dynamit_designer\",\n";
-    file << "  \"projectName\": \"" << wstringToUtf8(m_projectName) << "\",\n";
-    file << "  \"view\": {\n";
-    file << "    \"rotationX\": 0.3,\n";
-    file << "    \"rotationY\": 0.5,\n";
-    file << "    \"zoom\": 3.0,\n";
-    file << "    \"showNormals\": false,\n";
-    file << "    \"showAxisX\": true,\n";
-    file << "    \"showAxisY\": true,\n";
-    file << "    \"showAxisZ\": true,\n";
-    file << "    \"showGrid3D\": false,\n";
-    file << "    \"showGridXZ\": true,\n";
-    file << "    \"showGridXY\": false,\n";
-    file << "    \"showGridYZ\": false,\n";
-    file << "    \"showLight\": false\n";
-    file << "  },\n";
-    file << "  \"selectedShape\": -1,\n";
-    file << "  \"shapes\": []\n";
-    file << "}\n";
-
+    file << j.dump(2);
     file.close();
+
     m_isNewProject = false;  // No longer "new" after creating the file
     return true;
 }

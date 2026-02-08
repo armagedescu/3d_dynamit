@@ -172,6 +172,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     std::wcout << L"Directory: " << projectInfo.projectDirectory << std::endl;
     std::wcout << L"Path: " << projectInfo.projectPath << std::endl;
 
+    // Add to recent projects (for both new and existing projects)
+    StartupDialog::AddToRecentProjects(projectInfo.projectPath, projectInfo.projectName);
+
     // Initialize GLFW
     GLFWwindow* window = initGLFW();
     if (!window)

@@ -4,6 +4,9 @@
 #include <windows.h>
 #include <commctrl.h>
 
+#include <atlbase.h>
+#include <atlwin.h>
+
 class DesignerApp;
 
 // Control IDs
@@ -12,43 +15,47 @@ class DesignerApp;
 #define ID_BTN_DELETE       1003
 #define ID_CHK_SHOW_NORMALS 1004
 
-class MainToolbar
+class MainToolbar : public CWindowImpl<MainToolbar>
 {
 public:
-    MainToolbar(DesignerApp* app) : m_app(app), m_hwnd(nullptr) {}
-    ~MainToolbar() { if (m_hwnd) DestroyWindow(m_hwnd); }
+    DECLARE_WND_CLASS(L"MainToolbarClass")
+
+    MainToolbar(DesignerApp* app) : m_app(app) {}
 
     HWND Create(HWND parent)
     {
-        // Register window class
-        WNDCLASSEXW wc = {};
-        wc.cbSize = sizeof(WNDCLASSEXW);
-        wc.lpfnWndProc = WndProc;
-        wc.hInstance = GetModuleHandle(nullptr);
-        wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
-        wc.lpszClassName = L"MainToolbarClass";
-        RegisterClassExW(&wc);
+        RECT rc = { 0, 0, 280, 120 };
+        CWindowImpl::Create(parent, rc, L"Shapes",
+            WS_POPUP | WS_CAPTION | WS_VISIBLE, WS_EX_TOOLWINDOW);
 
-        // Create window
-        m_hwnd = CreateWindowExW(
-            WS_EX_TOOLWINDOW,
-            L"MainToolbarClass",
-            L"Shapes",
-            WS_POPUP | WS_CAPTION | WS_VISIBLE,
-            0, 0, 280, 120,
-            parent, nullptr, GetModuleHandle(nullptr), this);
-
-        if (m_hwnd)
+        if (m_hWnd)
         {
             createControls();
         }
 
-        return m_hwnd;
+        return m_hWnd;
     }
 
-    HWND GetHwnd() const { return m_hwnd; }
+    BEGIN_MSG_MAP(MainToolbar)
+        MESSAGE_HANDLER(WM_CLOSE, OnClose)
+        COMMAND_ID_HANDLER(ID_BTN_NEW_CONE, OnNewCone)
+        COMMAND_ID_HANDLER(ID_BTN_NEW_CYLINDER, OnNewCylinder)
+        COMMAND_ID_HANDLER(ID_BTN_DELETE, OnDelete)
+        COMMAND_ID_HANDLER(ID_CHK_SHOW_NORMALS, OnShowNormals)
+    END_MSG_MAP()
 
 private:
+    LRESULT OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+    {
+        ShowWindow(SW_HIDE);
+        return 0;
+    }
+
+    LRESULT OnNewCone(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+    LRESULT OnNewCylinder(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+    LRESULT OnDelete(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+    LRESULT OnShowNormals(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+
     void createControls()
     {
         HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -56,99 +63,64 @@ private:
         // New Cone button
         HWND btnCone = CreateWindowW(L"BUTTON", L"New Cone",
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            10, 5, 80, 25, m_hwnd, (HMENU)ID_BTN_NEW_CONE,
+            10, 5, 80, 25, m_hWnd, (HMENU)ID_BTN_NEW_CONE,
             GetModuleHandle(nullptr), nullptr);
-        SendMessage(btnCone, WM_SETFONT, (WPARAM)hFont, TRUE);
+        ::SendMessage(btnCone, WM_SETFONT, (WPARAM)hFont, TRUE);
 
         // New Cylinder button
         HWND btnCyl = CreateWindowW(L"BUTTON", L"New Cylinder",
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            100, 5, 90, 25, m_hwnd, (HMENU)ID_BTN_NEW_CYLINDER,
+            100, 5, 90, 25, m_hWnd, (HMENU)ID_BTN_NEW_CYLINDER,
             GetModuleHandle(nullptr), nullptr);
-        SendMessage(btnCyl, WM_SETFONT, (WPARAM)hFont, TRUE);
+        ::SendMessage(btnCyl, WM_SETFONT, (WPARAM)hFont, TRUE);
 
         // Delete button
         HWND btnDel = CreateWindowW(L"BUTTON", L"Delete",
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            200, 5, 65, 25, m_hwnd, (HMENU)ID_BTN_DELETE,
+            200, 5, 65, 25, m_hWnd, (HMENU)ID_BTN_DELETE,
             GetModuleHandle(nullptr), nullptr);
-        SendMessage(btnDel, WM_SETFONT, (WPARAM)hFont, TRUE);
+        ::SendMessage(btnDel, WM_SETFONT, (WPARAM)hFont, TRUE);
 
         // Show Normals checkbox
         HWND chkNormals = CreateWindowW(L"BUTTON", L"Show Normals",
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-            10, 40, 120, 20, m_hwnd, (HMENU)ID_CHK_SHOW_NORMALS,
+            10, 40, 120, 20, m_hWnd, (HMENU)ID_CHK_SHOW_NORMALS,
             GetModuleHandle(nullptr), nullptr);
-        SendMessage(chkNormals, WM_SETFONT, (WPARAM)hFont, TRUE);
+        ::SendMessage(chkNormals, WM_SETFONT, (WPARAM)hFont, TRUE);
     }
-
-    static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-    {
-        MainToolbar* pThis = nullptr;
-
-        if (msg == WM_CREATE)
-        {
-            CREATESTRUCT* pCreate = (CREATESTRUCT*)lParam;
-            pThis = (MainToolbar*)pCreate->lpCreateParams;
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pThis);
-        }
-        else
-        {
-            pThis = (MainToolbar*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-        }
-
-        if (pThis)
-        {
-            return pThis->handleMessage(hwnd, msg, wParam, lParam);
-        }
-
-        return DefWindowProc(hwnd, msg, wParam, lParam);
-    }
-
-    LRESULT handleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
     DesignerApp* m_app;
-    HWND m_hwnd;
 };
 
 // Include implementation inline to avoid separate cpp
 #include "../DesignerApp.h"
 #include "../ShapeManager.h"
 
-inline LRESULT MainToolbar::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+inline LRESULT MainToolbar::OnNewCone(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-    switch (msg)
+    if (m_app) m_app->newShape(ShapeConfig::Type::Cone);
+    return 0;
+}
+
+inline LRESULT MainToolbar::OnNewCylinder(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+    if (m_app) m_app->newShape(ShapeConfig::Type::Cylinder);
+    return 0;
+}
+
+inline LRESULT MainToolbar::OnDelete(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+    if (m_app) m_app->deleteSelectedShape();
+    return 0;
+}
+
+inline LRESULT MainToolbar::OnShowNormals(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+    if (m_app)
     {
-    case WM_COMMAND:
-        switch (LOWORD(wParam))
-        {
-        case ID_BTN_NEW_CONE:
-            if (m_app) m_app->newShape(ShapeConfig::Type::Cone);
-            return 0;
-
-        case ID_BTN_NEW_CYLINDER:
-            if (m_app) m_app->newShape(ShapeConfig::Type::Cylinder);
-            return 0;
-
-        case ID_BTN_DELETE:
-            if (m_app) m_app->deleteSelectedShape();
-            return 0;
-
-        case ID_CHK_SHOW_NORMALS:
-            if (m_app)
-            {
-                HWND chk = GetDlgItem(hwnd, ID_CHK_SHOW_NORMALS);
-                bool checked = (SendMessage(chk, BM_GETCHECK, 0, 0) == BST_CHECKED);
-                m_app->setShowNormals(checked);
-            }
-            return 0;
-        }
-        break;
-
-    case WM_CLOSE:
-        ShowWindow(hwnd, SW_HIDE);
-        return 0;
+        HWND chk = GetDlgItem(ID_CHK_SHOW_NORMALS);
+        bool checked = (::SendMessage(chk, BM_GETCHECK, 0, 0) == BST_CHECKED);
+        m_app->setShowNormals(checked);
     }
-
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return 0;
 }

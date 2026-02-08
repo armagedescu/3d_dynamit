@@ -62,7 +62,7 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\export\dynamitd_cpp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\export\dynamitd_cpp\include;$(SolutionDir)..\3rdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -80,7 +80,7 @@
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\export\dynamitd_cpp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\export\dynamitd_cpp\include;$(SolutionDir)..\3rdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -92,12 +92,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CodeExporter.h" />
     <ClInclude Include="DesignerApp.h" />
+    <ClInclude Include="ProjectManager.h" />
     <ClInclude Include="ShapeManager.h" />
     <ClInclude Include="dialogs\MainToolbar.h" />
     <ClInclude Include="dialogs\BuilderPanel.h" />
     <ClInclude Include="dialogs\TransformPanel.h" />
     <ClInclude Include="dialogs\ColorPanel.h" />
+    <ClInclude Include="VisualizationHelpers.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

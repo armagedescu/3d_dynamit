@@ -14,7 +14,7 @@
 class ProjectManager;
 
 // Forward declarations for dialog panels
-class MainToolbar;
+class ShapesListPanel;
 class ExportToolbar;
 class BuilderPanel;
 class TransformPanel;
@@ -82,10 +82,18 @@ public:
     // Get window title with project name
     void updateWindowTitle();
 
+    // Refresh shapes list (after load, etc.)
+    void refreshShapesList();
+
 private:
     void createDialogs();
     void updateDialogPositions();
     std::array<float, 16> computeViewProjection();
+
+    // Ray picking
+    int pickShape(double mouseX, double mouseY);
+    bool rayTriangleIntersect(const float* rayOrigin, const float* rayDir,
+        const float* v0, const float* v1, const float* v2, float& t);
 
     HINSTANCE m_hInstance;
     GLFWwindow* m_window;
@@ -120,14 +128,14 @@ private:
     std::unique_ptr<ProjectManager> m_projectManager;
 
     // Dialog panels
-    std::unique_ptr<MainToolbar> m_mainToolbar;
+    std::unique_ptr<ShapesListPanel> m_shapesListPanel;
     std::unique_ptr<ExportToolbar> m_exportToolbar;
     std::unique_ptr<BuilderPanel> m_builderPanel;
     std::unique_ptr<TransformPanel> m_transformPanel;
     std::unique_ptr<ColorPanel> m_colorPanel;
     std::unique_ptr<ViewPanel> m_viewPanel;
 
-    HWND m_mainToolbarHwnd;
+    HWND m_shapesListPanelHwnd;
     HWND m_exportToolbarHwnd;
     HWND m_builderPanelHwnd;
     HWND m_transformPanelHwnd;

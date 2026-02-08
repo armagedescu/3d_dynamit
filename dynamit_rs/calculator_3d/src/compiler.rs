@@ -693,7 +693,9 @@ mod tests {
 
         assert!((expr.eval() - 6.0).abs() < 1e-10);
 
-        x = 10.0;
+        // Value is read through the bound pointer in expr.eval()
+        #[allow(unused_assignments)]
+        { x = 10.0; }
         assert!((expr.eval() - 11.0).abs() < 1e-10);
     }
 

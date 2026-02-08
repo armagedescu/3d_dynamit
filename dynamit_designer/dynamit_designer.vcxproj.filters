@@ -36,6 +36,15 @@
     <ClInclude Include="dialogs\ColorPanel.h">
       <Filter>Header Files\dialogs</Filter>
     </ClInclude>
+    <ClInclude Include="CodeExporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VisualizationHelpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
