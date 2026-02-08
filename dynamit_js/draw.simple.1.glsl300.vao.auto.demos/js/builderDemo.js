@@ -36,7 +36,7 @@ let glmain = () => {
       .withColors4d(parabola.colors)
       .withIndices(parabola.indices, Uint32Array);
    
-   shape1.logStrategyShaders("Builder Demo:");
+   //shape1.logStrategyShaders("Builder Demo:");
    
    let gl = shape1.gl;
    gl.enable(gl.DEPTH_TEST);
@@ -65,7 +65,7 @@ let glmain = () => {
          0, 0, 0.3, 0,
          0.5, 0, 0, 1
       ];
-      shape2.transformMatrix4f(matrixRight);
+      //shape2.transformMatrix4f(matrixRight);
       shape2.drawTrianglesIndexed();
       
       requestAnimationFrame(animate);

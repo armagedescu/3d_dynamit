@@ -6,7 +6,8 @@ let glmain = () => {
    let gl = canvas.getContext('webgl2');
    
    // Load texture
-   let textureId = loadTexture(gl, "bitmaps/crate.jpg");
+   //let textureId = loadTexture(gl, "bitmaps/crate.jpg");
+   let textureId = loadTexture(gl, "/draw.simple.1.glsl300.vao.auto.demos/img/airplane.png");
    
    // Build geometry with texture coordinates using polar builder
    let geometry = Builder.polar()
@@ -25,7 +26,7 @@ let glmain = () => {
       .withConstLightDirection([-0.577, -0.577, 0.577])
       .withTransformMatrix4f();
    
-   shape.logStrategyShaders("Texture Demo:");
+   //shape.logStrategyShaders("Texture Demo:");
    
    gl.enable(gl.DEPTH_TEST);
    gl.clearColor(0.2, 0.2, 0.3, 1.0);

@@ -6,6 +6,7 @@ let glmain = () => {
    // Build a star shape using polar formula
    let geometry = Builder.polar()
       .formula("1 + 0.5 * cos(5 * theta)")
+      //.formula("1")
       .domain(0, 2 * Math.PI)
       .sectors(60)
       .slices(5)
@@ -20,7 +21,7 @@ let glmain = () => {
       .withConstLightDirection([-1, -1, 1])
       .withTransformMatrix4f();
    
-   shape.logStrategyShaders("Transform Matrix Demo:");
+   //shape.logStrategyShaders("Transform Matrix Demo:");
    
    let gl = shape.gl;
    gl.enable(gl.DEPTH_TEST);

@@ -5,12 +5,13 @@ let canvas = document.currentScript.parentElement;
 let glmain = () => {
    // Simple cylinder
    let geometry = Builder.polar()
-      .formula("0.3")
+      .formula("0.8")
       .domain(0, 2 * Math.PI)
       .sectors(30)
       .slices(5)
-      .color([0.2, 0.8, 0.4])
-      .buildCylinderIndexedWithColor();
+      .color([0.8, 0.8, 0.4])
+      .buildCylinderIndexedWithColor()
+      ;
    
    let shape = new Dynamit(canvas)
       .withVertices3d(geometry.verts)
@@ -18,7 +19,8 @@ let glmain = () => {
       .withColors4d(geometry.colors)
       .withIndices(geometry.indices, Uint32Array)
       .withConstLightDirection([-1, -1, 1])
-      .withTranslation4f();  // Uniform translation
+      //.withTranslation4f()  // Uniform translation
+      ;
    
    shape.logStrategyShaders("Translation Demo:");
    
@@ -36,7 +38,7 @@ let glmain = () => {
       let y = 0.5 * Math.sin(t);
       let z = 0.3 * Math.sin(t * 2);
       
-      shape.translate4f(x, y, z, 0);
+      //shape.translate4f(x, y, z, 0);
       shape.drawTrianglesIndexed();
       
       requestAnimationFrame(animate);
