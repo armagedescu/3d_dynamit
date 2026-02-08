@@ -14,11 +14,8 @@
 class ProjectManager;
 
 // Forward declarations for dialog panels
-class ShapesListPanel;
 class ExportToolbar;
-class BuilderPanel;
-class TransformPanel;
-class ColorPanel;
+class PropertiesPanel;
 class ViewPanel;
 
 class DesignerApp
@@ -128,17 +125,11 @@ private:
     std::unique_ptr<ProjectManager> m_projectManager;
 
     // Dialog panels
-    std::unique_ptr<ShapesListPanel> m_shapesListPanel;
     std::unique_ptr<ExportToolbar> m_exportToolbar;
-    std::unique_ptr<BuilderPanel> m_builderPanel;
-    std::unique_ptr<TransformPanel> m_transformPanel;
-    std::unique_ptr<ColorPanel> m_colorPanel;
+    std::unique_ptr<PropertiesPanel> m_propertiesPanel;
     std::unique_ptr<ViewPanel> m_viewPanel;
 
-    HWND m_shapesListPanelHwnd;
     HWND m_exportToolbarHwnd;
-    HWND m_builderPanelHwnd;
-    HWND m_transformPanelHwnd;
-    HWND m_colorPanelHwnd;
+    HWND m_propertiesPanelHwnd;
     HWND m_viewPanelHwnd;
 };

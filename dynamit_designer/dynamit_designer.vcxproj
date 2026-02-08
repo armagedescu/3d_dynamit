@@ -97,9 +97,9 @@
     <ClInclude Include="ProjectManager.h" />
     <ClInclude Include="ShapeManager.h" />
     <ClInclude Include="dialogs\MainToolbar.h" />
-    <ClInclude Include="dialogs\BuilderPanel.h" />
-    <ClInclude Include="dialogs\TransformPanel.h" />
-    <ClInclude Include="dialogs\ColorPanel.h" />
+    <ClInclude Include="dialogs\PropertiesPanel.h" />
+    <ClInclude Include="dialogs\ExportToolbar.h" />
+    <ClInclude Include="dialogs\ViewPanel.h" />
     <ClInclude Include="VisualizationHelpers.h" />
   </ItemGroup>
   <ItemGroup>

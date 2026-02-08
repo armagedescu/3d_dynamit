@@ -4,11 +4,8 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
-#include "dialogs/ShapesListPanel.h"
 #include "dialogs/ExportToolbar.h"
-#include "dialogs/BuilderPanel.h"
-#include "dialogs/TransformPanel.h"
-#include "dialogs/ColorPanel.h"
+#include "dialogs/PropertiesPanel.h"
 #include "dialogs/ViewPanel.h"
 
 #include <glm/glm.hpp>
@@ -36,11 +33,8 @@ DesignerApp::DesignerApp(HINSTANCE hInstance, GLFWwindow* window, int width, int
     , m_lastMouseX(0.0)
     , m_lastMouseY(0.0)
     , m_selectedShapeIndex(-1)
-    , m_shapesListPanelHwnd(nullptr)
     , m_exportToolbarHwnd(nullptr)
-    , m_builderPanelHwnd(nullptr)
-    , m_transformPanelHwnd(nullptr)
-    , m_colorPanelHwnd(nullptr)
+    , m_propertiesPanelHwnd(nullptr)
     , m_viewPanelHwnd(nullptr)
     , m_projectManager(std::make_unique<ProjectManager>(this))
 {
@@ -118,7 +112,7 @@ bool DesignerApp::initialize()
     }
 
     // Initial refresh of shapes list
-    if (m_shapesListPanel) m_shapesListPanel->refreshList();
+    if (m_propertiesPanel) m_propertiesPanel->refreshShapesList();
 
     return true;
 }
@@ -128,18 +122,12 @@ void DesignerApp::shutdown()
     m_shapeManager.clearAll();
 
     // Destroy dialogs
-    if (m_shapesListPanelHwnd) { DestroyWindow(m_shapesListPanelHwnd); m_shapesListPanelHwnd = nullptr; }
     if (m_exportToolbarHwnd) { DestroyWindow(m_exportToolbarHwnd); m_exportToolbarHwnd = nullptr; }
-    if (m_builderPanelHwnd) { DestroyWindow(m_builderPanelHwnd); m_builderPanelHwnd = nullptr; }
-    if (m_transformPanelHwnd) { DestroyWindow(m_transformPanelHwnd); m_transformPanelHwnd = nullptr; }
-    if (m_colorPanelHwnd) { DestroyWindow(m_colorPanelHwnd); m_colorPanelHwnd = nullptr; }
+    if (m_propertiesPanelHwnd) { DestroyWindow(m_propertiesPanelHwnd); m_propertiesPanelHwnd = nullptr; }
     if (m_viewPanelHwnd) { DestroyWindow(m_viewPanelHwnd); m_viewPanelHwnd = nullptr; }
 
-    m_shapesListPanel.reset();
     m_exportToolbar.reset();
-    m_builderPanel.reset();
-    m_transformPanel.reset();
-    m_colorPanel.reset();
+    m_propertiesPanel.reset();
     m_viewPanel.reset();
 }
 
@@ -149,29 +137,20 @@ void DesignerApp::createDialogs()
     HWND glfwHwnd = glfwGetWin32Window(m_window);
 
     // Create dialog panels using ATL
-    m_shapesListPanel = std::make_unique<ShapesListPanel>(this);
     m_exportToolbar = std::make_unique<ExportToolbar>(this);
-    m_builderPanel = std::make_unique<BuilderPanel>(this);
-    m_transformPanel = std::make_unique<TransformPanel>(this);
-    m_colorPanel = std::make_unique<ColorPanel>(this);
+    m_propertiesPanel = std::make_unique<PropertiesPanel>(this);
     m_viewPanel = std::make_unique<ViewPanel>(this);
 
     // Create windows
-    m_shapesListPanelHwnd = m_shapesListPanel->Create(glfwHwnd);
     m_exportToolbarHwnd = m_exportToolbar->Create(glfwHwnd);
-    m_builderPanelHwnd = m_builderPanel->Create(glfwHwnd);
-    m_transformPanelHwnd = m_transformPanel->Create(glfwHwnd);
-    m_colorPanelHwnd = m_colorPanel->Create(glfwHwnd);
+    m_propertiesPanelHwnd = m_propertiesPanel->Create(glfwHwnd);
     m_viewPanelHwnd = m_viewPanel->Create(glfwHwnd);
 
     updateDialogPositions();
 
     // Show panels
-    ShowWindow(m_shapesListPanelHwnd, SW_SHOW);
     ShowWindow(m_exportToolbarHwnd, SW_SHOW);
-    ShowWindow(m_builderPanelHwnd, SW_SHOW);
-    ShowWindow(m_transformPanelHwnd, SW_SHOW);
-    ShowWindow(m_colorPanelHwnd, SW_SHOW);
+    ShowWindow(m_propertiesPanelHwnd, SW_SHOW);
     ShowWindow(m_viewPanelHwnd, SW_SHOW);
 }
 
@@ -184,18 +163,7 @@ void DesignerApp::updateDialogPositions()
     // Stack panels vertically on the left
     int y = 30; // Start below title bar area
     int panelGap = 5;
-    int shapesListHeight = 200;
     int exportToolbarHeight = 215;
-    int builderHeight = 280;
-    int transformHeight = 180;
-    int colorHeight = 200;
-
-    if (m_shapesListPanelHwnd)
-    {
-        SetWindowPos(m_shapesListPanelHwnd, HWND_TOPMOST, winX + 5, winY + y,
-            m_panelWidth - 10, shapesListHeight, SWP_NOZORDER);
-        y += shapesListHeight + panelGap;
-    }
 
     if (m_exportToolbarHwnd)
     {
@@ -204,24 +172,15 @@ void DesignerApp::updateDialogPositions()
         y += exportToolbarHeight + panelGap;
     }
 
-    if (m_builderPanelHwnd)
+    // Properties panel (with integrated shapes list) - let it use its own size
+    if (m_propertiesPanelHwnd)
     {
-        SetWindowPos(m_builderPanelHwnd, HWND_TOPMOST, winX + 5, winY + y,
-            m_panelWidth - 10, builderHeight, SWP_NOZORDER);
-        y += builderHeight + panelGap;
-    }
-
-    if (m_transformPanelHwnd)
-    {
-        SetWindowPos(m_transformPanelHwnd, HWND_TOPMOST, winX + 5, winY + y,
-            m_panelWidth - 10, transformHeight, SWP_NOZORDER);
-        y += transformHeight + panelGap;
-    }
-
-    if (m_colorPanelHwnd)
-    {
-        SetWindowPos(m_colorPanelHwnd, HWND_TOPMOST, winX + 5, winY + y,
-            m_panelWidth - 10, colorHeight, SWP_NOZORDER);
+        RECT rc;
+        ::GetWindowRect(m_propertiesPanelHwnd, &rc);
+        int propHeight = rc.bottom - rc.top;
+        int propWidth = rc.right - rc.left;
+        SetWindowPos(m_propertiesPanelHwnd, HWND_TOPMOST, winX + 5, winY + y,
+            propWidth, propHeight, SWP_NOZORDER);
     }
 
     // View panel on the right side
@@ -357,11 +316,8 @@ void DesignerApp::onKey(int key, int scancode, int action, int mods)
         {
             m_panelsVisible = !m_panelsVisible;
             int showCmd = m_panelsVisible ? SW_SHOW : SW_HIDE;
-            if (m_shapesListPanelHwnd) ShowWindow(m_shapesListPanelHwnd, showCmd);
             if (m_exportToolbarHwnd) ShowWindow(m_exportToolbarHwnd, showCmd);
-            if (m_builderPanelHwnd) ShowWindow(m_builderPanelHwnd, showCmd);
-            if (m_transformPanelHwnd) ShowWindow(m_transformPanelHwnd, showCmd);
-            if (m_colorPanelHwnd) ShowWindow(m_colorPanelHwnd, showCmd);
+            if (m_propertiesPanelHwnd) ShowWindow(m_propertiesPanelHwnd, showCmd);
             if (m_viewPanelHwnd) ShowWindow(m_viewPanelHwnd, showCmd);
             std::cout << "Panels: " << (m_panelsVisible ? "visible" : "hidden") << std::endl;
         }
@@ -395,7 +351,7 @@ void DesignerApp::onMouseButton(int button, int action, int mods, double x, doub
                 if (pickedShape >= 0)
                 {
                     selectShape(pickedShape);
-                    if (m_shapesListPanel) m_shapesListPanel->refreshList();
+                    if (m_propertiesPanel) m_propertiesPanel->refreshShapesList();
                 }
             }
             m_mouseDragging = false;
@@ -436,10 +392,14 @@ void DesignerApp::newShape(ShapeConfig::Type type)
     config.name += " " + std::to_string(m_shapeManager.getShapeCount() + 1);
 
     int index = m_shapeManager.addShape(config);
-    selectShape(index);
+    m_selectedShapeIndex = index;
 
-    // Refresh shapes list
-    if (m_shapesListPanel) m_shapesListPanel->refreshList();
+    // Refresh UI if panel exists
+    if (m_propertiesPanel)
+    {
+        m_propertiesPanel->refreshShapesList();
+        m_propertiesPanel->updateFromConfig();
+    }
 
     std::cout << "Created new " << config.name << std::endl;
 }
@@ -459,9 +419,6 @@ void DesignerApp::deleteSelectedShape()
         {
             m_selectedShapeIndex = -1;
         }
-
-        // Refresh shapes list
-        if (m_shapesListPanel) m_shapesListPanel->refreshList();
     }
 }
 
@@ -471,11 +428,8 @@ void DesignerApp::selectShape(int index)
     {
         m_selectedShapeIndex = index;
 
-        // Update panels with new selection
-        if (m_shapesListPanel) m_shapesListPanel->updateSelection();
-        if (m_builderPanel) m_builderPanel->updateFromConfig();
-        if (m_transformPanel) m_transformPanel->updateFromConfig();
-        if (m_colorPanel) m_colorPanel->updateFromConfig();
+        // Update properties panel with new selection
+        if (m_propertiesPanel) m_propertiesPanel->updateFromConfig();
     }
 }
 
@@ -496,7 +450,7 @@ void DesignerApp::onShapeConfigChanged()
 
 void DesignerApp::refreshShapesList()
 {
-    if (m_shapesListPanel) m_shapesListPanel->refreshList();
+    if (m_propertiesPanel) m_propertiesPanel->refreshShapesList();
 }
 
 bool DesignerApp::rayTriangleIntersect(const float* rayOrigin, const float* rayDir,

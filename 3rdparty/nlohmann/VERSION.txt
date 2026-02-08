@@ -1,0 +1,7 @@
+nlohmann/json
+=============
+Version: 3.11.3
+Downloaded: 2026-02-07
+Source: https://github.com/nlohmann/json
+License: MIT
+Single-header library for JSON parsing in C++
