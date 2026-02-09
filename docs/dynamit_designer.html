@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamit Designer - Documentation</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --accent: #10b981;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-code: #0d1117;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --red: #f87171;
+            --green: #4ade80;
+            --blue: #60a5fa;
+            --yellow: #fbbf24;
+            --purple: #a78bfa;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #a78bfa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.25rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-top: 2.5rem;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.3rem;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            color: var(--purple);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p { margin-bottom: 0.75rem; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .workflow {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .step {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .arrow { color: var(--text-muted); font-size: 1.2rem; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        code {
+            background: var(--bg-code);
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 0.75rem 0;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .kbd {
+            display: inline-block;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.25rem;
+            padding: 0.1rem 0.5rem;
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 0.9em;
+            min-width: 1.5em;
+            text-align: center;
+        }
+
+        .color-red { color: var(--red); }
+        .color-green { color: var(--green); }
+        .color-blue { color: var(--blue); }
+        .color-yellow { color: var(--yellow); }
+
+        .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.95rem; }
+
+        ul { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+        li { margin-bottom: 0.25rem; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back">&larr; Back to docs</a>
+
+    <h1>Dynamit Designer</h1>
+    <p class="subtitle">Interactive 3D shape builder for designing composite objects from mathematical primitives</p>
+
+    <h2>What It Is</h2>
+    <p>
+        Dynamit Designer is a Windows desktop application for building 3D shapes visually.
+        You create parts (cones and cylinders) defined by polar formulas, transform each part
+        (move, rotate, scale), and combine them into a single unified mesh.
+    </p>
+    <p>
+        The result can be exported as C++ source code that uses the Dynamit library,
+        saved as a project file (.dproj), or welded into a single shape for further use.
+    </p>
+
+    <h2>Workflow</h2>
+    <div class="workflow">
+        <span class="step">Create parts</span>
+        <span class="arrow">&rarr;</span>
+        <span class="step">Edit formulas</span>
+        <span class="arrow">&rarr;</span>
+        <span class="step">Transform</span>
+        <span class="arrow">&rarr;</span>
+        <span class="step">Weld</span>
+        <span class="arrow">&rarr;</span>
+        <span class="step">Export</span>
+    </div>
+
+    <div class="card">
+        <h3>1. Create Parts</h3>
+        <p>
+            Each part is a <strong>cone</strong> or <strong>cylinder</strong> generated by the
+            <code>PolarBuilder</code>. The geometry lives in the <strong>[-1, 1]</strong> local
+            coordinate space. You add parts from the Properties Panel.
+        </p>
+    </div>
+
+    <div class="card">
+        <h3>2. Edit Formulas</h3>
+        <p>
+            Each part's shape is controlled by a polar formula <code>r = f(&theta;)</code>.
+            For example, <code>sin(theta)</code> creates a sphere-like surface, while <code>1</code>
+            creates a straight cone or cylinder. You can set the domain (start/end angle), number
+            of sectors and slices, smoothing, and colors.
+        </p>
+    </div>
+
+    <div class="card">
+        <h3>3. Transform</h3>
+        <p>
+            Each part can be moved, rotated, and scaled independently.
+            Use the visual gizmo handles in the 3D viewport or type exact values
+            in the Properties Panel.
+        </p>
+        <table>
+            <tr><th>Key</th><th>Mode</th><th>Handles</th><th>Affects</th></tr>
+            <tr>
+                <td><span class="kbd">W</span></td>
+                <td>Translate</td>
+                <td>Arrows with cone tips</td>
+                <td>Position (X, Y, Z)</td>
+            </tr>
+            <tr>
+                <td><span class="kbd">E</span></td>
+                <td>Rotate</td>
+                <td>Colored circles</td>
+                <td>Rotation (degrees)</td>
+            </tr>
+            <tr>
+                <td><span class="kbd">R</span></td>
+                <td>Scale</td>
+                <td>Lines with cube tips</td>
+                <td>Scale (X, Y, Z)</td>
+            </tr>
+        </table>
+        <p>
+            Axis colors:
+            <span class="color-red">X = Red</span>,
+            <span class="color-green">Y = Green</span>,
+            <span class="color-blue">Z = Blue</span>.
+            Click and drag a handle to transform along that axis.
+        </p>
+    </div>
+
+    <div class="card">
+        <h3>4. Weld</h3>
+        <p>
+            Welding combines all parts into a single mesh. Each part's transform is baked
+            into its vertices, normals are re-transformed, and indices are merged. The result
+            is one unified shape that can be exported or used as a building block.
+        </p>
+    </div>
+
+    <div class="card">
+        <h3>5. Export</h3>
+        <p>Three export modes for C++ code:</p>
+        <ul>
+            <li><strong>Geometry Only</strong> &mdash; just the PolarBuilder calls generating vertices, normals, colors, indices</li>
+            <li><strong>With Dynamit Setup</strong> &mdash; builder code + Dynamit renderer configuration</li>
+            <li><strong>Complete Standalone App</strong> &mdash; full GLFW application with camera, render loop, window setup</li>
+        </ul>
+        <p>Projects can also be saved/loaded as <code>.dproj</code> JSON files.</p>
+    </div>
+
+    <h2>Keyboard Shortcuts</h2>
+    <table>
+        <tr><th>Key</th><th>Action</th></tr>
+        <tr><td><span class="kbd">W</span></td><td>Translate mode (move gizmo)</td></tr>
+        <tr><td><span class="kbd">E</span></td><td>Rotate mode (rotation gizmo)</td></tr>
+        <tr><td><span class="kbd">R</span></td><td>Scale mode (scale gizmo)</td></tr>
+        <tr><td><span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> <span class="kbd">&uarr;</span> <span class="kbd">&darr;</span></td><td>Orbit camera</td></tr>
+        <tr><td>Scroll wheel</td><td>Zoom in/out</td></tr>
+        <tr><td>Left-click drag (empty space)</td><td>Orbit camera</td></tr>
+        <tr><td>Left-click (on shape)</td><td>Select shape</td></tr>
+        <tr><td><span class="kbd">F9</span></td><td>Toggle panels visibility</td></tr>
+        <tr><td><span class="kbd">F11</span></td><td>Toggle wireframe mode</td></tr>
+    </table>
+
+    <h2>Viewport</h2>
+    <p>
+        The 3D viewport uses a left-handed coordinate system:
+        <span class="color-red">+X right</span>,
+        <span class="color-green">+Y up</span>,
+        <span class="color-blue">+Z into screen</span>.
+        The camera orbits around the origin with spherical coordinates.
+        Visualization helpers (axes, grid, light direction) can be toggled from the View Panel.
+    </p>
+
+    <h2>Shape Properties</h2>
+    <table>
+        <tr><th>Property</th><th>Description</th></tr>
+        <tr><td>Formula</td><td>Polar formula <code>r = f(theta)</code> defining the radius at each angle</td></tr>
+        <tr><td>Domain</td><td>Start and end angle (radians). Full revolution = 0 to 2&pi;</td></tr>
+        <tr><td>Sectors</td><td>Angular subdivisions around the axis</td></tr>
+        <tr><td>Slices</td><td>Subdivisions along the axis</td></tr>
+        <tr><td>Smooth</td><td>Smooth normals vs. flat shading</td></tr>
+        <tr><td>Double coated</td><td>Render both inner and outer surfaces</td></tr>
+        <tr><td>Outer/Inner color</td><td>RGBA colors for front and back faces</td></tr>
+        <tr><td>Position</td><td>Translation offset (X, Y, Z)</td></tr>
+        <tr><td>Rotation</td><td>Euler angles in degrees (X, Y, Z)</td></tr>
+        <tr><td>Scale</td><td>Scale factors (X, Y, Z)</td></tr>
+    </table>
+
+    <h2>Formula Examples</h2>
+    <table>
+        <tr><th>Formula</th><th>Shape</th></tr>
+        <tr><td><code>1</code></td><td>Standard cone or cylinder</td></tr>
+        <tr><td><code>sin(theta)</code></td><td>Sphere-like surface of revolution</td></tr>
+        <tr><td><code>0.5 + 0.3 * cos(3 * theta)</code></td><td>Flower-petal shape</td></tr>
+        <tr><td><code>theta / 6.28</code></td><td>Spiral cone</td></tr>
+        <tr><td><code>abs(sin(2 * theta))</code></td><td>Four-lobed shape</td></tr>
+    </table>
+
+    <h2>Technical Details</h2>
+    <ul>
+        <li>Built with C++17, OpenGL 3.3, GLFW, GLM</li>
+        <li>UI panels use Win32 ATL dialogs</li>
+        <li>Rendering via the <a href="dynamit_cpp.html">Dynamit</a> library with auto-generated GLSL shaders</li>
+        <li>Each shape gets its own Dynamit instance with vertex, normal, color, and index buffers</li>
+        <li>Transform order: Translate &times; RotateX &times; RotateY &times; RotateZ &times; Scale</li>
+        <li>Shape picking via Moller-Trumbore ray-triangle intersection</li>
+        <li>Project files are human-readable JSON (.dproj)</li>
+    </ul>
+
+    <p style="margin-top: 2rem; color: var(--text-muted); font-size: 0.9rem;">
+        <a href="index.html">&larr; Back to docs</a>
+    </p>
+</body>
+</html>

@@ -74,6 +74,9 @@ bool DesignerApp::initialize()
     // Initialize visualization helpers (axes, light direction, grid)
     m_vizHelpers.initialize();
 
+    // Initialize transform gizmo
+    m_gizmo.initialize();
+
     createDialogs();
 
     // Handle project loading/creation
@@ -268,6 +271,17 @@ void DesignerApp::render()
     // Render all shapes - Dynamit handles shaders automatically!
     m_shapeManager.render(viewProjection, m_showNormals);
 
+    // Render transform gizmo on selected shape
+    if (m_selectedShapeIndex >= 0)
+    {
+        ShapeConfig* cfg = getSelectedShapeConfig();
+        if (cfg)
+        {
+            glm::vec3 shapePos(cfg->posX, cfg->posY, cfg->posZ);
+            m_gizmo.render(viewProjection, shapePos);
+        }
+    }
+
     // Reset polygon mode
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
@@ -322,6 +336,27 @@ void DesignerApp::onKey(int key, int scancode, int action, int mods)
             std::cout << "Panels: " << (m_panelsVisible ? "visible" : "hidden") << std::endl;
         }
         break;
+    case GLFW_KEY_W:
+        if (action == GLFW_PRESS)
+        {
+            m_gizmo.setMode(TransformGizmo::Mode::Translate);
+            std::cout << "Gizmo: Translate" << std::endl;
+        }
+        break;
+    case GLFW_KEY_E:
+        if (action == GLFW_PRESS)
+        {
+            m_gizmo.setMode(TransformGizmo::Mode::Rotate);
+            std::cout << "Gizmo: Rotate" << std::endl;
+        }
+        break;
+    case GLFW_KEY_R:
+        if (action == GLFW_PRESS)
+        {
+            m_gizmo.setMode(TransformGizmo::Mode::Scale);
+            std::cout << "Gizmo: Scale" << std::endl;
+        }
+        break;
     }
 }
 
@@ -335,32 +370,105 @@ void DesignerApp::onMouseButton(int button, int action, int mods, double x, doub
     {
         if (action == GLFW_PRESS)
         {
+            // Test gizmo hit first (if a shape is selected)
+            if (m_selectedShapeIndex >= 0)
+            {
+                ShapeConfig* cfg = getSelectedShapeConfig();
+                if (cfg)
+                {
+                    glm::vec3 rayOrigin, rayDir;
+                    unprojectRay(x, y, rayOrigin, rayDir);
+                    glm::vec3 shapePos(cfg->posX, cfg->posY, cfg->posZ);
+
+                    auto hitAxis = m_gizmo.hitTest(rayOrigin, rayDir, shapePos);
+                    if (hitAxis != TransformGizmo::Axis::None)
+                    {
+                        m_gizmo.beginDrag(hitAxis, rayOrigin, rayDir, shapePos);
+                        m_gizmoDragging = true;
+                        m_lastMouseX = x;
+                        m_lastMouseY = y;
+                        return; // Don't start camera drag
+                    }
+                }
+            }
+
             m_mouseDragging = true;
             m_lastMouseX = x;
             m_lastMouseY = y;
         }
         else if (action == GLFW_RELEASE)
         {
-            // Check if this was a click (minimal movement) for shape selection
-            double dx = x - m_lastMouseX;
-            double dy = y - m_lastMouseY;
-            if (dx * dx + dy * dy < 25.0)  // Less than 5 pixels movement
+            if (m_gizmoDragging)
             {
-                // Try to pick a shape
-                int pickedShape = pickShape(x, y);
-                if (pickedShape >= 0)
-                {
-                    selectShape(pickedShape);
-                    if (m_propertiesPanel) m_propertiesPanel->refreshShapesList();
-                }
+                m_gizmo.endDrag();
+                m_gizmoDragging = false;
             }
-            m_mouseDragging = false;
+            else
+            {
+                // Check if this was a click (minimal movement) for shape selection
+                double dx = x - m_lastMouseX;
+                double dy = y - m_lastMouseY;
+                if (dx * dx + dy * dy < 25.0)  // Less than 5 pixels movement
+                {
+                    // Try to pick a shape
+                    int pickedShape = pickShape(x, y);
+                    if (pickedShape >= 0)
+                    {
+                        selectShape(pickedShape);
+                        if (m_propertiesPanel) m_propertiesPanel->refreshShapesList();
+                    }
+                }
+                m_mouseDragging = false;
+            }
         }
     }
 }
 
 void DesignerApp::onMouseMove(double x, double y)
 {
+    if (m_gizmoDragging)
+    {
+        glm::vec3 rayOrigin, rayDir;
+        unprojectRay(x, y, rayOrigin, rayDir);
+
+        glm::vec3 delta = m_gizmo.updateDrag(rayOrigin, rayDir);
+
+        ShapeConfig* cfg = getSelectedShapeConfig();
+        if (cfg && m_gizmo.isDragging())
+        {
+            auto mode = m_gizmo.getMode();
+            if (mode == TransformGizmo::Mode::Translate)
+            {
+                cfg->posX += delta.x;
+                cfg->posY += delta.y;
+                cfg->posZ += delta.z;
+                glm::vec3 newPos(cfg->posX, cfg->posY, cfg->posZ);
+                m_gizmo.beginDrag(m_gizmo.getActiveAxis(), rayOrigin, rayDir, newPos);
+            }
+            else if (mode == TransformGizmo::Mode::Rotate)
+            {
+                cfg->rotX += delta.x;
+                cfg->rotY += delta.y;
+                cfg->rotZ += delta.z;
+                // Re-anchor at same position with new start angle
+                glm::vec3 shapePos(cfg->posX, cfg->posY, cfg->posZ);
+                m_gizmo.beginDrag(m_gizmo.getActiveAxis(), rayOrigin, rayDir, shapePos);
+            }
+            else if (mode == TransformGizmo::Mode::Scale)
+            {
+                cfg->scaleX += delta.x;
+                cfg->scaleY += delta.y;
+                cfg->scaleZ += delta.z;
+                glm::vec3 shapePos(cfg->posX, cfg->posY, cfg->posZ);
+                m_gizmo.beginDrag(m_gizmo.getActiveAxis(), rayOrigin, rayDir, shapePos);
+            }
+
+            onShapeConfigChanged();
+            if (m_propertiesPanel) m_propertiesPanel->updateFromConfig();
+        }
+        return;
+    }
+
     if (m_mouseDragging)
     {
         double dx = x - m_lastMouseX;
@@ -494,43 +602,44 @@ bool DesignerApp::rayTriangleIntersect(const float* rayOrigin, const float* rayD
     return t > EPSILON;
 }
 
-int DesignerApp::pickShape(double mouseX, double mouseY)
+void DesignerApp::unprojectRay(double mouseX, double mouseY, glm::vec3& rayOrigin, glm::vec3& rayDir)
 {
-    // Convert mouse position to normalized device coordinates
     float vpX = m_panelsVisible ? static_cast<float>(m_viewportX) : 0.0f;
     float vpW = m_panelsVisible ? static_cast<float>(m_viewportWidth) : static_cast<float>(m_windowWidth);
     float vpH = static_cast<float>(m_windowHeight);
 
-    // Mouse in viewport coordinates
     float localX = static_cast<float>(mouseX) - vpX;
     float ndcX = (2.0f * localX / vpW) - 1.0f;
     float ndcY = 1.0f - (2.0f * static_cast<float>(mouseY) / vpH);
 
-    // Compute camera position
     glm::vec3 cameraPos(
         m_zoom * cos(glm::radians(m_rotationX)) * sin(glm::radians(m_rotationY)),
         m_zoom * sin(glm::radians(m_rotationX)),
         m_zoom * cos(glm::radians(m_rotationX)) * cos(glm::radians(m_rotationY))
     );
 
-    // Compute view and projection matrices
     glm::mat4 view = glm::lookAtLH(cameraPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     float aspectRatio = vpW / vpH;
     glm::mat4 projection = glm::perspectiveLH(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
 
-    // Inverse VP to unproject
     glm::mat4 invVP = glm::inverse(projection * view);
 
-    // Unproject near and far points
     glm::vec4 nearPoint = invVP * glm::vec4(ndcX, ndcY, 0.0f, 1.0f);
     glm::vec4 farPoint = invVP * glm::vec4(ndcX, ndcY, 1.0f, 1.0f);
 
     nearPoint /= nearPoint.w;
     farPoint /= farPoint.w;
 
-    // Ray origin and direction
-    float rayOrigin[3] = { nearPoint.x, nearPoint.y, nearPoint.z };
-    glm::vec3 rayDirVec = glm::normalize(glm::vec3(farPoint) - glm::vec3(nearPoint));
+    rayOrigin = glm::vec3(nearPoint);
+    rayDir = glm::normalize(glm::vec3(farPoint) - glm::vec3(nearPoint));
+}
+
+int DesignerApp::pickShape(double mouseX, double mouseY)
+{
+    glm::vec3 rayOriginVec, rayDirVec;
+    unprojectRay(mouseX, mouseY, rayOriginVec, rayDirVec);
+
+    float rayOrigin[3] = { rayOriginVec.x, rayOriginVec.y, rayOriginVec.z };
     float rayDir[3] = { rayDirVec.x, rayDirVec.y, rayDirVec.z };
 
     // Test intersection with each shape

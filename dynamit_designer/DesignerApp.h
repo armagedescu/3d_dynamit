@@ -9,6 +9,7 @@
 
 #include "ShapeManager.h"
 #include "VisualizationHelpers.h"
+#include "TransformGizmo.h"
 
 // Forward declaration
 class ProjectManager;
@@ -120,6 +121,13 @@ private:
 
     // Visualization helpers
     VisualizationHelpers m_vizHelpers;
+
+    // Transform gizmo
+    TransformGizmo m_gizmo;
+    bool m_gizmoDragging = false;
+
+    // Ray unprojection helper
+    void unprojectRay(double mouseX, double mouseY, glm::vec3& rayOrigin, glm::vec3& rayDir);
 
     // Project manager
     std::unique_ptr<ProjectManager> m_projectManager;
