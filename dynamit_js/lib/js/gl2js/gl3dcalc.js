@@ -1,319 +1,555 @@
-"use strict";
+﻿"use strict";
 
 //========================================
-// 3DCalculator - Expression evaluator for parametric geometry
-// JavaScript port - uses Function() for expression evaluation
+// 3DCalculator - Expression evaluator with symbolic differentiation
+// JavaScript port of C++ expression_compiler.h
 //========================================
 
 //========================================
-// ExpressionContext - manages variable bindings
+// Binary operators
 //========================================
-class ExpressionContext {
-   #bindings = new Map();
-   
-   bind(name, valueOrGetter) {
-      // Can bind a value directly or a getter function
-      this.#bindings.set(name.toLowerCase(), valueOrGetter);
-      return this;
-   }
-   
-   unbind(name) {
-      this.#bindings.delete(name.toLowerCase());
-      return this;
-   }
-   
-   get(name) {
-      return this.#bindings.get(name.toLowerCase());
-   }
-   
-   has(name) {
-      return this.#bindings.has(name.toLowerCase());
-   }
-   
-   clear() {
-      this.#bindings.clear();
-      return this;
-   }
-   
-   // Get all bindings as object for Function() scope
-   toObject() {
-      let obj = {};
-      for (let [name, value] of this.#bindings) {
-         obj[name] = typeof value === 'function' ? value() : value;
-      }
-      return obj;
-   }
-   
-   get names() {
-      return Array.from(this.#bindings.keys());
-   }
-}
+const BinaryOperator = {
+   PLUS: 0,
+   MINUS: 1,
+   MULTIPLY: 2,
+   DIVIDE: 3,
+   POWER: 4,
+   UNKNOWN: 5
+};
 
 //========================================
 // Built-in constants
 //========================================
 const MathConstants = {
-   PI:      Math.PI,
-   E:       Math.E,
-   TAU:     Math.PI * 2,
-   M_PI:    Math.PI,
-   M_E:     Math.E,
-   M_PI_2:  Math.PI / 2,
-   M_PI_4:  Math.PI / 4,
+   PI: Math.PI,
+   E: Math.E,
+   TAU: Math.PI * 2,
+   M_PI: Math.PI,
+   M_E: Math.E,
+   M_PI_2: Math.PI / 2,
+   M_PI_4: Math.PI / 4,
    M_SQRT2: Math.SQRT2,
-   M_LN2:   Math.LN2,
-   M_LN10:  Math.LN10
+   M_SQRT1_2: Math.SQRT1_2,
+   M_LN2: Math.LN2,
+   M_LN10: Math.LN10,
+   M_LOG2E: Math.LOG2E,
+   M_LOG10E: Math.LOG10E,
+   M_1_PI: 1 / Math.PI,
+   M_2_PI: 2 / Math.PI,
+   M_2_SQRTPI: 2 / Math.sqrt(Math.PI)
 };
 
 //========================================
-// Expression - compiled expression with variable bindings
+// Function registry with derivatives
+//========================================
+const FunctionRegistry = {
+   sin: { arity: 1, fn: Math.sin, deriv: Math.cos },
+   cos: { arity: 1, fn: Math.cos, deriv: x => -Math.sin(x) },
+   tan: { arity: 1, fn: Math.tan, deriv: x => { let c = Math.cos(x); return 1 / (c * c); } },
+   sqrt: { arity: 1, fn: Math.sqrt, deriv: x => 0.5 / Math.sqrt(x) },
+   exp: { arity: 1, fn: Math.exp, deriv: Math.exp },
+   log: { arity: 1, fn: Math.log, deriv: x => 1 / x },
+   abs: { arity: 1, fn: Math.abs, deriv: x => x >= 0 ? 1 : -1 },
+   asin: { arity: 1, fn: Math.asin, deriv: x => 1 / Math.sqrt(1 - x * x) },
+   acos: { arity: 1, fn: Math.acos, deriv: x => -1 / Math.sqrt(1 - x * x) },
+   atan: { arity: 1, fn: Math.atan, deriv: x => 1 / (1 + x * x) },
+   sinh: { arity: 1, fn: Math.sinh, deriv: Math.cosh },
+   cosh: { arity: 1, fn: Math.cosh, deriv: Math.sinh },
+   tanh: { arity: 1, fn: Math.tanh, deriv: x => { let t = Math.tanh(x); return 1 - t * t; } },
+   floor: { arity: 1, fn: Math.floor, deriv: null },
+   ceil: { arity: 1, fn: Math.ceil, deriv: null },
+   round: { arity: 1, fn: Math.round, deriv: null },
+   sign: { arity: 1, fn: Math.sign, deriv: null },
+   pow: { arity: 2, fn: Math.pow, derivArg1: (a, b) => b * Math.pow(a, b - 1), derivArg2: (a, b) => Math.pow(a, b) * Math.log(a) },
+   atan2: { arity: 2, fn: Math.atan2, derivArg1: (y, x) => x / (x * x + y * y), derivArg2: (y, x) => -y / (x * x + y * y) },
+   min: { arity: 2, fn: Math.min, derivArg1: null, derivArg2: null },
+   max: { arity: 2, fn: Math.max, derivArg1: null, derivArg2: null }
+};
+
+//========================================
+// Expression base class
 //========================================
 class Expression {
-   #formula = "";
-   #compiledFn = null;
-   #context = new ExpressionContext();
-   #varNames = [];
-   
-   constructor(formula) {
-      this.#formula = formula;
-      this.#compile();
-   }
-   
-   #compile() {
-      // Transform formula for JavaScript compatibility
-      let jsFormula = this.#formula
-         // Replace ** with Math.pow for older compatibility (optional, modern JS supports **)
-         // .replace(/\*\*/g, ',')  // temporarily mark
-         // Handle functions - wrap with Math.
-         .replace(/\b(sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh|sqrt|abs|exp|log|log10|log2|pow|floor|ceil|round|min|max|sign)\s*\(/gi, 
-                  (match, fn) => `Math.${fn.toLowerCase()}(`)
-         // Handle PI, E as constants
-         .replace(/\bPI\b/gi, 'PI')
-         .replace(/\bE\b/gi, 'E')
-         .replace(/\bTAU\b/gi, 'TAU');
-      
-      // Extract variable names (identifiers that aren't Math functions or constants)
-      let identifierRe = /\b([a-zA-Z_][a-zA-Z0-9_]*)\b/g;
-      let match;
-      let varSet = new Set();
-      
-      while ((match = identifierRe.exec(this.#formula)) !== null) {
-         let name = match[1].toLowerCase();
-         // Skip Math functions and known constants
-         if (['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'sinh', 'cosh', 'tanh',
-              'sqrt', 'abs', 'exp', 'log', 'log10', 'log2', 'pow', 'floor', 'ceil', 'round',
-              'min', 'max', 'sign', 'pi', 'e', 'tau', 'math'].includes(name)) {
-            continue;
-         }
-         varSet.add(name);
-      }
-      
-      this.#varNames = Array.from(varSet);
-      
-      // Build function with constants and variables as parameters
-      let allNames = [...Object.keys(MathConstants), ...this.#varNames];
-      
-      try {
-         // Create function that takes all variables as arguments
-         this.#compiledFn = new Function(...allNames, `return ${jsFormula};`);
-      } catch (e) {
-         throw new Error(`Failed to compile expression "${this.#formula}": ${e.message}`);
-      }
-   }
-   
-   get formula() { return this.#formula; }
-   get context() { return this.#context; }
-   get variableNames() { return [...this.#varNames]; }
+   #context = new Map();
    
    bind(name, valueOrGetter) {
-      this.#context.bind(name, valueOrGetter);
+      this.#context.set(name.toLowerCase(), valueOrGetter);
       return this;
    }
    
    unbind(name) {
-      this.#context.unbind(name);
+      this.#context.delete(name.toLowerCase());
       return this;
    }
    
+   getBinding(name) {
+      return this.#context.get(name.toLowerCase());
+   }
+   
+   hasBinding(name) {
+      return this.#context.has(name.toLowerCase());
+   }
+   
+   get context() { return this.#context; }
+   
+   eval() { throw new Error("eval() must be implemented"); }
+   derivative(wrt) { throw new Error("derivative() must be implemented"); }
+   clone() { throw new Error("clone() must be implemented"); }
+   isConstant() { return false; }
+   
+   cylX(theta) { return this.eval() * Math.cos(theta); }
+   cylY(theta) { return this.eval() * Math.sin(theta); }
+}
+
+//========================================
+// Number constant expression
+//========================================
+class NumberConstantExpression extends Expression {
+   #value;
+   
+   constructor(value) {
+      super();
+      this.#value = value;
+   }
+   
+   eval() { return this.#value; }
+   isConstant() { return true; }
+   
+   derivative(wrt) {
+      return new NumberConstantExpression(0);
+   }
+   
+   clone() {
+      return new NumberConstantExpression(this.#value);
+   }
+}
+
+//========================================
+// Variable expression
+//========================================
+class VariableExpression extends Expression {
+   #name;
+   #root = null;
+   
+   constructor(name) {
+      super();
+      this.#name = name.toLowerCase();
+   }
+   
+   get name() { return this.#name; }
+   
+   setRoot(root) { this.#root = root; }
+   
    eval() {
-      // Build arguments array: constants first, then variables
-      let args = [
-         ...Object.values(MathConstants),
-         ...this.#varNames.map(name => {
-            let val = this.#context.get(name);
-            if (val === undefined) {
-               throw new Error(`Unbound variable: ${name}`);
-            }
-            return typeof val === 'function' ? val() : val;
-         })
-      ];
-      
-      return this.#compiledFn(...args);
+      let binding = this.#root ? this.#root.getBinding(this.#name) : this.getBinding(this.#name);
+      if (binding === undefined) {
+         throw new Error(`Unbound variable: ${this.#name}`);
+      }
+      return typeof binding === 'function' ? binding() : binding;
    }
    
-   // Cylindrical coordinate helpers
-   // r = eval(), returns r * cos(theta)
-   cylX(theta) {
-      return this.eval() * Math.cos(theta);
+   isConstant() { return false; }
+   
+   derivative(wrt) {
+      return new NumberConstantExpression(this.#name === wrt.toLowerCase() ? 1 : 0);
    }
    
-   // r = eval(), returns r * sin(theta)
-   cylY(theta) {
-      return this.eval() * Math.sin(theta);
+   clone() {
+      let c = new VariableExpression(this.#name);
+      c.#root = this.#root;
+      return c;
    }
 }
 
 //========================================
-// ExpressionCompiler - factory for Expression objects
+// Unary expression (prefix +/-)
 //========================================
-class ExpressionCompiler {
-   compile(formula) {
-      return new Expression(formula);
+class UnaryExpression extends Expression {
+   #operand;
+   #op; // 'plus' or 'minus'
+   
+   constructor(op, operand) {
+      super();
+      this.#op = op;
+      this.#operand = operand;
+   }
+   
+   eval() {
+      let val = this.#operand.eval();
+      return this.#op === 'minus' ? -val : val;
+   }
+   
+   isConstant() { return this.#operand.isConstant(); }
+   
+   derivative(wrt) {
+      let du = this.#operand.derivative(wrt);
+      if (this.#op === 'minus') {
+         return new UnaryExpression('minus', du);
+      }
+      return du;
+   }
+   
+   clone() {
+      return new UnaryExpression(this.#op, this.#operand.clone());
    }
 }
 
 //========================================
-// Geometry Builders using expressions
+// Binary expression (+, -, *, /, **)
 //========================================
-
-// Cross product of vectors from 3 points
-function cross3p(p0, p1, p2) {
-   let ax = p1[0] - p0[0], ay = p1[1] - p0[1], az = p1[2] - p0[2];
-   let bx = p2[0] - p0[0], by = p2[1] - p0[1], bz = p2[2] - p0[2];
-   return [
-      ay * bz - az * by,
-      az * bx - ax * bz,
-      ax * by - ay * bx
-   ];
-}
-
-// Normalize vector
-function normalize3(v) {
-   let len = Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-   if (len < 0.0001) return [0, 0, 0];
-   return [v[0]/len, v[1]/len, v[2]/len];
-}
-
-//========================================
-// buildConePolarIndexed - creates indexed cone geometry from polar formula
-//========================================
-function buildConePolarIndexed(formula, domainStart = 0, domainEnd = 2 * Math.PI, nsectors = 20, nslices = 3) {
-   let compiler = new ExpressionCompiler();
+class BinaryExpression extends Expression {
+   #left;
+   #right;
+   #op;
    
-   let verts = [];
-   let norms = [];
-   let indices = [];
-   
-   // Variable for theta
-   let theta = { value: 0 };
-   
-   // Compile r(theta) expression
-   let exprR = compiler.compile(formula);
-   exprR.bind("theta", () => theta.value);
-   
-   const zTip = -1.0;
-   
-   let addVertex = (x, y, z, nx, ny, nz) => {
-      let idx = verts.length / 3;
-      verts.push(x, y, z);
-      norms.push(nx, ny, nz);
-      return idx;
-   };
-   
-   // Add tip vertex (index 0)
-   verts.push(0, 0, zTip);
-   norms.push(0, 0, 0);
-   let tipIndex = 0;
-   
-   // Build first ring (base) with nsectors+1 vertices
-   let baseRing = [];
-   for (let i = 0; i <= nsectors; i++) {
-      theta.value = domainStart + (domainEnd - domainStart) * i / nsectors;
-      
-      let r = exprR.eval();
-      let x = exprR.cylX(theta.value) / nslices;
-      let y = exprR.cylY(theta.value) / nslices;
-      
-      let cosT = Math.cos(theta.value);
-      let sinT = Math.sin(theta.value);
-      
-      // Approximate normal (simplified)
-      let nx = r * cosT;
-      let ny = r * sinT;
-      let nz = zTip;
-      
-      baseRing.push(addVertex(x, y, 0, nx, ny, nz));
+   constructor(op, left, right) {
+      super();
+      this.#op = op;
+      this.#left = left;
+      this.#right = right;
    }
    
-   // Generate tip triangles (fan from tip to base ring)
-   for (let i = 0; i < nsectors; i++) {
-      indices.push(tipIndex, baseRing[i], baseRing[i + 1]);
-   }
-   
-   // Build remaining rings and quads for slices
-   if (nslices > 1) {
-      let prevRing = baseRing;
-      
-      for (let h = 1; h < nslices; h++) {
-         let h2n = (h + 1) / nslices;
-         let currRing = [];
-         
-         for (let i = 0; i <= nsectors; i++) {
-            theta.value = domainStart + (domainEnd - domainStart) * i / nsectors;
-            
-            let r = exprR.eval();
-            let x = exprR.cylX(theta.value) * h2n;
-            let y = exprR.cylY(theta.value) * h2n;
-            
-            let cosT = Math.cos(theta.value);
-            let sinT = Math.sin(theta.value);
-            let nx = r * cosT;
-            let ny = r * sinT;
-            let nz = -1;
-            
-            // Normalize
-            let len = Math.sqrt(nx*nx + ny*ny + nz*nz);
-            if (len > 0.0001) {
-               nx /= len; ny /= len; nz /= len;
-            }
-            
-            currRing.push(addVertex(x, y, h2n, nx, ny, nz));
-         }
-         
-         // Generate quads between prevRing and currRing
-         for (let i = 0; i < nsectors; i++) {
-            let v00 = prevRing[i];
-            let v01 = prevRing[i + 1];
-            let v10 = currRing[i];
-            let v11 = currRing[i + 1];
-            
-            // Triangle 1
-            indices.push(v00, v10, v01);
-            // Triangle 2
-            indices.push(v01, v10, v11);
-         }
-         
-         prevRing = currRing;
+   eval() {
+      let l = this.#left.eval();
+      let r = this.#right.eval();
+      switch (this.#op) {
+         case BinaryOperator.PLUS: return l + r;
+         case BinaryOperator.MINUS: return l - r;
+         case BinaryOperator.MULTIPLY: return l * r;
+         case BinaryOperator.DIVIDE: return l / r;
+         case BinaryOperator.POWER: return Math.pow(l, r);
+         default: throw new Error("Unknown operator");
       }
    }
    
-   return { verts, norms, indices };
+   isConstant() { return this.#left.isConstant() && this.#right.isConstant(); }
+   
+   derivative(wrt) {
+      let dl = this.#left.derivative(wrt);
+      let dr = this.#right.derivative(wrt);
+      
+      switch (this.#op) {
+         case BinaryOperator.PLUS:
+            return new BinaryExpression(BinaryOperator.PLUS, dl, dr);
+         case BinaryOperator.MINUS:
+            return new BinaryExpression(BinaryOperator.MINUS, dl, dr);
+         case BinaryOperator.MULTIPLY:
+            // Product rule: d(a*b) = a*db + da*b
+            return new BinaryExpression(BinaryOperator.PLUS,
+               new BinaryExpression(BinaryOperator.MULTIPLY, this.#left.clone(), dr),
+               new BinaryExpression(BinaryOperator.MULTIPLY, dl, this.#right.clone()));
+         case BinaryOperator.DIVIDE:
+            // Quotient rule: d(a/b) = (da*b - a*db) / b²
+            return new BinaryExpression(BinaryOperator.DIVIDE,
+               new BinaryExpression(BinaryOperator.MINUS,
+                  new BinaryExpression(BinaryOperator.MULTIPLY, dl, this.#right.clone()),
+                  new BinaryExpression(BinaryOperator.MULTIPLY, this.#left.clone(), dr)),
+               new BinaryExpression(BinaryOperator.MULTIPLY, this.#right.clone(), this.#right.clone()));
+         case BinaryOperator.POWER:
+            if (this.#right.isConstant()) {
+               // d(a^n) = n * a^(n-1) * da
+               let n = this.#right.eval();
+               return new BinaryExpression(BinaryOperator.MULTIPLY,
+                  new BinaryExpression(BinaryOperator.MULTIPLY,
+                     new NumberConstantExpression(n),
+                     new BinaryExpression(BinaryOperator.POWER, this.#left.clone(), new NumberConstantExpression(n - 1))),
+                  dl);
+            } else {
+               throw new Error("Derivative of variable exponent not implemented");
+            }
+         default:
+            throw new Error("Unknown operator for derivative");
+      }
+   }
+   
+   clone() {
+      return new BinaryExpression(this.#op, this.#left.clone(), this.#right.clone());
+   }
 }
 
 //========================================
-// buildConePolar - creates flat (non-indexed) cone geometry
+// Unary function expression
 //========================================
-function buildConePolar(formula, domainStart = 0, domainEnd = 2 * Math.PI, nsectors = 20, nslices = 3) {
-   let indexed = buildConePolarIndexed(formula, domainStart, domainEnd, nsectors, nslices);
+class UnaryFunctionExpression extends Expression {
+   #arg;
+   #fn;
+   #derivFn;
    
-   let verts = [];
-   let norms = [];
-   
-   for (let idx of indexed.indices) {
-      let offset = idx * 3;
-      verts.push(indexed.verts[offset], indexed.verts[offset + 1], indexed.verts[offset + 2]);
-      norms.push(indexed.norms[offset], indexed.norms[offset + 1], indexed.norms[offset + 2]);
+   constructor(fn, derivFn, arg) {
+      super();
+      this.#fn = fn;
+      this.#derivFn = derivFn;
+      this.#arg = arg;
    }
    
-   return { verts, norms };
+   eval() { return this.#fn(this.#arg.eval()); }
+   isConstant() { return this.#arg.isConstant(); }
+   
+   derivative(wrt) {
+      if (!this.#derivFn) throw new Error("No derivative for this function");
+      // Chain rule: d(f(u)) = f'(u) * du
+      let du = this.#arg.derivative(wrt);
+      return new BinaryExpression(BinaryOperator.MULTIPLY,
+         new UnaryFunctionExpression(this.#derivFn, null, this.#arg.clone()),
+         du);
+   }
+   
+   clone() {
+      return new UnaryFunctionExpression(this.#fn, this.#derivFn, this.#arg.clone());
+   }
+}
+
+//========================================
+// Binary function expression
+//========================================
+class BinaryFunctionExpression extends Expression {
+   #arg1;
+   #arg2;
+   #fn;
+   #derivArg1;
+   #derivArg2;
+   
+   constructor(fn, derivArg1, derivArg2, arg1, arg2) {
+      super();
+      this.#fn = fn;
+      this.#derivArg1 = derivArg1;
+      this.#derivArg2 = derivArg2;
+      this.#arg1 = arg1;
+      this.#arg2 = arg2;
+   }
+   
+   eval() { return this.#fn(this.#arg1.eval(), this.#arg2.eval()); }
+   isConstant() { return this.#arg1.isConstant() && this.#arg2.isConstant(); }
+   
+   derivative(wrt) {
+      if (!this.#derivArg1 || !this.#derivArg2) throw new Error("No partial derivatives for this function");
+      let du = this.#arg1.derivative(wrt);
+      let dv = this.#arg2.derivative(wrt);
+      // d(f(u,v)) = ∂f/∂u * du + ∂f/∂v * dv
+      return new BinaryExpression(BinaryOperator.PLUS,
+         new BinaryExpression(BinaryOperator.MULTIPLY,
+            new BinaryFunctionExpression(this.#derivArg1, null, null, this.#arg1.clone(), this.#arg2.clone()),
+            du),
+         new BinaryExpression(BinaryOperator.MULTIPLY,
+            new BinaryFunctionExpression(this.#derivArg2, null, null, this.#arg1.clone(), this.#arg2.clone()),
+            dv));
+   }
+   
+   clone() {
+      return new BinaryFunctionExpression(this.#fn, this.#derivArg1, this.#derivArg2, this.#arg1.clone(), this.#arg2.clone());
+   }
+}
+
+//========================================
+// Sub-expression (parentheses)
+//========================================
+class SubExpression extends Expression {
+   #inner;
+   
+   constructor(inner) {
+      super();
+      this.#inner = inner;
+   }
+   
+   eval() { return this.#inner.eval(); }
+   isConstant() { return this.#inner.isConstant(); }
+   derivative(wrt) { return this.#inner.derivative(wrt); }
+   clone() { return new SubExpression(this.#inner.clone()); }
+}
+
+//========================================
+// Simplify expression (constant folding)
+//========================================
+function simplify(expr) {
+   if (expr.isConstant()) {
+      return new NumberConstantExpression(expr.eval());
+   }
+   return expr;
+}
+
+//========================================
+// Expression Compiler - recursive descent parser
+//========================================
+class ExpressionCompiler {
+   #variables = [];
+   #pos = 0;
+   #formula = "";
+   
+   compile(formula) {
+      this.#formula = formula;
+      this.#pos = 0;
+      this.#variables = [];
+      
+      let expr = this.#parseAdditive();
+      
+      // Link all variables to root
+      for (let v of this.#variables) {
+         v.setRoot(expr);
+      }
+      
+      return expr;
+   }
+   
+   #peek() { return this.#formula[this.#pos] || ''; }
+   #advance() { return this.#formula[this.#pos++] || ''; }
+   #skipSpaces() { while (/\s/.test(this.#peek())) this.#advance(); }
+   
+   #parseAdditive() {
+      let left = this.#parseMultiplicative();
+      
+      while (true) {
+         this.#skipSpaces();
+         let c = this.#peek();
+         if (c === '+' || c === '-') {
+            this.#advance();
+            let right = this.#parseMultiplicative();
+            left = new BinaryExpression(c === '+' ? BinaryOperator.PLUS : BinaryOperator.MINUS, left, right);
+         } else {
+            break;
+         }
+      }
+      return left;
+   }
+   
+   #parseMultiplicative() {
+      let left = this.#parseUnary();
+      
+      while (true) {
+         this.#skipSpaces();
+         let c = this.#peek();
+         if (c === '*' && this.#formula[this.#pos + 1] !== '*') {
+            this.#advance();
+            let right = this.#parseUnary();
+            left = new BinaryExpression(BinaryOperator.MULTIPLY, left, right);
+         } else if (c === '/') {
+            this.#advance();
+            let right = this.#parseUnary();
+            left = new BinaryExpression(BinaryOperator.DIVIDE, left, right);
+         } else {
+            break;
+         }
+      }
+      return left;
+   }
+   
+   #parseUnary() {
+      this.#skipSpaces();
+      let c = this.#peek();
+      if (c === '+') {
+         this.#advance();
+         return this.#parsePower();
+      } else if (c === '-') {
+         this.#advance();
+         return new UnaryExpression('minus', this.#parsePower());
+      }
+      return this.#parsePower();
+   }
+   
+   #parsePower() {
+      let left = this.#parsePrimary();
+      
+      this.#skipSpaces();
+      if (this.#formula.substr(this.#pos, 2) === '**') {
+         this.#pos += 2;
+         let right = this.#parsePower(); // right-associative
+         return new BinaryExpression(BinaryOperator.POWER, left, right);
+      }
+      return left;
+   }
+   
+   #parsePrimary() {
+      this.#skipSpaces();
+      let c = this.#peek();
+      
+      // Parentheses
+      if (c === '(') {
+         this.#advance();
+         let inner = this.#parseAdditive();
+         this.#skipSpaces();
+         if (this.#peek() === ')') this.#advance();
+         return new SubExpression(inner);
+      }
+      
+      // Number
+      if (/[0-9.]/.test(c)) {
+         return this.#parseNumber();
+      }
+      
+      // Identifier (function, constant, or variable)
+      if (/[a-zA-Z_]/.test(c)) {
+         return this.#parseIdentifier();
+      }
+      
+      throw new Error(`Unexpected character: ${c} at position ${this.#pos}`);
+   }
+   
+   #parseNumber() {
+      let start = this.#pos;
+      while (/[0-9.eE+-]/.test(this.#peek())) {
+         if ((this.#peek() === '+' || this.#peek() === '-') && 
+             this.#pos > start && 
+             !/[eE]/.test(this.#formula[this.#pos - 1])) {
+            break;
+         }
+         this.#advance();
+      }
+      return new NumberConstantExpression(parseFloat(this.#formula.substring(start, this.#pos)));
+   }
+   
+   #parseIdentifier() {
+      let start = this.#pos;
+      while (/[a-zA-Z0-9_]/.test(this.#peek())) this.#advance();
+      let name = this.#formula.substring(start, this.#pos);
+      let nameLower = name.toLowerCase();
+      
+      this.#skipSpaces();
+      
+      // Check if function call
+      if (this.#peek() === '(') {
+         this.#advance();
+         let args = this.#parseArgList();
+         this.#skipSpaces();
+         if (this.#peek() === ')') this.#advance();
+         
+         let fnEntry = FunctionRegistry[nameLower];
+         if (!fnEntry) throw new Error(`Unknown function: ${name}`);
+         
+         if (fnEntry.arity === 1) {
+            if (args.length !== 1) throw new Error(`${name} expects 1 argument`);
+            return new UnaryFunctionExpression(fnEntry.fn, fnEntry.deriv, args[0]);
+         } else if (fnEntry.arity === 2) {
+            if (args.length !== 2) throw new Error(`${name} expects 2 arguments`);
+            return new BinaryFunctionExpression(fnEntry.fn, fnEntry.derivArg1, fnEntry.derivArg2, args[0], args[1]);
+         }
+      }
+      
+      // Check if constant
+      if (MathConstants.hasOwnProperty(nameLower) || MathConstants.hasOwnProperty(name)) {
+         return new NumberConstantExpression(MathConstants[nameLower] || MathConstants[name]);
+      }
+      
+      // Variable
+      let v = new VariableExpression(name);
+      this.#variables.push(v);
+      return v;
+   }
+   
+   #parseArgList() {
+      let args = [];
+      this.#skipSpaces();
+      if (this.#peek() === ')') return args;
+      
+      args.push(this.#parseAdditive());
+      
+      while (true) {
+         this.#skipSpaces();
+         if (this.#peek() === ',') {
+            this.#advance();
+            args.push(this.#parseAdditive());
+         } else {
+            break;
+         }
+      }
+      return args;
+   }
 }

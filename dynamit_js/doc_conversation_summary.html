@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DynamiT - Project Overview</title>
+    <link rel="stylesheet" href="./lib/css/theme.css">
+    <script src="./lib/js/general/theme.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 860px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: var(--doc-bg);
+            color: var(--doc-text);
+            line-height: 1.7;
+        }
+        h1 {
+            color: var(--doc-accent);
+            border-bottom: 2px solid var(--doc-accent);
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: var(--doc-heading-text);
+            background: var(--doc-heading-bg);
+            padding: 8px 14px;
+            border-left: 4px solid var(--doc-accent);
+            border-radius: 0 4px 4px 0;
+        }
+        blockquote {
+            border-left: 4px solid var(--doc-accent);
+            margin: 20px 0;
+            padding: 12px 20px;
+            background: var(--doc-quote-bg);
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+            font-size: 1.1em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px 14px;
+            border: 1px solid var(--doc-table-border);
+        }
+        th {
+            background: var(--doc-th-bg);
+            color: var(--doc-accent);
+        }
+        td { background: var(--doc-td-bg); }
+        code {
+            background: var(--doc-code-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.95em;
+        }
+        pre {
+            background: var(--doc-code-bg);
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        pre code { background: none; padding: 0; }
+        ul { padding-left: 22px; }
+        li { margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+
+<h1>DynamiT &mdash; Project Overview</h1>
+
+<h2>Philosophy</h2>
+<blockquote>
+    "A lot is going on, I know, but I don't want to care.
+    I want to care only about my stuff. Everything else, just do your job."
+</blockquote>
+<p>
+    DynamiT follows a <strong>declarative intent, hidden machinery</strong> approach.
+    The developer declares what they have and what they want.
+    Everything in between &mdash; shader composition, buffer management, attribute layout,
+    uniform binding &mdash; is DynamiT's job, not theirs.
+</p>
+
+<h2>What Is DynamiT</h2>
+<p>
+    DynamiT is a <strong>WebGL2 3D graphics library</strong> (with a parallel C++ desktop OpenGL implementation)
+    whose key innovation is <strong>automatic runtime GLSL shader generation</strong>.
+    Instead of writing shaders by hand, the library composes them based on the data you provide.
+</p>
+
+<h2>Core API</h2>
+<p>The fluent builder pattern is the vehicle for the philosophy:</p>
+<pre><code>// "I have vertices, normals, and a color. Draw triangles. That's all I care about."
+new Dynamit(canvas)
+    .withVertices3d(verts)
+    .withNormals3d(norms)
+    .withConstColor([1, 0, 0, 1])
+    .drawTriangles();</code></pre>
+
+<h2>Key Components</h2>
+<table>
+    <tr><th>Component</th><th>File</th><th>Role</th></tr>
+    <tr><td>Dynamit</td><td><code>gldynamic.js</code></td><td>Main API &mdash; VAO + auto shader generation</td></tr>
+    <tr><td>ShaderStrategy</td><td><code>gldynamic.js</code></td><td>Compositional shader builder</td></tr>
+    <tr><td>GlCanvas / GlProgram</td><td><code>glcanvas.js</code></td><td>WebGL2 context, shader compilation, textures</td></tr>
+    <tr><td>PolarBuilder / CartesianBuilder</td><td><code>gl3dbuilders.js</code></td><td>Parametric geometry from math formulas</td></tr>
+    <tr><td>3DCalculator</td><td><code>gl3dcalc.js</code></td><td>Expression parser with symbolic differentiation</td></tr>
+</table>
+
+<h2>Features</h2>
+<ul>
+    <li><strong>Auto shader generation</strong> from high-level descriptions (vertices, normals, colors, textures, transforms)</li>
+    <li><strong>Geometry builders</strong> &mdash; polar curves (e.g. <code>"1 + 0.5*cos(5*theta)"</code>) and Cartesian surfaces</li>
+    <li><strong>Transform matrices</strong> &mdash; move, scale, rotate</li>
+    <li><strong>Object chaining</strong> &mdash; multiple Dynamit objects sharing a single program</li>
+    <li><strong>Indexed &amp; strided drawing</strong>, triangle fans, texture mapping</li>
+    <li><strong>Symbolic differentiation</strong> for computing surface normals from formulas</li>
+</ul>
+
+<h2>Architecture</h2>
+<p>
+    The C++ implementation in <code>dynamit_gl/</code> serves as the desktop counterpart with the same
+    class structure (Dynamit, GlArrayBuffer, ShaderStrategy). The JavaScript version targets the web
+    via <strong>WebGL2 (GLSL 300 ES)</strong>, maintaining a consistent API across both platforms.
+</p>
+
+</body>
+</html>

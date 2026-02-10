@@ -3,8 +3,9 @@
 let canvas = document.currentScript.parentElement;
 
 let glmain = () => {
-   // Build a star shape using polar formula
+    // Build a star shape using polar formula
    let geometry = Builder.polar()
+      .doubleCoated()
       .formula("1 + 0.5 * cos(5 * theta)")
       //.formula("1")
       .domain(0, 2 * Math.PI)
@@ -25,6 +26,8 @@ let glmain = () => {
    
    let gl = shape.gl;
    gl.enable(gl.DEPTH_TEST);
+   //gl.enable(gl.CULL_FACE);
+
    gl.clearColor(0.1, 0.1, 0.2, 1.0);
    
    let animate = (time) => {

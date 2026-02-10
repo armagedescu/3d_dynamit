@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dynamit JS - Feature Demos</title>
     <link rel="stylesheet" href="./lib/css/default.css">
+    <link rel="stylesheet" href="./lib/css/theme.css">
+    <script src="./lib/js/general/theme.js"></script>
     <script src="./lib/js/math/3dmath.js"></script>
     <script src="./lib/js/gl2js/glcanvas.js"></script>
     <script src="./lib/js/gl2js/gldynamic.js"></script>
@@ -19,30 +21,30 @@
         }
 
         .demo-card {
-            background: #1e293b;
+            background: var(--demos-card-bg);
             border-radius: 8px;
             padding: 15px;
         }
 
             .demo-card h3 {
-                color: #60a5fa;
+                color: var(--demos-h3);
                 margin: 0 0 10px 0;
             }
 
             .demo-card p {
-                color: #94a3b8;
+                color: var(--demos-text);
                 font-size: 12px;
                 margin: 5px 0;
             }
 
         h1 {
-            color: #e2e8f0;
+            color: var(--demos-h1);
             padding: 20px;
             margin: 0;
         }
 
         body {
-            background: #0f172a;
+            background: var(--demos-bg);
             font-family: sans-serif;
             margin: 0;
         }
@@ -89,9 +91,9 @@
         </div>
     </div>
 
-    <div style="padding: 20px; color: #64748b;">
-        <h2 style="color: #94a3b8;">API Summary</h2>
-        <pre style="background: #1e293b; padding: 15px; border-radius: 8px; overflow-x: auto;">
+    <div style="padding: 20px; color: var(--demos-muted);">
+        <h2 style="color: var(--demos-h2);">API Summary</h2>
+        <pre style="background: var(--demos-pre-bg); padding: 15px; border-radius: 8px; overflow-x: auto;">
 // Transform matrices
 shape.withTransformMatrix4f("matrixName")
 shape.transformMatrix4f([...16 floats...])
