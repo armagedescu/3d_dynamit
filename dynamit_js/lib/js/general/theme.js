@@ -21,8 +21,8 @@
 
         var options = [
             { value: "light", label: "\u2600" },
-            { value: "dark",  label: "\u263E" },
-            { value: "auto",  label: "Auto" }
+            { value: "dark",  label: "\uD83C\uDF19" },
+            { value: "auto",  label: "\u25D0" }
         ];
 
         options.forEach(function (opt) {

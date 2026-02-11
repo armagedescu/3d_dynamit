@@ -184,14 +184,14 @@
     overflow: hidden;
     background: var(--bg-sample);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 13px;
+    font-size: 18px;
 }
 
 .theme-switcher button {
     border: none;
     background: transparent;
-    color: var(--text-body);
-    padding: 5px 10px;
+    color: #daa520;
+    padding: 4px 10px;
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
 }
