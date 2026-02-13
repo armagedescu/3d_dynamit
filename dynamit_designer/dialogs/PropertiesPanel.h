@@ -10,6 +10,8 @@
 #include <atlbase.h>
 #include <atlwin.h>
 
+#include "Theme.h"
+
 #pragma comment(lib, "comdlg32.lib")
 
 class DesignerApp;
@@ -105,6 +107,9 @@ public:
             int borderW = (windowRect.right - windowRect.left) - clientRect.right;
             int borderH = (windowRect.bottom - windowRect.top) - clientRect.bottom;
             ::SetWindowPos(m_hWnd, nullptr, 0, 0, m_panelWidth + borderW, 600, SWP_NOMOVE | SWP_NOZORDER);
+
+            applyTheme();
+            m_themeListenerId = Theme::instance().addListener([this]() { applyTheme(); });
         }
 
         return m_hWnd;
@@ -118,6 +123,10 @@ public:
         MESSAGE_HANDLER(WM_CLOSE, OnClose)
         MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
         MESSAGE_HANDLER(WM_CTLCOLORSTATIC, OnCtlColorStatic)
+        MESSAGE_HANDLER(WM_CTLCOLORBTN, OnCtlColorBtn)
+        MESSAGE_HANDLER(WM_CTLCOLOREDIT, OnCtlColorEdit)
+        MESSAGE_HANDLER(WM_CTLCOLORLISTBOX, OnCtlColorListbox)
+        MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBkgnd)
         MESSAGE_HANDLER(WM_NOTIFY, OnNotify)
         // Section header click handlers (STN_CLICKED from SS_NOTIFY statics)
         COMMAND_ID_HANDLER(ID_PP_HDR_SHAPES, OnSectionHeaderClick)
@@ -196,21 +205,56 @@ private:
         else if (ctrl == m_innerPreview && m_innerBrush)
             return (LRESULT)m_innerBrush;
 
+        auto& c = Theme::instance().colors();
+
         // Section headers - custom background
         for (int i = 0; i < SEC_COUNT; ++i)
         {
             if (ctrl == m_sectionHeaders[i])
             {
-                SetBkColor(hdc, RGB(220, 220, 220));
-                SetTextColor(hdc, RGB(0, 0, 0));
-                if (!m_hdrBrush)
-                    m_hdrBrush = CreateSolidBrush(RGB(220, 220, 220));
+                COLORREF hdrBg = Theme::instance().isDark() ? RGB(50, 50, 60) : RGB(220, 220, 220);
+                SetBkColor(hdc, hdrBg);
+                SetTextColor(hdc, c.text);
+                if (m_hdrBrush) DeleteObject(m_hdrBrush);
+                m_hdrBrush = CreateSolidBrush(hdrBg);
                 return (LRESULT)m_hdrBrush;
             }
         }
 
-        bHandled = FALSE;
-        return 0;
+        // All other statics
+        return (LRESULT)Theme::instance().onCtlColorStatic(hdc);
+    }
+
+    LRESULT OnCtlColorBtn(UINT, WPARAM wParam, LPARAM, BOOL&)
+    {
+        return (LRESULT)Theme::instance().onCtlColorStatic((HDC)wParam);
+    }
+
+    LRESULT OnCtlColorEdit(UINT, WPARAM wParam, LPARAM, BOOL&)
+    {
+        HDC hdc = (HDC)wParam;
+        auto& c = Theme::instance().colors();
+        SetTextColor(hdc, c.controlText);
+        SetBkColor(hdc, c.controlBg);
+        return (LRESULT)Theme::instance().controlBrush();
+    }
+
+    LRESULT OnCtlColorListbox(UINT, WPARAM wParam, LPARAM, BOOL&)
+    {
+        HDC hdc = (HDC)wParam;
+        auto& c = Theme::instance().colors();
+        SetTextColor(hdc, c.controlText);
+        SetBkColor(hdc, c.controlBg);
+        return (LRESULT)Theme::instance().controlBrush();
+    }
+
+    LRESULT OnEraseBkgnd(UINT, WPARAM wParam, LPARAM, BOOL&)
+    {
+        HDC hdc = (HDC)wParam;
+        RECT rc;
+        GetClientRect(&rc);
+        FillRect(hdc, &rc, Theme::instance().backgroundBrush());
+        return TRUE;
     }
 
     LRESULT OnNotify(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -300,6 +344,19 @@ private:
         ::SetWindowTextW(m_sectionHeaders[section], text.c_str());
     }
 
+    void applyTheme()
+    {
+        if (!m_hWnd) return;
+        Theme::applyTitleBar(m_hWnd, Theme::instance().isDark());
+        if (m_hdrBrush) { DeleteObject(m_hdrBrush); m_hdrBrush = nullptr; }
+        ::EnumChildWindows(m_hWnd, [](HWND child, LPARAM) -> BOOL {
+            SetWindowTheme(child, L"", L"");
+            ::InvalidateRect(child, nullptr, TRUE);
+            return TRUE;
+        }, 0);
+        ::InvalidateRect(m_hWnd, nullptr, TRUE);
+    }
+
     void repositionControls();
     void createControls();
     void applyChanges();
@@ -309,6 +366,7 @@ private:
 
     DesignerApp* m_app;
     bool m_updating;
+    int m_themeListenerId = 0;
     int m_panelWidth;
     int m_frameX;
     int m_frameW;

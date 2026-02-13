@@ -3,6 +3,11 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <commctrl.h>
+#include <uxtheme.h>
+
+#include "Theme.h"
+
+#pragma comment(lib, "uxtheme.lib")
 
 class DesignerApp;
 
@@ -14,6 +19,9 @@ class DesignerApp;
 #define ID_CHK_INCLUDE_NORMALS  2005
 #define ID_BTN_SAVE_PROJECT     2006
 #define ID_BTN_LOAD_PROJECT     2007
+#define ID_BTN_ET_THEME_LIGHT   2010
+#define ID_BTN_ET_THEME_DARK    2011
+#define ID_BTN_ET_THEME_AUTO    2012
 
 class ExportToolbar
 {
@@ -28,7 +36,7 @@ public:
         wc.cbSize = sizeof(WNDCLASSEXW);
         wc.lpfnWndProc = WndProc;
         wc.hInstance = GetModuleHandle(nullptr);
-        wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
+        wc.hbrBackground = nullptr;
         wc.lpszClassName = L"ExportToolbarClass";
         RegisterClassExW(&wc);
 
@@ -44,6 +52,8 @@ public:
         if (m_hwnd)
         {
             createControls();
+            applyTheme();
+            m_themeListenerId = Theme::instance().addListener([this]() { applyTheme(); });
         }
 
         return m_hwnd;
@@ -139,8 +149,21 @@ private:
 
     LRESULT handleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+    void applyTheme()
+    {
+        if (!m_hwnd) return;
+        Theme::applyTitleBar(m_hwnd, Theme::instance().isDark());
+        ::EnumChildWindows(m_hwnd, [](HWND child, LPARAM) -> BOOL {
+            SetWindowTheme(child, L"", L"");
+            ::InvalidateRect(child, nullptr, TRUE);
+            return TRUE;
+        }, 0);
+        ::InvalidateRect(m_hwnd, nullptr, TRUE);
+    }
+
     DesignerApp* m_app;
     HWND m_hwnd;
+    int m_themeListenerId = 0;
 };
 
 // Include implementation inline to avoid separate cpp
@@ -263,6 +286,19 @@ inline LRESULT ExportToolbar::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, 
     case WM_CLOSE:
         ShowWindow(hwnd, SW_HIDE);
         return 0;
+
+    case WM_CTLCOLORSTATIC:
+    case WM_CTLCOLORBTN:
+        return (LRESULT)Theme::instance().onCtlColorStatic((HDC)wParam);
+
+    case WM_ERASEBKGND:
+    {
+        HDC hdc = (HDC)wParam;
+        RECT rc;
+        GetClientRect(hwnd, &rc);
+        FillRect(hdc, &rc, Theme::instance().backgroundBrush());
+        return TRUE;
+    }
     }
 
     return DefWindowProc(hwnd, msg, wParam, lParam);

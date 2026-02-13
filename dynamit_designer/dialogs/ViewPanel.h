@@ -3,6 +3,11 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <commctrl.h>
+#include <uxtheme.h>
+
+#include "Theme.h"
+
+#pragma comment(lib, "uxtheme.lib")
 
 class DesignerApp;
 
@@ -29,7 +34,7 @@ public:
         wc.cbSize = sizeof(WNDCLASSEXW);
         wc.lpfnWndProc = WndProc;
         wc.hInstance = GetModuleHandle(nullptr);
-        wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
+        wc.hbrBackground = nullptr;
         wc.lpszClassName = L"ViewPanelClass";
         RegisterClassExW(&wc);
 
@@ -44,6 +49,8 @@ public:
         if (m_hwnd)
         {
             createControls();
+            applyTheme();
+            m_themeListenerId = Theme::instance().addListener([this]() { applyTheme(); });
         }
 
         return m_hwnd;
@@ -112,9 +119,23 @@ private:
     LRESULT handleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
     void applyChanges();
 
+    void applyTheme()
+    {
+        if (!m_hwnd) return;
+        Theme::applyTitleBar(m_hwnd, Theme::instance().isDark());
+        // Disable visual styles on checkboxes so WM_CTLCOLORSTATIC text color works
+        ::EnumChildWindows(m_hwnd, [](HWND child, LPARAM) -> BOOL {
+            SetWindowTheme(child, L"", L"");
+            ::InvalidateRect(child, nullptr, TRUE);
+            return TRUE;
+        }, 0);
+        ::InvalidateRect(m_hwnd, nullptr, TRUE);
+    }
+
     DesignerApp* m_app;
     HWND m_hwnd;
     bool m_updating;
+    int m_themeListenerId = 0;
 
     HWND m_chkAxisX;
     HWND m_chkAxisY;
@@ -181,6 +202,19 @@ inline LRESULT ViewPanel::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPAR
     case WM_CLOSE:
         ShowWindow(hwnd, SW_HIDE);
         return 0;
+
+    case WM_CTLCOLORSTATIC:
+    case WM_CTLCOLORBTN:
+        return (LRESULT)Theme::instance().onCtlColorStatic((HDC)wParam);
+
+    case WM_ERASEBKGND:
+    {
+        HDC hdc = (HDC)wParam;
+        RECT rc;
+        GetClientRect(hwnd, &rc);
+        FillRect(hdc, &rc, Theme::instance().backgroundBrush());
+        return TRUE;
+    }
     }
 
     return DefWindowProc(hwnd, msg, wParam, lParam);

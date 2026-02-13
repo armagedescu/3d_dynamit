@@ -13,6 +13,8 @@
 #include <atlbase.h>
 #include <atlwin.h>
 
+#include "Theme.h"
+
 #pragma comment(lib, "uxtheme.lib")
 
 // Enable visual styles (modern look)
@@ -24,6 +26,9 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #define ID_BTN_NEW_PROJECT  2001
 #define ID_BTN_OPEN_PROJECT 2002
 #define ID_LIST_RECENT      2004
+#define ID_BTN_THEME_LIGHT  2010
+#define ID_BTN_THEME_DARK   2011
+#define ID_BTN_THEME_AUTO   2012
 
 // Result of startup dialog
 struct StartupResult
@@ -47,7 +52,7 @@ class StartupDialog : public CWindowImpl<StartupDialog>
 public:
     DECLARE_WND_CLASS(L"StartupDialogClass")
 
-    StartupDialog() : m_hListRecent(nullptr), m_result{} {}
+    StartupDialog() {}
 
     // Show modal dialog, returns result
     StartupResult Show(HINSTANCE hInstance)
@@ -59,13 +64,13 @@ public:
         loadRecentProjects();
 
         // Desired client area size
-        int clientW = 480;
-        int clientH = 380;
+        int clientW = 520;
+        int clientH = 400;
 
         // Calculate window size to get desired client area
         RECT rc = { 0, 0, clientW, clientH };
-        DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
-        DWORD exStyle = WS_EX_DLGMODALFRAME;
+        DWORD style = WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX;
+        DWORD exStyle = 0;
         AdjustWindowRectEx(&rc, style, FALSE, exStyle);
         int dlgW = rc.right - rc.left;
         int dlgH = rc.bottom - rc.top;
@@ -130,9 +135,16 @@ public:
         MESSAGE_HANDLER(WM_CLOSE, OnClose)
         MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
         MESSAGE_HANDLER(WM_KEYDOWN, OnKeyDown)
+        MESSAGE_HANDLER(WM_SIZE, OnSize)
+        MESSAGE_HANDLER(WM_DRAWITEM, OnDrawItem)
+        MESSAGE_HANDLER(WM_CTLCOLORSTATIC, OnCtlColorStatic)
+        MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBkgnd)
         COMMAND_ID_HANDLER(ID_BTN_NEW_PROJECT, OnNewProjectClick)
         COMMAND_ID_HANDLER(ID_BTN_OPEN_PROJECT, OnOpenProjectClick)
-        COMMAND_HANDLER(ID_LIST_RECENT, LBN_DBLCLK, OnRecentDblClick)
+        COMMAND_ID_HANDLER(ID_BTN_THEME_LIGHT, OnThemeClick)
+        COMMAND_ID_HANDLER(ID_BTN_THEME_DARK, OnThemeClick)
+        COMMAND_ID_HANDLER(ID_BTN_THEME_AUTO, OnThemeClick)
+        NOTIFY_HANDLER(ID_LIST_RECENT, NM_DBLCLK, OnRecentDblClick)
     END_MSG_MAP()
 
 private:
@@ -180,7 +192,7 @@ private:
         return 0;
     }
 
-    LRESULT OnRecentDblClick(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+    LRESULT OnRecentDblClick(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
     {
         if (onRecentProjectDoubleClick())
         {
@@ -189,106 +201,218 @@ private:
         return 0;
     }
 
+    LRESULT OnSize(UINT, WPARAM wParam, LPARAM, BOOL&)
+    {
+        if (wParam != SIZE_MINIMIZED && m_hListRecent)
+            repositionControls();
+        return 0;
+    }
+
+    LRESULT OnDrawItem(UINT, WPARAM, LPARAM lParam, BOOL& bHandled)
+    {
+        DRAWITEMSTRUCT* dis = (DRAWITEMSTRUCT*)lParam;
+        if (dis->CtlID == ID_BTN_THEME_LIGHT)
+            Theme::drawThemeButton(dis, ThemeMode::Light);
+        else if (dis->CtlID == ID_BTN_THEME_DARK)
+            Theme::drawThemeButton(dis, ThemeMode::Dark);
+        else if (dis->CtlID == ID_BTN_THEME_AUTO)
+            Theme::drawThemeButton(dis, ThemeMode::Auto);
+        else if (dis->CtlID == ID_BTN_NEW_PROJECT || dis->CtlID == ID_BTN_OPEN_PROJECT)
+            Theme::drawButton(dis);
+        else
+            bHandled = FALSE;
+        return TRUE;
+    }
+
+    LRESULT OnCtlColorStatic(UINT, WPARAM wParam, LPARAM, BOOL&)
+    {
+        return (LRESULT)Theme::instance().onCtlColorStatic((HDC)wParam);
+    }
+
+    LRESULT OnEraseBkgnd(UINT, WPARAM wParam, LPARAM, BOOL&)
+    {
+        HDC hdc = (HDC)wParam;
+        RECT rc;
+        GetClientRect(&rc);
+        FillRect(hdc, &rc, Theme::instance().backgroundBrush());
+        return TRUE;
+    }
+
+    LRESULT OnThemeClick(WORD, WORD wID, HWND, BOOL&)
+    {
+        ThemeMode mode = ThemeMode::Auto;
+        if (wID == ID_BTN_THEME_LIGHT) mode = ThemeMode::Light;
+        else if (wID == ID_BTN_THEME_DARK) mode = ThemeMode::Dark;
+
+        Theme::instance().setMode(mode);
+        applyTheme();
+        return 0;
+    }
+
+    void applyTheme()
+    {
+        Theme::applyTitleBar(m_hWnd, Theme::instance().isDark());
+        Theme::applyToListView(m_hListRecent);
+
+        // Repaint everything
+        InvalidateRect(nullptr, TRUE);
+        // Force repaint of theme buttons
+        if (m_hBtnThemeLight) ::InvalidateRect(m_hBtnThemeLight, nullptr, TRUE);
+        if (m_hBtnThemeDark) ::InvalidateRect(m_hBtnThemeDark, nullptr, TRUE);
+        if (m_hBtnThemeAuto) ::InvalidateRect(m_hBtnThemeAuto, nullptr, TRUE);
+        if (m_hBtnNew) ::InvalidateRect(m_hBtnNew, nullptr, TRUE);
+        if (m_hBtnOpen) ::InvalidateRect(m_hBtnOpen, nullptr, TRUE);
+    }
+
     void createControls()
     {
-        // Get client area dimensions
-        RECT clientRect;
-        GetClientRect(&clientRect);
-        int clientW = clientRect.right;
-        int clientH = clientRect.bottom;
-
-        // Margins and spacing
-        const int margin = 20;
-        const int buttonH = 40;
-        const int spacing = 15;
-
-        // Create fonts
+        // Create font
         NONCLIENTMETRICSW ncm = { sizeof(NONCLIENTMETRICSW) };
         SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-        HFONT hFont = CreateFontIndirectW(&ncm.lfMessageFont);
+        m_hFont = CreateFontIndirectW(&ncm.lfMessageFont);
 
-        LOGFONTW lfTitle = ncm.lfMessageFont;
-        lfTitle.lfWeight = FW_SEMIBOLD;
-        lfTitle.lfHeight = -18;
-        HFONT hTitleFont = CreateFontIndirectW(&lfTitle);
+        // Theme chooser buttons
+        m_hBtnThemeLight = CreateWindowW(L"BUTTON", L"",
+            WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
+            0, 0, 0, 0, m_hWnd, (HMENU)ID_BTN_THEME_LIGHT,
+            m_hInstance, nullptr);
+        m_hBtnThemeDark = CreateWindowW(L"BUTTON", L"",
+            WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
+            0, 0, 0, 0, m_hWnd, (HMENU)ID_BTN_THEME_DARK,
+            m_hInstance, nullptr);
+        m_hBtnThemeAuto = CreateWindowW(L"BUTTON", L"",
+            WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
+            0, 0, 0, 0, m_hWnd, (HMENU)ID_BTN_THEME_AUTO,
+            m_hInstance, nullptr);
 
-        LOGFONTW lfButton = ncm.lfMessageFont;
-        lfButton.lfHeight = -14;
-        HFONT hButtonFont = CreateFontIndirectW(&lfButton);
+        // Project buttons (owner-draw for theme support)
+        m_hBtnNew = CreateWindowW(L"BUTTON", L"New Project...",
+            WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
+            0, 0, 0, 0, m_hWnd, (HMENU)ID_BTN_NEW_PROJECT,
+            m_hInstance, nullptr);
+        ::SendMessage(m_hBtnNew, WM_SETFONT, (WPARAM)m_hFont, TRUE);
+
+        m_hBtnOpen = CreateWindowW(L"BUTTON", L"Open Project...",
+            WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
+            0, 0, 0, 0, m_hWnd, (HMENU)ID_BTN_OPEN_PROJECT,
+            m_hInstance, nullptr);
+        ::SendMessage(m_hBtnOpen, WM_SETFONT, (WPARAM)m_hFont, TRUE);
+
+        // Recent Projects label
+        m_hLblRecent = CreateWindowW(L"STATIC",
+            L"Recent Projects:",
+            WS_CHILD | WS_VISIBLE,
+            0, 0, 0, 0, m_hWnd, nullptr,
+            m_hInstance, nullptr);
+        ::SendMessage(m_hLblRecent, WM_SETFONT, (WPARAM)m_hFont, TRUE);
+
+        // Recent Projects list view (report mode with columns)
+        m_hListRecent = CreateWindowExW(
+            WS_EX_CLIENTEDGE,
+            WC_LISTVIEWW,
+            nullptr,
+            WS_CHILD | WS_VISIBLE | WS_VSCROLL | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER,
+            0, 0, 0, 0, m_hWnd, (HMENU)ID_LIST_RECENT,
+            m_hInstance, nullptr);
+        ::SendMessage(m_hListRecent, WM_SETFONT, (WPARAM)m_hFont, TRUE);
+
+        // Full-row select, no gridlines
+        ListView_SetExtendedListViewStyle(m_hListRecent, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+
+        // Add columns
+        LVCOLUMNW col = {};
+        col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_FMT;
+        col.fmt = LVCFMT_LEFT;
+
+        col.pszText = const_cast<LPWSTR>(L"Name");
+        col.cx = 140;
+        ListView_InsertColumn(m_hListRecent, 0, &col);
+
+        col.pszText = const_cast<LPWSTR>(L"Path");
+        col.cx = 340;
+        ListView_InsertColumn(m_hListRecent, 1, &col);
+
+        // Populate
+        populateRecentList();
+
+        // Position everything
+        repositionControls();
+
+        // Apply theme
+        applyTheme();
+    }
+
+    void repositionControls()
+    {
+        RECT rc;
+        GetClientRect(&rc);
+        int clientW = rc.right;
+        int clientH = rc.bottom;
+
+        const int margin = 10;
+        const int buttonH = 26;
+        const int buttonW = 100;
+        const int spacing = 8;
+
+        const int themeBtnSize = 20;
 
         int y = margin;
 
-        // Title label
-        HWND lblTitle = CreateWindowW(L"STATIC",
-            L"Welcome to Dynamit Designer",
-            WS_CHILD | WS_VISIBLE | SS_CENTER,
-            margin, y, clientW - 2 * margin, 28, m_hWnd, nullptr,
-            m_hInstance, nullptr);
-        ::SendMessage(lblTitle, WM_SETFONT, (WPARAM)hTitleFont, TRUE);
-        y += 28 + spacing;
+        // Theme buttons on their own row, top-right
+        int themeX = clientW - margin - 3 * (themeBtnSize + 2) + 2;
+        ::SetWindowPos(m_hBtnThemeLight, nullptr, themeX, y, themeBtnSize, themeBtnSize, SWP_NOZORDER);
+        ::SetWindowPos(m_hBtnThemeDark, nullptr, themeX + themeBtnSize + 2, y, themeBtnSize, themeBtnSize, SWP_NOZORDER);
+        ::SetWindowPos(m_hBtnThemeAuto, nullptr, themeX + 2 * (themeBtnSize + 2), y, themeBtnSize, themeBtnSize, SWP_NOZORDER);
+        y += themeBtnSize + spacing;
 
-        // Buttons row
-        int buttonW = (clientW - 2 * margin - spacing) / 2;
+        // Recent label on the left, project buttons on the right
+        ::SetWindowPos(m_hLblRecent, nullptr, margin, y + 4, 150, 18, SWP_NOZORDER);
 
-        HWND btnNew = CreateWindowW(L"BUTTON", L"New Project...",
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            margin, y, buttonW, buttonH, m_hWnd, (HMENU)ID_BTN_NEW_PROJECT,
-            m_hInstance, nullptr);
-        ::SendMessage(btnNew, WM_SETFONT, (WPARAM)hButtonFont, TRUE);
+        int btnX = clientW - margin - buttonW;
+        ::SetWindowPos(m_hBtnOpen, nullptr, btnX, y, buttonW + 10, buttonH, SWP_NOZORDER);
+        btnX -= buttonW + spacing;
+        ::SetWindowPos(m_hBtnNew, nullptr, btnX, y, buttonW, buttonH, SWP_NOZORDER);
+        y += buttonH + spacing;
 
-        HWND btnOpen = CreateWindowW(L"BUTTON", L"Open Existing Project...",
-            WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-            margin + buttonW + spacing, y, buttonW, buttonH, m_hWnd, (HMENU)ID_BTN_OPEN_PROJECT,
-            m_hInstance, nullptr);
-        ::SendMessage(btnOpen, WM_SETFONT, (WPARAM)hButtonFont, TRUE);
-        y += buttonH + spacing + 5;
+        // List fills remaining space
+        int listH = clientH - y - margin;
+        if (listH < 50) listH = 50;
+        ::SetWindowPos(m_hListRecent, nullptr, margin, y, clientW - 2 * margin, listH, SWP_NOZORDER);
 
-        // Recent Projects label
-        HWND lblRecent = CreateWindowW(L"STATIC",
-            L"Recent Projects:",
-            WS_CHILD | WS_VISIBLE,
-            margin, y, 150, 20, m_hWnd, nullptr,
-            m_hInstance, nullptr);
-        ::SendMessage(lblRecent, WM_SETFONT, (WPARAM)hFont, TRUE);
-        y += 22;
+        // Resize path column to fill available width
+        int nameColW = ListView_GetColumnWidth(m_hListRecent, 0);
+        int pathColW = clientW - 2 * margin - nameColW - 4;
+        if (pathColW < 100) pathColW = 100;
+        ListView_SetColumnWidth(m_hListRecent, 1, pathColW);
+    }
 
-        // Calculate listbox height (fill remaining space minus hint)
-        int hintH = 20;
-        int listH = clientH - y - margin - hintH - spacing;
+    void populateRecentList()
+    {
+        ListView_DeleteAllItems(m_hListRecent);
 
-        // Recent Projects listbox
-        m_hListRecent = CreateWindowExW(
-            WS_EX_CLIENTEDGE,
-            L"LISTBOX",
-            nullptr,
-            WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
-            margin, y, clientW - 2 * margin, listH, m_hWnd, (HMENU)ID_LIST_RECENT,
-            m_hInstance, nullptr);
-        ::SendMessage(m_hListRecent, WM_SETFONT, (WPARAM)hFont, TRUE);
-        y += listH + spacing;
-
-        // Populate recent projects list
         if (m_recentProjects.empty())
         {
-            ::SendMessageW(m_hListRecent, LB_ADDSTRING, 0, (LPARAM)L"(No recent projects)");
+            LVITEMW item = {};
+            item.mask = LVIF_TEXT;
+            item.iItem = 0;
+            item.pszText = const_cast<LPWSTR>(L"(No recent projects)");
+            ListView_InsertItem(m_hListRecent, &item);
             ::EnableWindow(m_hListRecent, FALSE);
         }
         else
         {
-            for (const auto& proj : m_recentProjects)
+            for (int i = 0; i < (int)m_recentProjects.size(); i++)
             {
-                std::wstring display = proj.name + L"  -  " + proj.path;
-                ::SendMessageW(m_hListRecent, LB_ADDSTRING, 0, (LPARAM)display.c_str());
+                LVITEMW item = {};
+                item.mask = LVIF_TEXT;
+                item.iItem = i;
+                item.pszText = const_cast<LPWSTR>(m_recentProjects[i].name.c_str());
+                ListView_InsertItem(m_hListRecent, &item);
+
+                ListView_SetItemText(m_hListRecent, i, 1,
+                    const_cast<LPWSTR>(m_recentProjects[i].path.c_str()));
             }
         }
-
-        // Hint at bottom
-        HWND lblHint = CreateWindowW(L"STATIC",
-            L"Double-click a recent project to open it, or press Escape to exit.",
-            WS_CHILD | WS_VISIBLE | SS_CENTER,
-            margin, y, clientW - 2 * margin, hintH, m_hWnd, nullptr,
-            m_hInstance, nullptr);
-        ::SendMessage(lblHint, WM_SETFONT, (WPARAM)hFont, TRUE);
     }
 
     bool onNewProject()
@@ -396,8 +520,8 @@ private:
 
     bool onRecentProjectDoubleClick()
     {
-        int sel = (int)::SendMessageW(m_hListRecent, LB_GETCURSEL, 0, 0);
-        if (sel == LB_ERR || sel < 0 || sel >= (int)m_recentProjects.size())
+        int sel = ListView_GetNextItem(m_hListRecent, -1, LVNI_SELECTED);
+        if (sel < 0 || sel >= (int)m_recentProjects.size())
             return false;
 
         const RecentProject& proj = m_recentProjects[sel];
@@ -489,8 +613,15 @@ private:
         }
     }
 
-    HINSTANCE m_hInstance;
-    HWND m_hListRecent;
+    HINSTANCE m_hInstance = nullptr;
+    HWND m_hListRecent = nullptr;
+    HWND m_hBtnNew = nullptr;
+    HWND m_hBtnOpen = nullptr;
+    HWND m_hLblRecent = nullptr;
+    HWND m_hBtnThemeLight = nullptr;
+    HWND m_hBtnThemeDark = nullptr;
+    HWND m_hBtnThemeAuto = nullptr;
+    HFONT m_hFont = nullptr;
     StartupResult m_result;
     std::vector<RecentProject> m_recentProjects;
 };

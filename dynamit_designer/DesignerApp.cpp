@@ -4,6 +4,8 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
+#include "dialogs/Theme.h"
+#include "dialogs/ThemeToolbar.h"
 #include "dialogs/ExportToolbar.h"
 #include "dialogs/PropertiesPanel.h"
 #include "dialogs/ViewPanel.h"
@@ -151,10 +153,22 @@ void DesignerApp::createDialogs()
 
     updateDialogPositions();
 
+    // Theme toolbar - floating, top-right
+    m_themeToolbar = std::make_unique<ThemeToolbar>();
+    m_themeToolbarHwnd = m_themeToolbar->Create(glfwHwnd);
+
+    // Apply theme to GLFW window
+    Theme::applyTitleBar(glfwHwnd, Theme::instance().isDark());
+    Theme::instance().addListener([this]() {
+        HWND hwnd = glfwGetWin32Window(m_window);
+        Theme::applyTitleBar(hwnd, Theme::instance().isDark());
+    });
+
     // Show panels
     ShowWindow(m_exportToolbarHwnd, SW_SHOW);
     ShowWindow(m_propertiesPanelHwnd, SW_SHOW);
     ShowWindow(m_viewPanelHwnd, SW_SHOW);
+    ShowWindow(m_themeToolbarHwnd, SW_SHOW);
 }
 
 void DesignerApp::updateDialogPositions()
@@ -194,6 +208,18 @@ void DesignerApp::updateDialogPositions()
         SetWindowPos(m_viewPanelHwnd, HWND_TOPMOST,
             winX + m_windowWidth - viewPanelWidth - 5, winY + 30,
             viewPanelWidth, viewPanelHeight, SWP_NOZORDER);
+    }
+
+    // Theme toolbar top-right
+    if (m_themeToolbarHwnd)
+    {
+        RECT ttrc;
+        ::GetWindowRect(m_themeToolbarHwnd, &ttrc);
+        int ttW = ttrc.right - ttrc.left;
+        int ttH = ttrc.bottom - ttrc.top;
+        SetWindowPos(m_themeToolbarHwnd, HWND_TOPMOST,
+            winX + m_windowWidth - ttW - 5, winY + 30,
+            ttW, ttH, SWP_NOZORDER);
     }
 }
 
@@ -690,3 +716,5 @@ int DesignerApp::pickShape(double mouseX, double mouseY)
 
     return closestShape;
 }
+
+

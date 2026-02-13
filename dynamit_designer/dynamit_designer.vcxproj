@@ -100,6 +100,9 @@
     <ClInclude Include="dialogs\PropertiesPanel.h" />
     <ClInclude Include="dialogs\ExportToolbar.h" />
     <ClInclude Include="dialogs\ViewPanel.h" />
+    <ClInclude Include="dialogs\Theme.h" />
+    <ClInclude Include="dialogs\ThemeToolbar.h" />
+    <ClInclude Include="dialogs\SplashScreen.h" />
     <ClInclude Include="TransformGizmo.h" />
     <ClInclude Include="VisualizationHelpers.h" />
   </ItemGroup>

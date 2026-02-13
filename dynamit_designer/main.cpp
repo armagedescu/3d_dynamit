@@ -14,6 +14,7 @@
 #pragma comment(lib, "comctl32.lib")
 
 #include "DesignerApp.h"
+#include "dialogs/SplashScreen.h"
 #include "dialogs/StartupDialog.h"
 #include "ProjectManager.h"
 
@@ -157,6 +158,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     std::cout << "=== Dynamit Designer ===" << std::endl;
     std::cout << "Visual Shape Designer for PolarBuilder" << std::endl;
     std::cout << std::endl;
+
+    // Show splash screen
+    SplashScreen splash;
+    splash.Show(hInstance, 2500);
 
     // Show startup dialog to create/open project
     StartupDialog startupDlg;

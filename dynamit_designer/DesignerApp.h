@@ -18,6 +18,7 @@ class ProjectManager;
 class ExportToolbar;
 class PropertiesPanel;
 class ViewPanel;
+class ThemeToolbar;
 
 class DesignerApp
 {
@@ -140,4 +141,8 @@ private:
     HWND m_exportToolbarHwnd;
     HWND m_propertiesPanelHwnd;
     HWND m_viewPanelHwnd;
+
+    // Theme toolbar
+    std::unique_ptr<ThemeToolbar> m_themeToolbar;
+    HWND m_themeToolbarHwnd = nullptr;
 };
