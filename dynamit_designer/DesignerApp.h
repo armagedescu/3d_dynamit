@@ -15,7 +15,8 @@
 class ProjectManager;
 
 // Forward declarations for dialog panels
-class ExportToolbar;
+class ToolboxPanel;
+class ObjectExplorerPanel;
 class PropertiesPanel;
 class ViewPanel;
 class ThemeToolbar;
@@ -81,12 +82,22 @@ public:
     // Get window title with project name
     void updateWindowTitle();
 
-    // Refresh shapes list (after load, etc.)
+    // Refresh shapes list in ObjectExplorerPanel (after load, etc.)
     void refreshShapesList();
+
+    // Menu command handler (called from message loop for WM_COMMAND menu items)
+    void onMenuCommand(int id);
+
+    // Export helpers (called from menu)
+    void exportCodeToClipboard();
+    void exportCodeToFile();
 
 private:
     void createDialogs();
+    void createMenuBar();
     void updateDialogPositions();
+    void updateExportMenuCheckmarks();
+    void updateViewMenuCheckmarks();
     std::array<float, 16> computeViewProjection();
 
     // Ray picking
@@ -134,15 +145,26 @@ private:
     std::unique_ptr<ProjectManager> m_projectManager;
 
     // Dialog panels
-    std::unique_ptr<ExportToolbar> m_exportToolbar;
+    std::unique_ptr<ToolboxPanel> m_toolboxPanel;
+    std::unique_ptr<ObjectExplorerPanel> m_objectExplorerPanel;
     std::unique_ptr<PropertiesPanel> m_propertiesPanel;
     std::unique_ptr<ViewPanel> m_viewPanel;
-
-    HWND m_exportToolbarHwnd;
-    HWND m_propertiesPanelHwnd;
-    HWND m_viewPanelHwnd;
-
-    // Theme toolbar
     std::unique_ptr<ThemeToolbar> m_themeToolbar;
+
+    HWND m_toolboxPanelHwnd = nullptr;
+    HWND m_objectExplorerPanelHwnd = nullptr;
+    HWND m_propertiesPanelHwnd = nullptr;
+    HWND m_viewPanelHwnd = nullptr;
     HWND m_themeToolbarHwnd = nullptr;
+
+    // Menu bar
+    HMENU m_hMenuBar = nullptr;
+    HMENU m_hFileMenu = nullptr;
+    HMENU m_hExportMenu = nullptr;
+    HMENU m_hViewMenu = nullptr;
+
+    // Export state (persisted across menu invocations)
+    bool m_exportIncludeDynamit = true;
+    bool m_exportCompleteApp = false;
+    bool m_exportIncludeNormals = false;
 };

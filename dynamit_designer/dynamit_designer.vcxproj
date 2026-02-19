@@ -97,6 +97,8 @@
     <ClInclude Include="ProjectManager.h" />
     <ClInclude Include="ShapeManager.h" />
     <ClInclude Include="dialogs\MainToolbar.h" />
+    <ClInclude Include="dialogs\ToolboxPanel.h" />
+    <ClInclude Include="dialogs\ObjectExplorerPanel.h" />
     <ClInclude Include="dialogs\PropertiesPanel.h" />
     <ClInclude Include="dialogs\ExportToolbar.h" />
     <ClInclude Include="dialogs\ViewPanel.h" />

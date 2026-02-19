@@ -17,18 +17,6 @@
 class DesignerApp;
 
 // Control IDs for PropertiesPanel (unique prefix ID_PP_)
-// Shapes section
-#define ID_PP_LIST_SHAPES        6050
-#define ID_PP_BTN_NEW_CONE       6051
-#define ID_PP_BTN_NEW_CYLINDER   6052
-#define ID_PP_BTN_DELETE         6053
-#define ID_PP_BTN_DUPLICATE      6054
-#define ID_PP_BTN_MOVE_UP        6055
-#define ID_PP_BTN_MOVE_DOWN      6056
-#define ID_PP_BTN_WELD           6057
-#define ID_PP_CHK_VISIBLE        6058
-#define ID_PP_EDIT_NAME          6059
-
 // Builder section
 #define ID_PP_EDIT_FORMULA       6001
 #define ID_PP_EDIT_DOMAIN_START  6002
@@ -69,13 +57,12 @@ class DesignerApp;
 #define ID_PP_STATIC_INNER_PREVIEW 6041
 
 // Section header IDs
-#define ID_PP_HDR_SHAPES         6100
 #define ID_PP_HDR_BUILDER        6101
 #define ID_PP_HDR_TRANSFORM      6102
 #define ID_PP_HDR_COLORS         6103
 
 // Section indices
-enum Section { SEC_SHAPES = 0, SEC_BUILDER, SEC_TRANSFORM, SEC_COLORS, SEC_COUNT };
+enum Section { SEC_BUILDER = 0, SEC_TRANSFORM, SEC_COLORS, SEC_COUNT };
 
 class PropertiesPanel : public CWindowImpl<PropertiesPanel>
 {
@@ -116,8 +103,6 @@ public:
     }
 
     void updateFromConfig();
-    void refreshShapesList();
-    void updateShapeSelection();
 
     BEGIN_MSG_MAP(PropertiesPanel)
         MESSAGE_HANDLER(WM_CLOSE, OnClose)
@@ -129,21 +114,9 @@ public:
         MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBkgnd)
         MESSAGE_HANDLER(WM_NOTIFY, OnNotify)
         // Section header click handlers (STN_CLICKED from SS_NOTIFY statics)
-        COMMAND_ID_HANDLER(ID_PP_HDR_SHAPES, OnSectionHeaderClick)
         COMMAND_ID_HANDLER(ID_PP_HDR_BUILDER, OnSectionHeaderClick)
         COMMAND_ID_HANDLER(ID_PP_HDR_TRANSFORM, OnSectionHeaderClick)
         COMMAND_ID_HANDLER(ID_PP_HDR_COLORS, OnSectionHeaderClick)
-        // Shapes handlers
-        COMMAND_HANDLER(ID_PP_LIST_SHAPES, LBN_SELCHANGE, OnShapeSelChange)
-        COMMAND_ID_HANDLER(ID_PP_BTN_NEW_CONE, OnNewCone)
-        COMMAND_ID_HANDLER(ID_PP_BTN_NEW_CYLINDER, OnNewCylinder)
-        COMMAND_ID_HANDLER(ID_PP_BTN_DELETE, OnDelete)
-        COMMAND_ID_HANDLER(ID_PP_BTN_DUPLICATE, OnDuplicate)
-        COMMAND_ID_HANDLER(ID_PP_BTN_MOVE_UP, OnMoveUp)
-        COMMAND_ID_HANDLER(ID_PP_BTN_MOVE_DOWN, OnMoveDown)
-        COMMAND_ID_HANDLER(ID_PP_BTN_WELD, OnWeld)
-        COMMAND_ID_HANDLER(ID_PP_CHK_VISIBLE, OnVisibleClick)
-        COMMAND_HANDLER(ID_PP_EDIT_NAME, EN_KILLFOCUS, OnNameChange)
         // Builder handlers
         COMMAND_HANDLER(ID_PP_EDIT_FORMULA, EN_KILLFOCUS, OnFormulaKillFocus)
         COMMAND_HANDLER(ID_PP_EDIT_DOMAIN_START, EN_CHANGE, OnEditChange)
@@ -270,34 +243,16 @@ private:
 
     LRESULT OnSectionHeaderClick(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
     {
-        // Map control ID to section index
         int section = -1;
         switch (wID)
         {
-        case ID_PP_HDR_SHAPES:    section = SEC_SHAPES; break;
         case ID_PP_HDR_BUILDER:   section = SEC_BUILDER; break;
         case ID_PP_HDR_TRANSFORM: section = SEC_TRANSFORM; break;
         case ID_PP_HDR_COLORS:    section = SEC_COLORS; break;
         }
-
-        if (section >= 0)
-        {
-            toggleSection(section);
-        }
+        if (section >= 0) toggleSection(section);
         return 0;
     }
-
-    // Shapes handlers
-    LRESULT OnShapeSelChange(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-    LRESULT OnNewCone(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-    LRESULT OnNewCylinder(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-    LRESULT OnDelete(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-    LRESULT OnDuplicate(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-    LRESULT OnMoveUp(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-    LRESULT OnMoveDown(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-    LRESULT OnWeld(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-    LRESULT OnVisibleClick(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-    LRESULT OnNameChange(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 
     // Builder handlers
     LRESULT OnFormulaKillFocus(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
@@ -338,7 +293,7 @@ private:
 
     void updateSectionHeaderText(int section)
     {
-        const wchar_t* names[] = { L"Shapes", L"Builder", L"Transform", L"Colors" };
+        const wchar_t* names[] = { L"Builder", L"Transform", L"Colors" };
         std::wstring text = m_collapsed[section] ? L"\u25B6 " : L"\u25BC ";
         text += names[section];
         ::SetWindowTextW(m_sectionHeaders[section], text.c_str());
@@ -382,11 +337,6 @@ private:
     int m_sectionContentHeight[SEC_COUNT];
     int m_sectionOrigStartY[SEC_COUNT];  // Original start Y for each section
     HBRUSH m_hdrBrush = nullptr;
-
-    // Shapes controls
-    HWND m_listShapes;
-    HWND m_editName;
-    HWND m_chkVisible;
 
     // Builder controls
     HWND m_editFormula;
@@ -432,20 +382,16 @@ inline void PropertiesPanel::createControls()
     // Layout constants
     int margin = 8;
     int btnGap = 3;
-    int btnConeW = 48, btnCylW = 40, btnDupW = 35, btnDelW = 35;
-    int btnUpW = 24, btnDownW = 24, btnWeldW = 42;
     int chkSmoothW = 60, chkTurboW = 55, chkDoubleCoatW = 65, chkReversedW = 70;
 
     // Derive panel width from the widest fixed-content row
-    int buttonsRowW = btnConeW + btnCylW + btnDupW + btnDelW + btnUpW + btnDownW + btnWeldW + 6 * btnGap;
     int checkboxRowW = chkSmoothW + chkTurboW + chkDoubleCoatW + chkReversedW + 3 * btnGap;
-    int minContentW = buttonsRowW > checkboxRowW ? buttonsRowW : checkboxRowW;
 
     m_labelW = 55;
     m_rowH = 24;
     m_frameX = margin;
     m_contentX = m_frameX + margin;
-    m_panelWidth = minContentW + 4 * margin;
+    m_panelWidth = checkboxRowW + 4 * margin;
     m_frameW = m_panelWidth - 2 * margin;
 
     int y = 3;
@@ -499,46 +445,10 @@ inline void PropertiesPanel::createControls()
         ::SendMessage(h, WM_SETFONT, (WPARAM)hBoldFont, TRUE);
         m_sectionHeaders[sec] = h;
         y += hdrH;
-        m_sectionOrigStartY[sec] = y;  // Store where content starts
+        m_sectionOrigStartY[sec] = y;
     };
 
-    // ===== SHAPES SECTION =====
-    createSectionHeader(SEC_SHAPES, L"Shapes", ID_PP_HDR_SHAPES);
-    int shapesStartY = y;
-
-    // Calculate available content width
     int contentW = m_frameW - 2 * margin;
-    int visibleChkW = 55;
-
-    // Name and visible row
-    createLabel(SEC_SHAPES, L"Name:", m_contentX, y);
-    int nameEditW = contentW - m_labelW - visibleChkW - btnGap;
-    m_editName = createEdit(SEC_SHAPES, ID_PP_EDIT_NAME, m_contentX + m_labelW, y, nameEditW);
-    m_chkVisible = createCheck(SEC_SHAPES, L"Visible", ID_PP_CHK_VISIBLE, m_contentX + m_labelW + nameEditW + btnGap, y, visibleChkW);
-    y += m_rowH;
-
-    // List box - full content width
-    m_listShapes = CreateWindowW(L"LISTBOX", nullptr,
-        WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
-        m_contentX, y, contentW, 80, m_hWnd, (HMENU)(INT_PTR)ID_PP_LIST_SHAPES,
-        GetModuleHandle(nullptr), nullptr);
-    ::SendMessage(m_listShapes, WM_SETFONT, (WPARAM)hFont, TRUE);
-    addToSection(SEC_SHAPES, m_listShapes, y);
-    y += 85;
-
-    // Buttons row - positions calculated from button widths
-    int bx = m_contentX;
-    createButton(SEC_SHAPES, L"+Cone", ID_PP_BTN_NEW_CONE, bx, y, btnConeW); bx += btnConeW + btnGap;
-    createButton(SEC_SHAPES, L"+Cyl", ID_PP_BTN_NEW_CYLINDER, bx, y, btnCylW); bx += btnCylW + btnGap;
-    createButton(SEC_SHAPES, L"Dup", ID_PP_BTN_DUPLICATE, bx, y, btnDupW); bx += btnDupW + btnGap;
-    createButton(SEC_SHAPES, L"Del", ID_PP_BTN_DELETE, bx, y, btnDelW); bx += btnDelW + btnGap;
-    createButton(SEC_SHAPES, L"\u25B2", ID_PP_BTN_MOVE_UP, bx, y, btnUpW); bx += btnUpW + btnGap;
-    createButton(SEC_SHAPES, L"\u25BC", ID_PP_BTN_MOVE_DOWN, bx, y, btnDownW); bx += btnDownW + btnGap;
-    createButton(SEC_SHAPES, L"Weld", ID_PP_BTN_WELD, bx, y, btnWeldW);
-    y += m_rowH + 3;
-
-    m_sectionContentHeight[SEC_SHAPES] = y - shapesStartY;
-    y += 2;
 
     // ===== BUILDER SECTION =====
     createSectionHeader(SEC_BUILDER, L"Builder", ID_PP_HDR_BUILDER);
@@ -740,95 +650,6 @@ inline void PropertiesPanel::repositionControls()
     ::InvalidateRect(m_hWnd, nullptr, TRUE);
 }
 
-inline void PropertiesPanel::refreshShapesList()
-{
-    if (!m_hWnd || !m_app || !m_listShapes) return;
-
-    m_updating = true;
-
-    ::SendMessage(m_listShapes, LB_RESETCONTENT, 0, 0);
-
-    ShapeManager& mgr = m_app->getShapeManager();
-    int shapeCount = mgr.getShapeCount();
-
-    for (int i = 0; i < shapeCount; ++i)
-    {
-        const ShapeInstance* shape = mgr.getShape(i);
-        if (shape)
-        {
-            std::wstring item;
-            if (shape->config.type == ShapeConfig::Type::Cone)
-                item = L"[C] ";
-            else
-                item = L"[Y] ";
-
-            if (!shape->visible)
-                item = L"(" + item.substr(0, 3) + L") ";
-
-            const std::string& name = shape->config.name;
-            int wsize = MultiByteToWideChar(CP_UTF8, 0, name.c_str(), -1, nullptr, 0);
-            if (wsize > 0)
-            {
-                std::wstring wname(wsize - 1, 0);
-                MultiByteToWideChar(CP_UTF8, 0, name.c_str(), -1, &wname[0], wsize);
-                item += wname;
-            }
-
-            ::SendMessageW(m_listShapes, LB_ADDSTRING, 0, (LPARAM)item.c_str());
-        }
-    }
-
-    int selectedIndex = m_app->getSelectedShapeIndex();
-    if (selectedIndex >= 0 && selectedIndex < shapeCount)
-    {
-        ::SendMessage(m_listShapes, LB_SETCURSEL, selectedIndex, 0);
-    }
-    else if (shapeCount > 0)
-    {
-        ::SendMessage(m_listShapes, LB_SETCURSEL, 0, 0);
-    }
-
-    // Force repaint
-    ::InvalidateRect(m_listShapes, nullptr, TRUE);
-
-    updateShapeSelection();
-    m_updating = false;
-}
-
-inline void PropertiesPanel::updateShapeSelection()
-{
-    if (!m_hWnd || !m_app) return;
-
-    bool wasUpdating = m_updating;
-    m_updating = true;
-
-    ShapeConfig* cfg = m_app->getSelectedShapeConfig();
-    if (cfg)
-    {
-        const std::string& name = cfg->name;
-        int wsize = MultiByteToWideChar(CP_UTF8, 0, name.c_str(), -1, nullptr, 0);
-        if (wsize > 0)
-        {
-            std::wstring wname(wsize - 1, 0);
-            MultiByteToWideChar(CP_UTF8, 0, name.c_str(), -1, &wname[0], wsize);
-            ::SetWindowTextW(m_editName, wname.c_str());
-        }
-
-        ShapeInstance* shape = m_app->getShapeManager().getShape(m_app->getSelectedShapeIndex());
-        if (shape)
-        {
-            ::SendMessage(m_chkVisible, BM_SETCHECK, shape->visible ? BST_CHECKED : BST_UNCHECKED, 0);
-        }
-    }
-    else
-    {
-        ::SetWindowTextW(m_editName, L"");
-        ::SendMessage(m_chkVisible, BM_SETCHECK, BST_UNCHECKED, 0);
-    }
-
-    m_updating = wasUpdating;
-}
-
 inline void PropertiesPanel::updateFromConfig()
 {
     if (!m_hWnd) return;
@@ -837,9 +658,6 @@ inline void PropertiesPanel::updateFromConfig()
     if (!cfg) return;
 
     m_updating = true;
-
-    // Update shapes selection
-    updateShapeSelection();
 
     // === Builder section ===
     ::SetWindowTextW(m_editFormula, cfg->formula.c_str());
@@ -1038,171 +856,6 @@ inline void PropertiesPanel::pickColor(bool outer)
         updateFromConfig();
         m_app->onShapeConfigChanged();
     }
-}
-
-// Shapes handlers
-inline LRESULT PropertiesPanel::OnShapeSelChange(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-    if (m_updating) return 0;
-
-    int sel = static_cast<int>(::SendMessage(m_listShapes, LB_GETCURSEL, 0, 0));
-    if (sel != LB_ERR && m_app)
-    {
-        m_app->selectShape(sel);
-        updateFromConfig();
-    }
-    return 0;
-}
-
-inline LRESULT PropertiesPanel::OnNewCone(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-    if (m_app)
-    {
-        m_app->newShape(ShapeConfig::Type::Cone);
-        refreshShapesList();
-        updateFromConfig();
-    }
-    return 0;
-}
-
-inline LRESULT PropertiesPanel::OnNewCylinder(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-    if (m_app)
-    {
-        m_app->newShape(ShapeConfig::Type::Cylinder);
-        refreshShapesList();
-        updateFromConfig();
-    }
-    return 0;
-}
-
-inline LRESULT PropertiesPanel::OnDelete(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-    if (m_app)
-    {
-        m_app->deleteSelectedShape();
-        refreshShapesList();
-        updateFromConfig();
-    }
-    return 0;
-}
-
-inline LRESULT PropertiesPanel::OnDuplicate(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-    if (!m_app) return 0;
-
-    ShapeConfig* cfg = m_app->getSelectedShapeConfig();
-    if (cfg)
-    {
-        ShapeConfig newCfg = *cfg;
-        newCfg.name = cfg->name + " Copy";
-        newCfg.posX += 0.5f;
-        newCfg.posY += 0.5f;
-
-        m_app->getShapeManager().addShape(newCfg);
-        m_app->selectShape(m_app->getShapeManager().getShapeCount() - 1);
-        refreshShapesList();
-        updateFromConfig();
-    }
-    return 0;
-}
-
-inline LRESULT PropertiesPanel::OnMoveUp(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-    if (!m_app) return 0;
-
-    int index = m_app->getSelectedShapeIndex();
-    if (index > 0)
-    {
-        m_app->getShapeManager().swapShapes(index, index - 1);
-        m_app->selectShape(index - 1);
-        refreshShapesList();
-    }
-    return 0;
-}
-
-inline LRESULT PropertiesPanel::OnMoveDown(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-    if (!m_app) return 0;
-
-    int index = m_app->getSelectedShapeIndex();
-    if (index >= 0 && index < m_app->getShapeManager().getShapeCount() - 1)
-    {
-        m_app->getShapeManager().swapShapes(index, index + 1);
-        m_app->selectShape(index + 1);
-        refreshShapesList();
-    }
-    return 0;
-}
-
-inline LRESULT PropertiesPanel::OnWeld(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-    if (!m_app) return 0;
-
-    ShapeManager& mgr = m_app->getShapeManager();
-    if (mgr.getShapeCount() < 2)
-    {
-        MessageBoxW(L"Need at least 2 shapes to weld.", L"Weld", MB_OK | MB_ICONINFORMATION);
-        return 0;
-    }
-
-    if (MessageBoxW(L"This will merge all shapes into a single shape.\nThis operation cannot be undone.\n\nContinue?",
-        L"Weld All Shapes", MB_YESNO | MB_ICONQUESTION) != IDYES)
-    {
-        return 0;
-    }
-
-    if (mgr.weldAllShapes())
-    {
-        m_app->selectShape(0);
-        refreshShapesList();
-        updateFromConfig();
-        MessageBoxW(L"All shapes welded successfully.", L"Weld", MB_OK | MB_ICONINFORMATION);
-    }
-    else
-    {
-        MessageBoxW(L"Weld operation failed.", L"Weld", MB_OK | MB_ICONERROR);
-    }
-
-    return 0;
-}
-
-inline LRESULT PropertiesPanel::OnVisibleClick(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-    if (m_updating || !m_app) return 0;
-
-    ShapeInstance* shape = m_app->getShapeManager().getShape(m_app->getSelectedShapeIndex());
-    if (shape)
-    {
-        bool checked = (::SendMessage(m_chkVisible, BM_GETCHECK, 0, 0) == BST_CHECKED);
-        shape->visible = checked;
-        refreshShapesList();
-    }
-    return 0;
-}
-
-inline LRESULT PropertiesPanel::OnNameChange(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-    if (m_updating || !m_app) return 0;
-
-    ShapeConfig* cfg = m_app->getSelectedShapeConfig();
-    if (cfg)
-    {
-        wchar_t buf[256];
-        ::GetWindowTextW(m_editName, buf, 256);
-
-        std::wstring wname(buf);
-        int size = WideCharToMultiByte(CP_UTF8, 0, wname.c_str(), -1, nullptr, 0, nullptr, nullptr);
-        if (size > 0)
-        {
-            std::string narrow(size - 1, 0);
-            WideCharToMultiByte(CP_UTF8, 0, wname.c_str(), -1, &narrow[0], size, nullptr, nullptr);
-            cfg->name = narrow;
-        }
-
-        refreshShapesList();
-    }
-    return 0;
 }
 
 inline LRESULT PropertiesPanel::OnEditFormulaClick(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)

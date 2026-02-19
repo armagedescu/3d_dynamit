@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <algorithm>
 #include <iostream>
 
 using namespace dynamit::builders;
@@ -69,6 +70,14 @@ void ShapeManager::rebuildShape(int index)
     ShapeInstance* shape = getShape(index);
     if (!shape)
         return;
+
+    // Welded shapes: don't regenerate from formula — just re-upload existing data
+    if (shape->rawGeometry)
+    {
+        setupDynamitRenderer(*shape);
+        shape->dirty = false;
+        return;
+    }
 
     // Try to build - if formula is invalid, keep existing geometry
     std::vector<float> newVerts, newNorms, newColors;
@@ -224,11 +233,88 @@ bool ShapeManager::weldAllShapes()
     // Set up the welded shape's renderer
     welded.dirty = false;
     welded.visible = true;
+    welded.rawGeometry = true;
     setupDynamitRenderer(welded);
 
     m_shapes.push_back(std::move(welded));
 
     std::cout << "Welded all shapes: " << welded.verts.size() / 3 << " vertices, "
+              << welded.indices.size() / 3 << " triangles" << std::endl;
+
+    return true;
+}
+
+bool ShapeManager::weldShapes(const std::vector<int>& indices)
+{
+    if (indices.size() < 2) return false;
+    for (int idx : indices)
+        if (idx < 0 || idx >= static_cast<int>(m_shapes.size())) return false;
+
+    // Use the smallest index as insertion point and name source
+    int insertAt = *std::min_element(indices.begin(), indices.end());
+
+    ShapeInstance welded;
+    welded.config.name = m_shapes[insertAt].config.name + " (welded)";
+    welded.config.type = m_shapes[insertAt].config.type;
+    welded.config.segments.clear();
+    // Transform is baked into vertices — reset to identity
+    welded.config.posX = welded.config.posY = welded.config.posZ = 0.0f;
+    welded.config.rotX = welded.config.rotY = welded.config.rotZ = 0.0f;
+    welded.config.scaleX = welded.config.scaleY = welded.config.scaleZ = 1.0f;
+
+    for (int idx : indices)
+    {
+        ShapeInstance& shape = m_shapes[idx];
+        if (shape.dirty) rebuildShape(idx);
+
+        std::array<float, 16> t = getTransformMatrix(idx);
+        uint32_t indexOffset = static_cast<uint32_t>(welded.verts.size() / 3);
+
+        for (size_t v = 0; v < shape.verts.size(); v += 3)
+        {
+            float x = shape.verts[v], y = shape.verts[v + 1], z = shape.verts[v + 2];
+            welded.verts.push_back(t[0]*x + t[4]*y + t[8]*z  + t[12]);
+            welded.verts.push_back(t[1]*x + t[5]*y + t[9]*z  + t[13]);
+            welded.verts.push_back(t[2]*x + t[6]*y + t[10]*z + t[14]);
+        }
+
+        for (size_t n = 0; n < shape.norms.size(); n += 3)
+        {
+            float nx = shape.norms[n], ny = shape.norms[n + 1], nz = shape.norms[n + 2];
+            float tnx = t[0]*nx + t[4]*ny + t[8]*nz;
+            float tny = t[1]*nx + t[5]*ny + t[9]*nz;
+            float tnz = t[2]*nx + t[6]*ny + t[10]*nz;
+            float len = std::sqrt(tnx*tnx + tny*tny + tnz*tnz);
+            if (len > 0.0001f) { tnx /= len; tny /= len; tnz /= len; }
+            welded.norms.push_back(tnx);
+            welded.norms.push_back(tny);
+            welded.norms.push_back(tnz);
+        }
+
+        welded.colors.insert(welded.colors.end(), shape.colors.begin(), shape.colors.end());
+
+        for (uint32_t i : shape.indices)
+            welded.indices.push_back(i + indexOffset);
+    }
+
+    welded.dirty = false;
+    welded.visible = true;
+    welded.rawGeometry = true;
+    setupDynamitRenderer(welded);
+
+    // Remove selected shapes in reverse order to preserve indices during erasure
+    std::vector<int> sorted = indices;
+    std::sort(sorted.begin(), sorted.end(), std::greater<int>());
+    for (int idx : sorted)
+        m_shapes.erase(m_shapes.begin() + idx);
+
+    // Insert welded at the position of the earliest removed shape
+    if (insertAt > static_cast<int>(m_shapes.size()))
+        insertAt = static_cast<int>(m_shapes.size());
+    m_shapes.insert(m_shapes.begin() + insertAt, std::move(welded));
+
+    std::cout << "[ShapeManager] Welded " << indices.size() << " shapes → "
+              << welded.verts.size() / 3 << " verts, "
               << welded.indices.size() / 3 << " triangles" << std::endl;
 
     return true;

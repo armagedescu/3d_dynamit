@@ -129,12 +129,22 @@ bool initGLEW()
     return true;
 }
 
-// Process Windows messages for ATL dialogs
+// Process Windows messages for ATL dialogs and menu commands
 void processWindowsMessages()
 {
     MSG msg;
     while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
     {
+        // Intercept menu WM_COMMAND before dispatching to GLFW window proc
+        if (msg.message == WM_COMMAND && g_app && HIWORD(msg.wParam) == 0)
+        {
+            int cmdId = LOWORD(msg.wParam);
+            if (cmdId >= 3001 && cmdId <= 3099)  // Menu ID range
+            {
+                g_app->onMenuCommand(cmdId);
+                continue;
+            }
+        }
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }

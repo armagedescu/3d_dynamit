@@ -6,9 +6,27 @@
 
 #include "dialogs/Theme.h"
 #include "dialogs/ThemeToolbar.h"
-#include "dialogs/ExportToolbar.h"
+#include "dialogs/ToolboxPanel.h"
+#include "dialogs/ObjectExplorerPanel.h"
 #include "dialogs/PropertiesPanel.h"
 #include "dialogs/ViewPanel.h"
+#include "CodeExporter.h"
+
+// Menu command IDs
+#define ID_MENU_FIRST               3001
+#define ID_MENU_FILE_SAVE           3001
+#define ID_MENU_FILE_SAVE_AS        3002
+#define ID_MENU_FILE_EXIT           3003
+#define ID_MENU_EXPORT_COPY         3010
+#define ID_MENU_EXPORT_FILE         3011
+#define ID_MENU_EXPORT_MODE_GEO     3012
+#define ID_MENU_EXPORT_MODE_DYNAMIT 3013
+#define ID_MENU_EXPORT_MODE_APP     3014
+#define ID_MENU_EXPORT_NORMALS      3015
+#define ID_MENU_VIEW_WIREFRAME      3020
+#define ID_MENU_VIEW_PANELS         3021
+#define ID_MENU_EDIT_WELD_ALL       3030
+#define ID_MENU_LAST                3099
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -35,9 +53,6 @@ DesignerApp::DesignerApp(HINSTANCE hInstance, GLFWwindow* window, int width, int
     , m_lastMouseX(0.0)
     , m_lastMouseY(0.0)
     , m_selectedShapeIndex(-1)
-    , m_exportToolbarHwnd(nullptr)
-    , m_propertiesPanelHwnd(nullptr)
-    , m_viewPanelHwnd(nullptr)
     , m_projectManager(std::make_unique<ProjectManager>(this))
 {
 }
@@ -117,7 +132,7 @@ bool DesignerApp::initialize()
     }
 
     // Initial refresh of shapes list
-    if (m_propertiesPanel) m_propertiesPanel->refreshShapesList();
+    if (m_objectExplorerPanel) m_objectExplorerPanel->refreshShapesList();
 
     return true;
 }
@@ -126,13 +141,24 @@ void DesignerApp::shutdown()
 {
     m_shapeManager.clearAll();
 
-    // Destroy dialogs
-    if (m_exportToolbarHwnd) { DestroyWindow(m_exportToolbarHwnd); m_exportToolbarHwnd = nullptr; }
-    if (m_propertiesPanelHwnd) { DestroyWindow(m_propertiesPanelHwnd); m_propertiesPanelHwnd = nullptr; }
-    if (m_viewPanelHwnd) { DestroyWindow(m_viewPanelHwnd); m_viewPanelHwnd = nullptr; }
-    if (m_themeToolbarHwnd) { DestroyWindow(m_themeToolbarHwnd); m_themeToolbarHwnd = nullptr; }
+    // Remove menu bar before destroying window
+    if (m_hMenuBar)
+    {
+        HWND glfwHwnd = glfwGetWin32Window(m_window);
+        SetMenu(glfwHwnd, nullptr);
+        DestroyMenu(m_hMenuBar);
+        m_hMenuBar = nullptr;
+    }
 
-    m_exportToolbar.reset();
+    // Destroy panels
+    if (m_toolboxPanelHwnd)        { DestroyWindow(m_toolboxPanelHwnd);        m_toolboxPanelHwnd = nullptr; }
+    if (m_objectExplorerPanelHwnd) { DestroyWindow(m_objectExplorerPanelHwnd); m_objectExplorerPanelHwnd = nullptr; }
+    if (m_propertiesPanelHwnd)     { DestroyWindow(m_propertiesPanelHwnd);     m_propertiesPanelHwnd = nullptr; }
+    if (m_viewPanelHwnd)           { DestroyWindow(m_viewPanelHwnd);           m_viewPanelHwnd = nullptr; }
+    if (m_themeToolbarHwnd)        { DestroyWindow(m_themeToolbarHwnd);        m_themeToolbarHwnd = nullptr; }
+
+    m_toolboxPanel.reset();
+    m_objectExplorerPanel.reset();
     m_propertiesPanel.reset();
     m_viewPanel.reset();
     m_themeToolbar.reset();
@@ -140,18 +166,21 @@ void DesignerApp::shutdown()
 
 void DesignerApp::createDialogs()
 {
-    // Get GLFW window handle
     HWND glfwHwnd = glfwGetWin32Window(m_window);
 
-    // Create dialog panels using ATL
-    m_exportToolbar = std::make_unique<ExportToolbar>(this);
-    m_propertiesPanel = std::make_unique<PropertiesPanel>(this);
-    m_viewPanel = std::make_unique<ViewPanel>(this);
+    // Create menu bar on the GLFW window
+    createMenuBar();
 
-    // Create windows
-    m_exportToolbarHwnd = m_exportToolbar->Create(glfwHwnd);
-    m_propertiesPanelHwnd = m_propertiesPanel->Create(glfwHwnd);
-    m_viewPanelHwnd = m_viewPanel->Create(glfwHwnd);
+    // Create panels
+    m_toolboxPanel        = std::make_unique<ToolboxPanel>(this);
+    m_objectExplorerPanel = std::make_unique<ObjectExplorerPanel>(this);
+    m_propertiesPanel     = std::make_unique<PropertiesPanel>(this);
+    m_viewPanel           = std::make_unique<ViewPanel>(this);
+
+    m_toolboxPanelHwnd        = m_toolboxPanel->Create(glfwHwnd);
+    m_objectExplorerPanelHwnd = m_objectExplorerPanel->Create(glfwHwnd);
+    m_propertiesPanelHwnd     = m_propertiesPanel->Create(glfwHwnd);
+    m_viewPanelHwnd           = m_viewPanel->Create(glfwHwnd);
 
     updateDialogPositions();
 
@@ -166,40 +195,265 @@ void DesignerApp::createDialogs()
         Theme::applyTitleBar(hwnd, Theme::instance().isDark());
     });
 
-    // Show panels
-    ShowWindow(m_exportToolbarHwnd, SW_SHOW);
-    ShowWindow(m_propertiesPanelHwnd, SW_SHOW);
-    ShowWindow(m_viewPanelHwnd, SW_SHOW);
-    ShowWindow(m_themeToolbarHwnd, SW_SHOW);
+    ShowWindow(m_toolboxPanelHwnd,        SW_SHOW);
+    ShowWindow(m_objectExplorerPanelHwnd, SW_SHOW);
+    ShowWindow(m_propertiesPanelHwnd,     SW_SHOW);
+    ShowWindow(m_viewPanelHwnd,           SW_SHOW);
+    ShowWindow(m_themeToolbarHwnd,        SW_SHOW);
+}
+
+void DesignerApp::createMenuBar()
+{
+    HWND glfwHwnd = glfwGetWin32Window(m_window);
+
+    // File menu
+    m_hFileMenu = CreatePopupMenu();
+    AppendMenuW(m_hFileMenu, MF_STRING, ID_MENU_FILE_SAVE,    L"Save Project\tCtrl+S");
+    AppendMenuW(m_hFileMenu, MF_STRING, ID_MENU_FILE_SAVE_AS, L"Save As...");
+    AppendMenuW(m_hFileMenu, MF_SEPARATOR, 0, nullptr);
+
+    m_hExportMenu = CreatePopupMenu();
+    AppendMenuW(m_hExportMenu, MF_STRING, ID_MENU_EXPORT_MODE_GEO,     L"Geometry Only");
+    AppendMenuW(m_hExportMenu, MF_STRING, ID_MENU_EXPORT_MODE_DYNAMIT, L"With Dynamit Setup");
+    AppendMenuW(m_hExportMenu, MF_STRING, ID_MENU_EXPORT_MODE_APP,     L"Complete Standalone App");
+    AppendMenuW(m_hExportMenu, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(m_hExportMenu, MF_STRING, ID_MENU_EXPORT_NORMALS, L"Include Normals Highlighter");
+    AppendMenuW(m_hExportMenu, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(m_hExportMenu, MF_STRING, ID_MENU_EXPORT_COPY, L"Copy to Clipboard\tCtrl+E");
+    AppendMenuW(m_hExportMenu, MF_STRING, ID_MENU_EXPORT_FILE, L"Save to File...");
+
+    AppendMenuW(m_hFileMenu, MF_POPUP, (UINT_PTR)m_hExportMenu, L"Export C++ Code");
+    AppendMenuW(m_hFileMenu, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(m_hFileMenu, MF_STRING, ID_MENU_EDIT_WELD_ALL, L"Weld All Shapes");
+    AppendMenuW(m_hFileMenu, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(m_hFileMenu, MF_STRING, ID_MENU_FILE_EXIT, L"Exit");
+
+    // Edit menu (placeholder)
+    HMENU hEditMenu = CreatePopupMenu();
+
+    // View menu
+    m_hViewMenu = CreatePopupMenu();
+    AppendMenuW(m_hViewMenu, MF_STRING, ID_MENU_VIEW_WIREFRAME, L"Wireframe\tF11");
+    AppendMenuW(m_hViewMenu, MF_STRING, ID_MENU_VIEW_PANELS,    L"Toggle Panels\tF9");
+
+    // Project menu (placeholder)
+    HMENU hProjectMenu = CreatePopupMenu();
+
+    // Build menu bar
+    m_hMenuBar = CreateMenu();
+    AppendMenuW(m_hMenuBar, MF_POPUP, (UINT_PTR)m_hFileMenu, L"File");
+    AppendMenuW(m_hMenuBar, MF_POPUP, (UINT_PTR)hEditMenu,   L"Edit");
+    AppendMenuW(m_hMenuBar, MF_POPUP, (UINT_PTR)m_hViewMenu, L"View");
+    AppendMenuW(m_hMenuBar, MF_POPUP, (UINT_PTR)hProjectMenu, L"Project");
+
+    SetMenu(glfwHwnd, m_hMenuBar);
+    DrawMenuBar(glfwHwnd);
+
+    updateExportMenuCheckmarks();
+    updateViewMenuCheckmarks();
+}
+
+void DesignerApp::updateExportMenuCheckmarks()
+{
+    if (!m_hExportMenu) return;
+    CheckMenuItem(m_hExportMenu, ID_MENU_EXPORT_MODE_GEO,
+        MF_BYCOMMAND | ((!m_exportIncludeDynamit && !m_exportCompleteApp) ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(m_hExportMenu, ID_MENU_EXPORT_MODE_DYNAMIT,
+        MF_BYCOMMAND | ((m_exportIncludeDynamit && !m_exportCompleteApp) ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(m_hExportMenu, ID_MENU_EXPORT_MODE_APP,
+        MF_BYCOMMAND | (m_exportCompleteApp ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(m_hExportMenu, ID_MENU_EXPORT_NORMALS,
+        MF_BYCOMMAND | (m_exportIncludeNormals ? MF_CHECKED : MF_UNCHECKED));
+}
+
+void DesignerApp::updateViewMenuCheckmarks()
+{
+    if (!m_hViewMenu) return;
+    CheckMenuItem(m_hViewMenu, ID_MENU_VIEW_WIREFRAME,
+        MF_BYCOMMAND | (m_wireframeMode ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(m_hViewMenu, ID_MENU_VIEW_PANELS,
+        MF_BYCOMMAND | (m_panelsVisible ? MF_CHECKED : MF_UNCHECKED));
+}
+
+void DesignerApp::onMenuCommand(int id)
+{
+    switch (id)
+    {
+    case ID_MENU_FILE_SAVE:
+        if (!m_projectManager->saveProject())
+        {
+            auto& err = m_projectManager->getLastError();
+            if (!err.empty())
+                MessageBoxW(glfwGetWin32Window(m_window), err.c_str(), L"Save Error", MB_OK | MB_ICONERROR);
+        }
+        break;
+
+    case ID_MENU_FILE_SAVE_AS:
+        if (m_projectManager->saveProjectAs(glfwGetWin32Window(m_window)))
+            updateWindowTitle();
+        break;
+
+    case ID_MENU_FILE_EXIT:
+        glfwSetWindowShouldClose(m_window, GLFW_TRUE);
+        break;
+
+    case ID_MENU_EXPORT_MODE_GEO:
+        m_exportIncludeDynamit = false;
+        m_exportCompleteApp = false;
+        updateExportMenuCheckmarks();
+        break;
+
+    case ID_MENU_EXPORT_MODE_DYNAMIT:
+        m_exportIncludeDynamit = true;
+        m_exportCompleteApp = false;
+        updateExportMenuCheckmarks();
+        break;
+
+    case ID_MENU_EXPORT_MODE_APP:
+        m_exportIncludeDynamit = true;
+        m_exportCompleteApp = true;
+        updateExportMenuCheckmarks();
+        break;
+
+    case ID_MENU_EXPORT_NORMALS:
+        m_exportIncludeNormals = !m_exportIncludeNormals;
+        updateExportMenuCheckmarks();
+        break;
+
+    case ID_MENU_EXPORT_COPY:
+        exportCodeToClipboard();
+        break;
+
+    case ID_MENU_EXPORT_FILE:
+        exportCodeToFile();
+        break;
+
+    case ID_MENU_EDIT_WELD_ALL:
+    {
+        HWND hwnd = glfwGetWin32Window(m_window);
+        if (m_shapeManager.getShapeCount() < 2)
+        {
+            MessageBoxW(hwnd, L"Need at least 2 shapes to weld.", L"Weld All", MB_OK | MB_ICONINFORMATION);
+            break;
+        }
+        if (MessageBoxW(hwnd,
+            L"Merge ALL shapes into one?\nThis cannot be undone.",
+            L"Weld All Shapes", MB_YESNO | MB_ICONQUESTION) == IDYES)
+        {
+            if (m_shapeManager.weldAllShapes())
+            {
+                selectShape(0);
+                refreshShapesList();
+                if (m_propertiesPanel) m_propertiesPanel->updateFromConfig();
+            }
+        }
+        break;
+    }
+
+    case ID_MENU_VIEW_WIREFRAME:
+        m_wireframeMode = !m_wireframeMode;
+        updateViewMenuCheckmarks();
+        break;
+
+    case ID_MENU_VIEW_PANELS:
+    {
+        m_panelsVisible = !m_panelsVisible;
+        int showCmd = m_panelsVisible ? SW_SHOW : SW_HIDE;
+        if (m_toolboxPanelHwnd)        ShowWindow(m_toolboxPanelHwnd,        showCmd);
+        if (m_objectExplorerPanelHwnd) ShowWindow(m_objectExplorerPanelHwnd, showCmd);
+        if (m_propertiesPanelHwnd)     ShowWindow(m_propertiesPanelHwnd,     showCmd);
+        if (m_viewPanelHwnd)           ShowWindow(m_viewPanelHwnd,           showCmd);
+        updateViewMenuCheckmarks();
+        break;
+    }
+    }
+}
+
+void DesignerApp::exportCodeToClipboard()
+{
+    ShapeConfig* config = getSelectedShapeConfig();
+    if (!config)
+    {
+        MessageBoxW(glfwGetWin32Window(m_window), L"No shape selected", L"Export", MB_OK | MB_ICONWARNING);
+        return;
+    }
+
+    CodeExporter::ExportMode mode;
+    if (m_exportCompleteApp)
+        mode = CodeExporter::ExportMode::StandaloneApplication;
+    else if (m_exportIncludeDynamit)
+        mode = CodeExporter::ExportMode::WithDynamitSetup;
+    else
+        mode = CodeExporter::ExportMode::GeometryOnly;
+
+    std::wstring code = CodeExporter::generateCppCode(*config, mode, m_exportIncludeNormals);
+    if (CodeExporter::copyToClipboard(code))
+        MessageBoxW(glfwGetWin32Window(m_window), L"C++ code copied to clipboard!", L"Export", MB_OK | MB_ICONINFORMATION);
+    else
+        MessageBoxW(glfwGetWin32Window(m_window), L"Failed to copy to clipboard", L"Error", MB_OK | MB_ICONERROR);
+}
+
+void DesignerApp::exportCodeToFile()
+{
+    ShapeConfig* config = getSelectedShapeConfig();
+    if (!config)
+    {
+        MessageBoxW(glfwGetWin32Window(m_window), L"No shape selected", L"Export", MB_OK | MB_ICONWARNING);
+        return;
+    }
+
+    CodeExporter::ExportMode mode;
+    if (m_exportCompleteApp)
+        mode = CodeExporter::ExportMode::StandaloneApplication;
+    else if (m_exportIncludeDynamit)
+        mode = CodeExporter::ExportMode::WithDynamitSetup;
+    else
+        mode = CodeExporter::ExportMode::GeometryOnly;
+
+    std::wstring code = CodeExporter::generateCppCode(*config, mode, m_exportIncludeNormals);
+    if (CodeExporter::saveToFile(glfwGetWin32Window(m_window), code))
+        MessageBoxW(glfwGetWin32Window(m_window), L"C++ code saved successfully!", L"Export", MB_OK | MB_ICONINFORMATION);
 }
 
 void DesignerApp::updateDialogPositions()
 {
-    // Get GLFW window position
     int winX, winY;
     glfwGetWindowPos(m_window, &winX, &winY);
 
-    // Stack panels vertically on the left
-    int y = 30; // Start below title bar area
+    // Stack panels vertically on the left side
+    int panelX = winX + 5;
+    int y = 30; // below title bar / menu bar
     int panelGap = 5;
-    int exportToolbarHeight = 215;
+    int panelW = m_panelWidth - 10;
 
-    if (m_exportToolbarHwnd)
+    // Toolbox panel (thin strip with add-primitive buttons)
+    if (m_toolboxPanelHwnd)
     {
-        SetWindowPos(m_exportToolbarHwnd, HWND_TOPMOST, winX + 5, winY + y,
-            m_panelWidth - 10, exportToolbarHeight, SWP_NOZORDER);
-        y += exportToolbarHeight + panelGap;
+        RECT rc;
+        ::GetWindowRect(m_toolboxPanelHwnd, &rc);
+        int h = rc.bottom - rc.top;
+        SetWindowPos(m_toolboxPanelHwnd, HWND_TOPMOST, panelX, winY + y, panelW, h, SWP_NOZORDER);
+        y += h + panelGap;
     }
 
-    // Properties panel (with integrated shapes list) - let it use its own size
+    // Object explorer panel (shapes list + management)
+    if (m_objectExplorerPanelHwnd)
+    {
+        RECT rc;
+        ::GetWindowRect(m_objectExplorerPanelHwnd, &rc);
+        int h = rc.bottom - rc.top;
+        SetWindowPos(m_objectExplorerPanelHwnd, HWND_TOPMOST, panelX, winY + y, panelW, h, SWP_NOZORDER);
+        y += h + panelGap;
+    }
+
+    // Properties panel (builder + transform + colors)
     if (m_propertiesPanelHwnd)
     {
         RECT rc;
         ::GetWindowRect(m_propertiesPanelHwnd, &rc);
-        int propHeight = rc.bottom - rc.top;
-        int propWidth = rc.right - rc.left;
-        SetWindowPos(m_propertiesPanelHwnd, HWND_TOPMOST, winX + 5, winY + y,
-            propWidth, propHeight, SWP_NOZORDER);
+        int h = rc.bottom - rc.top;
+        int w = rc.right - rc.left;
+        SetWindowPos(m_propertiesPanelHwnd, HWND_TOPMOST, panelX, winY + y, w, h, SWP_NOZORDER);
     }
 
     // View panel on the right side
@@ -358,10 +612,30 @@ void DesignerApp::onKey(int key, int scancode, int action, int mods)
         {
             m_panelsVisible = !m_panelsVisible;
             int showCmd = m_panelsVisible ? SW_SHOW : SW_HIDE;
-            if (m_exportToolbarHwnd) ShowWindow(m_exportToolbarHwnd, showCmd);
-            if (m_propertiesPanelHwnd) ShowWindow(m_propertiesPanelHwnd, showCmd);
-            if (m_viewPanelHwnd) ShowWindow(m_viewPanelHwnd, showCmd);
+            if (m_toolboxPanelHwnd)        ShowWindow(m_toolboxPanelHwnd,        showCmd);
+            if (m_objectExplorerPanelHwnd) ShowWindow(m_objectExplorerPanelHwnd, showCmd);
+            if (m_propertiesPanelHwnd)     ShowWindow(m_propertiesPanelHwnd,     showCmd);
+            if (m_viewPanelHwnd)           ShowWindow(m_viewPanelHwnd,           showCmd);
+            updateViewMenuCheckmarks();
             std::cout << "Panels: " << (m_panelsVisible ? "visible" : "hidden") << std::endl;
+        }
+        break;
+    case GLFW_KEY_S:
+        if (action == GLFW_PRESS && (mods & GLFW_MOD_CONTROL))
+        {
+            onMenuCommand(ID_MENU_FILE_SAVE);
+        }
+        break;
+    case GLFW_KEY_E:
+        if (action == GLFW_PRESS && (mods & GLFW_MOD_CONTROL))
+        {
+            exportCodeToClipboard();
+            break;
+        }
+        if (action == GLFW_PRESS)
+        {
+            m_gizmo.setMode(TransformGizmo::Mode::Rotate);
+            std::cout << "Gizmo: Rotate" << std::endl;
         }
         break;
     case GLFW_KEY_W:
@@ -369,13 +643,6 @@ void DesignerApp::onKey(int key, int scancode, int action, int mods)
         {
             m_gizmo.setMode(TransformGizmo::Mode::Translate);
             std::cout << "Gizmo: Translate" << std::endl;
-        }
-        break;
-    case GLFW_KEY_E:
-        if (action == GLFW_PRESS)
-        {
-            m_gizmo.setMode(TransformGizmo::Mode::Rotate);
-            std::cout << "Gizmo: Rotate" << std::endl;
         }
         break;
     case GLFW_KEY_R:
@@ -443,7 +710,7 @@ void DesignerApp::onMouseButton(int button, int action, int mods, double x, doub
                     if (pickedShape >= 0)
                     {
                         selectShape(pickedShape);
-                        if (m_propertiesPanel) m_propertiesPanel->refreshShapesList();
+                        if (m_objectExplorerPanel) m_objectExplorerPanel->refreshShapesList();
                     }
                 }
                 m_mouseDragging = false;
@@ -530,12 +797,9 @@ void DesignerApp::newShape(ShapeConfig::Type type)
     int index = m_shapeManager.addShape(config);
     m_selectedShapeIndex = index;
 
-    // Refresh UI if panel exists
-    if (m_propertiesPanel)
-    {
-        m_propertiesPanel->refreshShapesList();
-        m_propertiesPanel->updateFromConfig();
-    }
+    // Refresh UI panels
+    if (m_objectExplorerPanel) m_objectExplorerPanel->refreshShapesList();
+    if (m_propertiesPanel) m_propertiesPanel->updateFromConfig();
 
     std::cout << "Created new " << config.name << std::endl;
 }
@@ -564,7 +828,8 @@ void DesignerApp::selectShape(int index)
     {
         m_selectedShapeIndex = index;
 
-        // Update properties panel with new selection
+        // Update panels with new selection
+        if (m_objectExplorerPanel) m_objectExplorerPanel->updateShapeSelection();
         if (m_propertiesPanel) m_propertiesPanel->updateFromConfig();
     }
 }
@@ -586,7 +851,7 @@ void DesignerApp::onShapeConfigChanged()
 
 void DesignerApp::refreshShapesList()
 {
-    if (m_propertiesPanel) m_propertiesPanel->refreshShapesList();
+    if (m_objectExplorerPanel) m_objectExplorerPanel->refreshShapesList();
 }
 
 bool DesignerApp::rayTriangleIntersect(const float* rayOrigin, const float* rayDir,

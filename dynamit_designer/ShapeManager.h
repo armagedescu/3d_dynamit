@@ -104,6 +104,7 @@ struct ShapeInstance
 
     bool dirty = true;
     bool visible = true;
+    bool rawGeometry = false;  // true for welded shapes — don't regenerate from formula
 
     // Last error from formula parsing (empty if no error)
     std::string lastError;
@@ -134,6 +135,9 @@ public:
 
     // Weld all shapes into one
     bool weldAllShapes();
+
+    // Weld selected shapes (by index) into one, replacing them in-place
+    bool weldShapes(const std::vector<int>& indices);
 
     // Rendering - no shader program needed, dynamit handles it!
     void render(const std::array<float, 16>& viewProjection, bool showNormals = false);
