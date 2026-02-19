@@ -130,10 +130,12 @@ void DesignerApp::shutdown()
     if (m_exportToolbarHwnd) { DestroyWindow(m_exportToolbarHwnd); m_exportToolbarHwnd = nullptr; }
     if (m_propertiesPanelHwnd) { DestroyWindow(m_propertiesPanelHwnd); m_propertiesPanelHwnd = nullptr; }
     if (m_viewPanelHwnd) { DestroyWindow(m_viewPanelHwnd); m_viewPanelHwnd = nullptr; }
+    if (m_themeToolbarHwnd) { DestroyWindow(m_themeToolbarHwnd); m_themeToolbarHwnd = nullptr; }
 
     m_exportToolbar.reset();
     m_propertiesPanel.reset();
     m_viewPanel.reset();
+    m_themeToolbar.reset();
 }
 
 void DesignerApp::createDialogs()
